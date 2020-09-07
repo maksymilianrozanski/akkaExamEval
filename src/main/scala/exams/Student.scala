@@ -1,31 +1,39 @@
 package exams
 
-import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior}
 import exams.data.{CompletedExam, EmptyExam}
 
-object Student {
+sealed trait StudentWaiting
+final case class StudentReceivedExam(emptyExam: EmptyExam, examEvaluator: ActorRef[ReceivedAnswers]) extends StudentWaiting
 
-  def apply(): Behavior[Student] = student()
+object StudentWaiting {
 
-  def student(): Behavior[Student] = {
-    Behaviors.setup { context =>
+  def apply(): Behavior[StudentWaiting] = studentWaiting()
+
+  def studentWaiting(): Behavior[StudentWaiting] = {
+    Behaviors.setup(context =>
       Behaviors.receiveMessage {
-        case ReceivedExam(emptyExam, evaluator) =>
-          evaluator ! EvaluateExam(context.self, CompletedExam())
-          Behaviors.same
-        case ExamResult(score) =>
-          if (score > 0.7)
-            context.log.info("I'm very happy!")
-          else {
-            context.log.info("I'm not very happy")
-          }
-          Behaviors.stopped
-      }
-    }
+        case StudentReceivedExam(emptyExam, examEvaluator) =>
+          val waitingForResult = context.spawn(StudentWaiting2(), "student-waiting")
+          examEvaluator ! ReceivedAnswers(waitingForResult, CompletedExam(emptyExam.questions))
+          Behaviors.ignore
+      })
   }
 }
 
-sealed trait Student
-final case class ReceivedExam(emptyExam: EmptyExam, evaluator: ActorRef[ExamEvaluator]) extends Student
-final case class ExamResult(score: Double) extends Student
+sealed trait StudentWaiting2
+final case class StudentWaitingForResult(result: Double) extends StudentWaiting2
+
+object StudentWaiting2 {
+  def apply(): Behavior[StudentWaiting2] =
+    Behaviors.setup(context =>
+      Behaviors.receiveMessage {
+        case StudentWaitingForResult(result) =>
+          context.log.info("received result {} !", result)
+          Behaviors.stopped
+      }
+    )
+}
+
+

@@ -8,16 +8,9 @@ object Main {
 
   def apply(): Behavior[NotUsed] =
     Behaviors.setup { context =>
-      val examEvaluator = context.spawn(ExamEvaluator(), "evaluator")
-      val studentA = context.spawn(Student(), "studentA")
-      val studentB = context.spawn(Student(), "studentB")
-      val studentC = context.spawn(Student(), "studentC")
-
-      context.watch(examEvaluator)
-
-      examEvaluator ! RequestExam(studentA)
-      examEvaluator ! RequestExam(studentB)
-      examEvaluator ! RequestExam(studentC)
+      val generator  = context.spawn(ExamDistributor(), "distributor")
+      val student = context.spawn(StudentWaiting(), "student1")
+      generator ! RequestExam(student)
 
       Behaviors.receiveSignal {
         case (_, Terminated(_)) => Behaviors.stopped
