@@ -14,7 +14,7 @@ object ExamDistributor {
   def distributor: Behavior[ExamDistributor] = Behaviors.setup[ExamDistributor](context => {
     Behaviors.receiveMessage[ExamDistributor] {
       case RequestExam(student) =>
-        val evaluator = context.spawn(ExamEvaluatorWaiting(ExamGenerator.sampleExam()), "evaluator")
+        val evaluator = context.spawnAnonymous(ExamEvaluatorWaiting(ExamGenerator.sampleExam()))
         student ! GiveExamToStudent(ExamGenerator.sampleExam(), evaluator)
         Behaviors.same
     }
