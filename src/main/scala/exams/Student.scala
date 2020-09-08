@@ -4,36 +4,26 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import exams.data.{CompletedExam, EmptyExam}
 
-sealed trait StudentWaiting
-final case class StudentReceivedExam(emptyExam: EmptyExam, examEvaluator: ActorRef[ReceivedAnswers]) extends StudentWaiting
+sealed trait Student
+final case class GiveExamToStudent(emptyExam: EmptyExam, examEvaluator: ActorRef[EvaluateAnswers]) extends Student
+final case class GiveResultToStudent(result: Double) extends Student
 
-object StudentWaiting {
+object Student {
+  def apply(): Behavior[Student] = waitingForExam()
 
-  def apply(): Behavior[StudentWaiting] = studentWaiting()
+  def waitingForExam(): Behavior[Student] = Behaviors.setup(context =>
+    Behaviors.receiveMessage {
+      case GiveExamToStudent(emptyExam, examEvaluator) =>
+        examEvaluator ! EvaluateAnswers(context.self, CompletedExam(emptyExam.questions))
+        waitingForResult()
+      case GiveResultToStudent(_) =>
+        Behaviors.unhandled
+    })
 
-  def studentWaiting(): Behavior[StudentWaiting] = {
-    Behaviors.setup(context =>
-      Behaviors.receiveMessage {
-        case StudentReceivedExam(emptyExam, examEvaluator) =>
-          val waitingForResult = context.spawn(StudentWaiting2(), "student-waiting")
-          examEvaluator ! ReceivedAnswers(waitingForResult, CompletedExam(emptyExam.questions))
-          Behaviors.ignore
-      })
+  def waitingForResult(): Behavior[Student] = Behaviors.receive[Student] {
+    case (_, GiveExamToStudent(_, _)) => Behaviors.unhandled
+    case (context, GiveResultToStudent(result)) =>
+      context.log.info("Received result: {} ", result)
+      Behaviors.stopped
   }
 }
-
-sealed trait StudentWaiting2
-final case class StudentWaitingForResult(result: Double) extends StudentWaiting2
-
-object StudentWaiting2 {
-  def apply(): Behavior[StudentWaiting2] =
-    Behaviors.setup(context =>
-      Behaviors.receiveMessage {
-        case StudentWaitingForResult(result) =>
-          context.log.info("received result {} !", result)
-          Behaviors.stopped
-      }
-    )
-}
-
-

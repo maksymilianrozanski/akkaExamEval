@@ -9,7 +9,7 @@ object Main {
   def apply(): Behavior[NotUsed] =
     Behaviors.setup { context =>
       val generator  = context.spawn(ExamDistributor(), "distributor")
-      val student = context.spawn(StudentWaiting(), "student1")
+      val student = context.spawn(Student(), "student1")
       generator ! RequestExam(student)
 
       Behaviors.receiveSignal {
