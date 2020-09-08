@@ -5,7 +5,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import exams.data.{CompletedExam, EmptyExam}
 
 sealed trait ExamEvaluator
-final case class EvaluateAnswers(student: ActorRef[Student], completedExam: CompletedExam) extends ExamEvaluator
+final case class EvaluateAnswers(student: ActorRef[Student], selectedAnswers: CompletedExam) extends ExamEvaluator
 
 object ExamEvaluator {
   def apply(emptyExam: EmptyExam): Behavior[ExamEvaluator] = evaluator(emptyExam)

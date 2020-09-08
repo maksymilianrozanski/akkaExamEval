@@ -14,7 +14,7 @@ object Student {
   def waitingForExam(): Behavior[Student] = Behaviors.setup(context =>
     Behaviors.receiveMessage {
       case GiveExamToStudent(emptyExam, examEvaluator) =>
-        examEvaluator ! EvaluateAnswers(context.self, CompletedExam(emptyExam.questions))
+        examEvaluator ! EvaluateAnswers(context.self, CompletedExam(List()))
         waitingForResult()
       case GiveResultToStudent(_) =>
         Behaviors.unhandled
