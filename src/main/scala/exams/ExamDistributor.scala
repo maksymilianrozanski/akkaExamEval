@@ -2,12 +2,14 @@ package exams
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import exams.data.ExamGenerator
+import exams.data.{ExamGenerator, StudentsExam}
 
 sealed trait ExamDistributor
 final case class RequestExam(student: ActorRef[Student]) extends ExamDistributor
 
 object ExamDistributor {
+
+  import exams.data.TeachersExam._
 
   def apply(): Behavior[ExamDistributor] = distributor
 
@@ -15,7 +17,8 @@ object ExamDistributor {
     Behaviors.receiveMessage[ExamDistributor] {
       case RequestExam(student) =>
         val evaluator = context.spawnAnonymous(ExamEvaluator(ExamGenerator.sampleExam()))
-        student ! GiveExamToStudent(ExamGenerator.sampleExam(), evaluator)
+        val exam: StudentsExam = ExamGenerator.sampleExam()
+        student ! GiveExamToStudent(exam, evaluator)
         Behaviors.same
     }
   })

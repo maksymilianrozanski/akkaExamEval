@@ -2,7 +2,7 @@ package exams.data
 
 object ExamGenerator {
 
-  def sampleExam(): EmptyExam = EmptyExam(List())
+  def sampleExam(): TeachersExam = TeachersExam(List())
 
   //  {
   //    val q1Answers = List(Answer("yes"), Answer("no"))

@@ -2,10 +2,10 @@ package exams
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import exams.data.{CompletedExam, EmptyExam}
+import exams.data.{CompletedExam, EmptyExam, StudentsExam}
 
 sealed trait Student
-final case class GiveExamToStudent(emptyExam: EmptyExam, examEvaluator: ActorRef[EvaluateAnswers]) extends Student
+final case class GiveExamToStudent(emptyExam: StudentsExam, examEvaluator: ActorRef[EvaluateAnswers]) extends Student
 final case class GiveResultToStudent(result: Double) extends Student
 
 object Student {

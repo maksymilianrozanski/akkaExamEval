@@ -2,8 +2,16 @@ package exams.data
 
 //data
 sealed trait Exam
-final case class EmptyExam(questions: List[BlankQuestion]) extends Exam
+final case class EmptyExam(questions: TeachersExam) extends Exam
 final case class CompletedExam(selectedAnswers: List[List[Int]]) extends Exam
+
+case class TeachersExam(questions: List[Question])
+object TeachersExam {
+  implicit def toStudentsExam(teachersExam: TeachersExam): StudentsExam =
+    StudentsExam(teachersExam.questions.map(_.question))
+}
+
+case class StudentsExam(questions: List[BlankQuestion])
 
 case class Question(question: BlankQuestion, correctAnswer: List[Int])
 case class BlankQuestion(text: String, answers: List[Answer], selectedAnswer: List[Int])
