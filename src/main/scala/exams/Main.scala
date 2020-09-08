@@ -11,8 +11,13 @@ object Main {
       val generator = context.spawn(ExamDistributor(), "distributor")
       val student1 = context.spawn(Student(), "student1")
       val student2 = context.spawn(Student(), "student2")
+      val student3 = context.spawn(Student(), "student3")
+      val student4 = context.spawn(Student(), "student4")
+
       generator ! RequestExam(student1)
       generator ! RequestExam(student2)
+      generator ! RequestExam(student3)
+      generator ! RequestExam(student4)
 
       Behaviors.receiveSignal {
         case (_, Terminated(_)) => Behaviors.stopped
