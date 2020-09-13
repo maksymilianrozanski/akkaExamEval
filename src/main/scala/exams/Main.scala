@@ -1,7 +1,7 @@
 package exams
 
 import akka.NotUsed
-import akka.actor.typed.{ActorSystem, Behavior, Terminated}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.scaladsl.adapter.TypedActorSystemOps
 import akka.http.scaladsl.Http
@@ -31,7 +31,7 @@ object Main {
 
   def apply(): Behavior[NotUsed] =
     Behaviors.setup { context =>
-      val generator = context.spawn(ExamDistributor(), "distributor")
+      implicit val generator: ActorRef[ExamDistributor] = context.spawn(ExamDistributor(), "distributor")
       val student1 = context.spawn(Student(), "student1")
       val student2 = context.spawn(Student(), "student2")
       val student3 = context.spawn(Student(), "student3")
@@ -44,7 +44,7 @@ object Main {
 
       val studentActions = context.spawn(StudentActions(), "studentActions")
       context.watch(studentActions)
-      val routes = new StudentRoutes(studentActions)(context.system)
+      val routes = new StudentRoutes(studentActions)(context.system, generator)
       startHttpServer(routes.studentRoutes, context.system)
 
       Behaviors.receiveSignal {

@@ -1,33 +1,37 @@
 package exams.http
 
-import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
-import akka.http.scaladsl.server.Directives.{pathEnd, pathPrefix, _}
+import akka.actor.typed.{ActorRef, ActorSystem}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
-import exams.http.StudentActions.{ActionPerformed, TestCommand}
+import exams.http.StudentActions.TestCommand
+import exams.{ExamDistributor, RequestExam}
 
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class StudentRoutes(userActions: ActorRef[StudentActions.Command])(implicit val system: ActorSystem[_]) {
+class StudentRoutes(userActions: ActorRef[StudentActions.Command])(implicit val system: ActorSystem[_],
+                                                                   implicit val examDistributor: ActorRef[ExamDistributor]
+) {
 
   private implicit val timeout: Timeout = Timeout.create(system.settings.config.getDuration("my-app.routes.ask-timeout"))
 
-  def testCommand(): Future[ActionPerformed] =
-    userActions.ask(TestCommand)
-
-  val studentRoutes: Route =
+  val studentRoutes: Route = {
     pathPrefix("student") {
-      concat(
-        pathEnd {
-          concat(
-            get {
-              onSuccess(testCommand()) {
-                response => complete(response.description)
-              }
-            }
-          )
-        }
-      )
+      (pathEndOrSingleSlash & get) {
+        complete(userActions.ask(TestCommand).map {
+          x =>
+            println("/student route")
+            HttpEntity(ContentTypes.`text/plain(UTF-8)`, "no content yet, student route")
+        })
+      } ~ (path("start") & get) {
+        complete(userActions.ask(StudentActions.RequestExamCommand("hello", _)).map {
+          case RequestExam(student) =>
+            println("start exam route")
+            HttpEntity(ContentTypes.`text/plain(UTF-8)`, "no content yet, start exam route")
+        })
+      }
     }
+  }
 }
