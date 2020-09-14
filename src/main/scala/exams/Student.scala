@@ -3,18 +3,21 @@ package exams
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import exams.data.{CompletedExam, StudentsExam}
+import exams.http.StudentActions
+import exams.http.StudentActions.ExamToDisplay
 
 sealed trait Student
 final case class GiveExamToStudent(emptyExam: StudentsExam, examEvaluator: ActorRef[EvaluateAnswers]) extends Student
 final case class GiveResultToStudent(result: Double) extends Student
 
 object Student {
-  def apply(): Behavior[Student] = waitingForExam()
+  def apply(displayReceiver: ActorRef[ExamToDisplay]): Behavior[Student] = waitingForExam(displayReceiver)
 
-  def waitingForExam(): Behavior[Student] = Behaviors.setup(context =>
+  def waitingForExam(displayReceiver: ActorRef[ExamToDisplay]): Behavior[Student] = Behaviors.setup(context =>
     Behaviors.receiveMessage {
       case GiveExamToStudent(emptyExam, examEvaluator) =>
-        examEvaluator ! EvaluateAnswers(context.self, randomAnswers(emptyExam))
+        context.log.info(s"Student received exam ${GiveExamToStudent(emptyExam, examEvaluator)}")
+        displayReceiver ! ExamToDisplay(emptyExam)
         waitingForResult()
       case GiveResultToStudent(_) =>
         Behaviors.unhandled
