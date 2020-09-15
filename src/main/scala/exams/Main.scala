@@ -2,11 +2,12 @@ package exams
 
 import akka.NotUsed
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
-import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.scaladsl.adapter.TypedActorSystemOps
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
-import exams.http.{StudentActions, StudentRoutes}
+import akka.util.Timeout
+import exams.http.{RoutesActorsPack, StudentActions, StudentRoutes}
 
 import scala.util.{Failure, Success}
 
@@ -32,19 +33,21 @@ object Main {
   def apply(): Behavior[NotUsed] =
     Behaviors.setup { context =>
       implicit val generator: ActorRef[ExamDistributor] = context.spawn(ExamDistributor(), "distributor")
-//      val student1 = context.spawn(Student(), "student1")
-//      val student2 = context.spawn(Student(), "student2")
-//      val student3 = context.spawn(Student(), "student3")
-//      val student4 = context.spawn(Student(), "student4")
-//
-//      generator ! RequestExam(student1)
-//      generator ! RequestExam(student2)
-//      generator ! RequestExam(student3)
-//      generator ! RequestExam(student4)
+      //      val student1 = context.spawn(Student(), "student1")
+      //      val student2 = context.spawn(Student(), "student2")
+      //      val student3 = context.spawn(Student(), "student3")
+      //      val student4 = context.spawn(Student(), "student4")
+      //
+      //      generator ! RequestExam(student1)
+      //      generator ! RequestExam(student2)
+      //      generator ! RequestExam(student3)
+      //      generator ! RequestExam(student4)
 
-      val studentActions = context.spawn(StudentActions(), "studentActions")
+      implicit val studentActions: ActorRef[StudentActions.Command] = context.spawn(StudentActions(), "studentActions")
       context.watch(studentActions)
-      val routes = new StudentRoutes(studentActions)(context, context.system, generator)
+      implicit val timeout: Timeout = Timeout.create(context.system.settings.config.getDuration("my-app.routes.ask-timeout"))
+      implicit val actorPack: RoutesActorsPack = RoutesActorsPack(studentActions, context, context.system, generator, timeout)
+      val routes = new StudentRoutes()
       startHttpServer(routes.studentRoutes, context.system)
 
       Behaviors.receiveSignal {

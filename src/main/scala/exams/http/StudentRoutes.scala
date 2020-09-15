@@ -1,41 +1,57 @@
 package exams.http
 
-import akka.NotUsed
 import akka.actor.typed.scaladsl.ActorContext
 import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
 import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{Route, StandardRoute}
 import akka.util.Timeout
-import exams.http.StudentActions.{ActionPerformed, ExamToDisplay, TestCommand}
-import exams.{ExamDistributor, RequestExam, Student}
+import exams.ExamDistributor
+import exams.http.StudentActions.{ExamToDisplay, TestCommand}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class StudentRoutes(userActions: ActorRef[StudentActions.Command])
-                   (
-                     val context: ActorContext[_],
-                     implicit val system: ActorSystem[_],
-                     implicit val examDistributor: ActorRef[ExamDistributor]) {
+case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
+                            context: ActorContext[_],
+                            system: ActorSystem[_],
+                            examDistributor: ActorRef[ExamDistributor],
+                            implicit val timeout: Timeout)
 
-  private implicit val timeout: Timeout = Timeout.create(system.settings.config.getDuration("my-app.routes.ask-timeout"))
+class StudentRoutes(implicit val actors: RoutesActorsPack) {
 
-  val studentRoutes: Route = {
+  implicit val actorSystem: ActorSystem[_] = actors.system
+
+  val studentRoutes: Route = StudentRoutes2.studentRoutes
+}
+
+object StudentRoutes2 {
+
+  def studentRoutes(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): Route = {
     pathPrefix("student") {
       (pathEndOrSingleSlash & get) {
-        complete(userActions.ask(TestCommand).map {
-          x =>
-            println("/student route")
-            HttpEntity(ContentTypes.`text/plain(UTF-8)`, "no content yet, student route")
-        })
+        testRequestRoute
       } ~ (path("start") & get) {
-        complete(userActions.ask(StudentActions.RequestExamCommand("hello", _, examDistributor)).map {
-          case ExamToDisplay(exam) =>
-            println("start exam route")
-            HttpEntity(ContentTypes.`text/plain(UTF-8)`, s"no content yet, start exam route, description: $exam")
-        })
+        examRequestedRoute
       }
     }
+  }
+
+  def testRequestRoute(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): StandardRoute = {
+    import actors._
+    complete(userActions.ask(TestCommand).map {
+      x =>
+        println("/student route")
+        HttpEntity(ContentTypes.`text/plain(UTF-8)`, "no content yet, student route")
+    })
+  }
+
+  def examRequestedRoute(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): StandardRoute = {
+    import actors._
+    complete(userActions.ask(StudentActions.RequestExamCommand("hello", _, examDistributor)).map {
+      case ExamToDisplay(exam) =>
+        println("start exam route")
+        HttpEntity(ContentTypes.`text/plain(UTF-8)`, s"no content yet, start exam route, description: $exam")
+    })
   }
 }
