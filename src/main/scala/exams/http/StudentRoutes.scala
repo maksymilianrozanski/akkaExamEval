@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import akka.util.Timeout
 import exams.ExamDistributor
-import exams.http.StudentActions.{ExamToDisplay, TestCommand}
+import exams.http.StudentActions.ExamToDisplay
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -30,20 +30,12 @@ object StudentRoutes2 {
   def studentRoutes(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): Route = {
     pathPrefix("student") {
       (pathEndOrSingleSlash & get) {
-        testRequestRoute
+        complete(
+          HttpEntity(ContentTypes.`text/plain(UTF-8)`, "nothing here yet"))
       } ~ (path("start") & get) {
         examRequestedRoute
       }
     }
-  }
-
-  def testRequestRoute(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): StandardRoute = {
-    import actors._
-    complete(userActions.ask(TestCommand).map {
-      x =>
-        println("/student route")
-        HttpEntity(ContentTypes.`text/plain(UTF-8)`, "no content yet, student route")
-    })
   }
 
   def examRequestedRoute(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): StandardRoute = {
