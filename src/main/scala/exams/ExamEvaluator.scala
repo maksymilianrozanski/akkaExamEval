@@ -22,8 +22,9 @@ object ExamEvaluator {
   private def percentOfCorrectAnswers(teachersExam: TeachersExam, answers: CompletedExam): Double = {
     val validAnswers = teachersExam.questions.map(_.correctAnswer)
     assert(validAnswers.nonEmpty, "exam should contain at least one question")
-    assert(answers.selectedAnswers.length == validAnswers.length, "length of student's answers should be equal to list of valid answers")
-    val points = validAnswers.zip(answers.selectedAnswers).map(pair =>
+    assert(answers.selectedAnswers.questions.length == validAnswers.length, "length of student's answers should be equal to list of valid answers")
+    val studentsAnswers = answers.selectedAnswers.questions.map(_.selectedAnswer)
+    val points = validAnswers.zip(studentsAnswers).map(pair =>
       if (pair._1 == pair._2) 1 else 0
     ).sum
     points.toDouble / validAnswers.length.toDouble

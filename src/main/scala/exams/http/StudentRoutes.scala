@@ -7,7 +7,8 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest}
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import akka.util.Timeout
-import exams.data.CompletedExam
+import exams.data.TeachersExam.toStudentsExam
+import exams.data.{CompletedExam, ExamGenerator}
 import exams.{ExamDistributor, RequestExamEvaluation}
 import exams.http.StudentActions.ExamToDisplay
 
@@ -52,7 +53,8 @@ object StudentRoutes2 {
   }
 
   def examEvalRequested(request: HttpRequest)(implicit actors: RoutesActorsPack): Route = {
-    actors.examDistributor ! RequestExamEvaluation(CompletedExam(List()))
+    //todo: replace generated exam with parsed JSON
+    actors.examDistributor ! RequestExamEvaluation(CompletedExam(toStudentsExam(ExamGenerator.sampleExam())))
     println(s"exam eval endpoint, request: $request")
     complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "exam eval endpoint, no content yet"))
   }

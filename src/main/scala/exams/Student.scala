@@ -31,13 +31,13 @@ object Student {
       }
     )
 
-  private def randomAnswers(emptyExam: StudentsExam) =
-    CompletedExam(emptyExam.questions.map(
-      _ => {
-        val rand = math.random()
-        if (rand > 0.5)
-          List(0)
-        else List(1)
-      }
-    ))
+//  private def randomAnswers(emptyExam: StudentsExam) =
+//    CompletedExam(emptyExam.questions.map(
+//          _ => {
+//            val rand = math.random()
+//            if (rand > 0.5)
+//              List(0)
+//            else List(1)
+//          }
+//        ))
 }

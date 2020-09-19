@@ -3,7 +3,7 @@ package exams.data
 //data
 sealed trait Exam
 final case class EmptyExam(questions: TeachersExam) extends Exam
-final case class CompletedExam(selectedAnswers: List[List[Int]]) extends Exam
+final case class CompletedExam(selectedAnswers: StudentsExam) extends Exam
 
 case class TeachersExam(questions: List[Question])
 object TeachersExam {
