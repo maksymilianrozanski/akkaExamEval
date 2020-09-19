@@ -7,21 +7,30 @@ import exams.http.StudentActions
 import exams.http.StudentActions.ExamToDisplay
 
 sealed trait Student
+final case class RequestExamCommand(code: String, distributor: ActorRef[ExamDistributor]) extends Student
+
 final case class GiveExamToStudent(emptyExam: StudentsExam, examEvaluator: ActorRef[EvaluateAnswers]) extends Student
 final case class GiveResultToStudent(result: Double) extends Student
 
 object Student {
-  def apply(displayReceiver: ActorRef[ExamToDisplay]): Behavior[Student] = waitingForExam(displayReceiver)
+  def apply(displayReceiver: ActorRef[ExamToDisplay]): Behavior[Student] = stateless(displayReceiver)
 
-  def waitingForExam(displayReceiver: ActorRef[ExamToDisplay]): Behavior[Student] = Behaviors.setup(context =>
-    Behaviors.receiveMessage {
-      case GiveExamToStudent(emptyExam, examEvaluator) =>
-        context.log.info(s"Student received exam ${GiveExamToStudent(emptyExam, examEvaluator)}")
-        displayReceiver ! ExamToDisplay(emptyExam)
-        waitingForResult()
-      case GiveResultToStudent(_) =>
-        Behaviors.unhandled
-    })
+  def stateless(displayReceiver: ActorRef[ExamToDisplay]): Behavior[Student] =
+    Behaviors.setup(context =>
+      Behaviors.receiveMessage {
+        case GiveExamToStudent(emptyExam, examEvaluator) =>
+          context.log.info(s"Student received exam ${GiveExamToStudent(emptyExam, examEvaluator)}")
+          displayReceiver ! ExamToDisplay(emptyExam)
+          Behaviors.stopped
+        case GiveResultToStudent(result) =>
+          context.log.info("Received result: {} ", result)
+          Behaviors.stopped
+        case RequestExamCommand(code, distributor) =>
+          context.log.info("received starting exam request")
+          distributor ! RequestExam(context.self)
+          Behaviors.same
+      }
+    )
 
   private def randomAnswers(emptyExam: StudentsExam) =
     CompletedExam(emptyExam.questions.map(
@@ -32,11 +41,4 @@ object Student {
         else List(1)
       }
     ))
-
-  def waitingForResult(): Behavior[Student] = Behaviors.receive[Student] {
-    case (_, GiveExamToStudent(_, _)) => Behaviors.unhandled
-    case (context, GiveResultToStudent(result)) =>
-      context.log.info("Received result: {} ", result)
-      Behaviors.stopped
-  }
 }
