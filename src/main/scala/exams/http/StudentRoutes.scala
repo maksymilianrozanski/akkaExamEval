@@ -3,11 +3,12 @@ package exams.http
 import akka.actor.typed.scaladsl.ActorContext
 import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
 import akka.actor.typed.{ActorRef, ActorSystem}
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest}
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import akka.util.Timeout
-import exams.ExamDistributor
+import exams.data.CompletedExam
+import exams.{ExamDistributor, RequestExamEvaluation}
 import exams.http.StudentActions.ExamToDisplay
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -27,6 +28,7 @@ class StudentRoutes(implicit val actors: RoutesActorsPack) {
 
 object StudentRoutes2 {
 
+
   def studentRoutes(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): Route = {
     pathPrefix("student") {
       (pathEndOrSingleSlash & get) {
@@ -34,6 +36,8 @@ object StudentRoutes2 {
           HttpEntity(ContentTypes.`text/plain(UTF-8)`, "nothing here yet"))
       } ~ (path("start") & get) {
         examRequestedRoute
+      } ~ (path("evaluate") & post & extractRequest) {
+        examEvalRequested
       }
     }
   }
@@ -45,5 +49,11 @@ object StudentRoutes2 {
         println("start exam route")
         HttpEntity(ContentTypes.`text/plain(UTF-8)`, s"no content yet, start exam route, description: $exam")
     })
+  }
+
+  def examEvalRequested(request: HttpRequest)(implicit actors: RoutesActorsPack): Route = {
+    actors.examDistributor ! RequestExamEvaluation(CompletedExam(List()))
+    println(s"exam eval endpoint, request: $request")
+    complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "exam eval endpoint, no content yet"))
   }
 }
