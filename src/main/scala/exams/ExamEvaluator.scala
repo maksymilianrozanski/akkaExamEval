@@ -1,21 +1,22 @@
 package exams
 
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import exams.data.{CompletedExam, EmptyExam, TeachersExam}
+import exams.data.{CompletedExam, TeachersExam}
 
 sealed trait ExamEvaluator
-final case class EvaluateAnswers(student: ActorRef[Student], selectedAnswers: CompletedExam) extends ExamEvaluator
+final case class EvaluateAnswers(teachersExam: TeachersExam, selectedAnswers: CompletedExam) extends ExamEvaluator
+
 
 object ExamEvaluator {
-  def apply(emptyExam: TeachersExam): Behavior[ExamEvaluator] = evaluator(emptyExam)
+  def apply(): Behavior[ExamEvaluator] = evaluator()
 
-  def evaluator(emptyExam: TeachersExam): Behavior[ExamEvaluator] = Behaviors.receive {
-    case (context, EvaluateAnswers(student, completedExam)) =>
+  def evaluator(): Behavior[ExamEvaluator] = Behaviors.receive {
+    case (context, EvaluateAnswers(teachersExam, completedExam)) =>
       context.log.info("Sending exam result to student")
-      val result = percentOfCorrectAnswers(emptyExam, completedExam)
-      student ! GiveResultToStudent(result)
-      Behaviors.stopped
+      val result = percentOfCorrectAnswers(teachersExam, completedExam)
+      context.log.info(s"Exam result: $result, not saving or sending yet.")
+      Behaviors.same
   }
 
   private def percentOfCorrectAnswers(teachersExam: TeachersExam, answers: CompletedExam): Double = {

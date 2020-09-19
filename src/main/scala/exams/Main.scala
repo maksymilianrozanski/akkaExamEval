@@ -32,7 +32,8 @@ object Main {
 
   def apply(): Behavior[NotUsed] =
     Behaviors.setup { context =>
-      implicit val generator: ActorRef[ExamDistributor] = context.spawn(ExamDistributor(), "distributor")
+      val examEvaluator = context.spawnAnonymous(ExamEvaluator())
+      implicit val generator: ActorRef[ExamDistributor] = context.spawn(ExamDistributor(examEvaluator), "distributor")
       //      val student1 = context.spawn(Student(), "student1")
       //      val student2 = context.spawn(Student(), "student2")
       //      val student3 = context.spawn(Student(), "student3")

@@ -3,13 +3,12 @@ package exams
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import exams.data.{CompletedExam, StudentsExam}
-import exams.http.StudentActions
 import exams.http.StudentActions.ExamToDisplay
 
 sealed trait Student
 final case class RequestExamCommand(code: String, distributor: ActorRef[ExamDistributor]) extends Student
 
-final case class GiveExamToStudent(emptyExam: StudentsExam, examEvaluator: ActorRef[EvaluateAnswers]) extends Student
+final case class GiveExamToStudent(emptyExam: StudentsExam) extends Student
 final case class GiveResultToStudent(result: Double) extends Student
 
 object Student {
@@ -18,8 +17,8 @@ object Student {
   def stateless(displayReceiver: ActorRef[ExamToDisplay]): Behavior[Student] =
     Behaviors.setup(context =>
       Behaviors.receiveMessage {
-        case GiveExamToStudent(emptyExam, examEvaluator) =>
-          context.log.info(s"Student received exam ${GiveExamToStudent(emptyExam, examEvaluator)}")
+        case GiveExamToStudent(emptyExam) =>
+          context.log.info(s"Student received exam ${GiveExamToStudent(emptyExam)}")
           displayReceiver ! ExamToDisplay(emptyExam)
           Behaviors.stopped
         case GiveResultToStudent(result) =>
