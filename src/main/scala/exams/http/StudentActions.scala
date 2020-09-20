@@ -26,7 +26,7 @@ object StudentActions {
         case RequestExamCommand(code, displayReceiver, distributor) =>
           context.log.info("received starting exam request")
           val student = context.spawnAnonymous(Student(displayReceiver))
-          distributor ! RequestExam(student)
+          distributor ! RequestExam(code, student)
           Behaviors.same
       })
   }

@@ -26,18 +26,18 @@ object Student {
           Behaviors.stopped
         case RequestExamCommand(code, distributor) =>
           context.log.info("received starting exam request")
-          distributor ! RequestExam(context.self)
+          distributor ! RequestExam(code, context.self)
           Behaviors.same
       }
     )
 
-//  private def randomAnswers(emptyExam: StudentsExam) =
-//    CompletedExam(emptyExam.questions.map(
-//          _ => {
-//            val rand = math.random()
-//            if (rand > 0.5)
-//              List(0)
-//            else List(1)
-//          }
-//        ))
+  //  private def randomAnswers(emptyExam: StudentsExam) =
+  //    CompletedExam(emptyExam.questions.map(
+  //          _ => {
+  //            val rand = math.random()
+  //            if (rand > 0.5)
+  //              List(0)
+  //            else List(1)
+  //          }
+  //        ))
 }
