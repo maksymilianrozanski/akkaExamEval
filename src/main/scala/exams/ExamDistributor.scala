@@ -40,8 +40,8 @@ object ExamDistributor {
   def distributorCommandHandler(context: ActorContext[ExamDistributor], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
       case RequestExam(studentId, studentRef) =>
-        val exam: TeachersExam = ExamGenerator.sampleExam()
         val examId = state.openExams.size.toString
+        val exam: TeachersExam = ExamGenerator.sampleExam(examId)
         Effect.persist(ExamAdded(examId, studentId, exam))
           .thenRun((s: ExamDistributorState) => {
             context.log.info("persisted examId: {}", examId)

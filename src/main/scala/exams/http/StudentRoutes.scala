@@ -57,7 +57,7 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
 trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
   implicit val answerFormat: RootJsonFormat[Answer] = jsonFormat1(Answer)
   implicit val blankQuestionFormat: RootJsonFormat[BlankQuestion] = jsonFormat3(BlankQuestion)
-  implicit val studentsExamFormat: RootJsonFormat[StudentsExam] = jsonFormat1(StudentsExam)
+  implicit val studentsExamFormat: RootJsonFormat[StudentsExam] = jsonFormat2(StudentsExam)
   implicit val completedExamFormat: RootJsonFormat[CompletedExam] = jsonFormat2(CompletedExam)
   implicit val examToDisplayFormat: RootJsonFormat[ExamToDisplay] = jsonFormat1(ExamToDisplay)
 }
