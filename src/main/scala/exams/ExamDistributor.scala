@@ -4,9 +4,11 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import exams.data.{CompletedExam, ExamGenerator, StudentsExam}
 
+
 sealed trait ExamDistributor
 final case class RequestExam(student: ActorRef[Student]) extends ExamDistributor
 final case class RequestExamEvaluation(completedExam: CompletedExam) extends ExamDistributor
+final case class RequestExamEvaluationCompact(examId: String, answers: List[List[String]]) extends ExamDistributor
 
 object ExamDistributor {
 
@@ -26,6 +28,10 @@ object ExamDistributor {
         //todo: send persisted teacher's exam to evaluator instead of generating new
         val exam = ExamGenerator.sampleExam()
         evaluator ! EvaluateAnswers(exam, completedExam)
+        Behaviors.same
+      case request@RequestExamEvaluationCompact(examId, answers) =>
+        context.log.info("Received RequestExamEvaluationCompact {}, not implemented yet", request)
+        //todo: not implemented
         Behaviors.same
     }
   })
