@@ -5,7 +5,18 @@
       <option name="implicitConversions" value="true" />
     </profile>
     <profile name="sbt 2" modules="akkaExams">
+      <option name="postfixOps" value="true" />
       <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="existentials" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xfatal-warnings" />
+        <parameter value="-Xcheckinit" />
+      </parameters>
     </profile>
   </component>
 </project>

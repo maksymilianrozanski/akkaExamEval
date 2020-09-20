@@ -3,16 +3,16 @@ package exams.http
 import akka.actor.typed.scaladsl.ActorContext
 import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
 import akka.actor.typed.{ActorRef, ActorSystem}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest}
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import akka.util.Timeout
 import exams.data.TeachersExam.toStudentsExam
-import exams.data.{CompletedExam, ExamGenerator}
-import exams.{ExamDistributor, RequestExamEvaluation}
+import exams.data._
 import exams.http.StudentActions.ExamToDisplay
-
-import scala.concurrent.ExecutionContext.Implicits.global
+import exams.{ExamDistributor, RequestExamEvaluation}
+import spray.json._
 
 case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
                             context: ActorContext[_],
@@ -20,15 +20,12 @@ case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
                             examDistributor: ActorRef[ExamDistributor],
                             implicit val timeout: Timeout)
 
-class StudentRoutes(implicit val actors: RoutesActorsPack) {
+object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
 
-  implicit val actorSystem: ActorSystem[_] = actors.system
-
-  val studentRoutes: Route = StudentRoutes2.studentRoutes
-}
-
-object StudentRoutes2 {
-
+  def createStudentRoutes(implicit actors: RoutesActorsPack): Route = {
+    implicit val actorSystem: ActorSystem[_] = actors.system
+    StudentRoutes2.studentRoutes
+  }
 
   def studentRoutes(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): Route = {
     pathPrefix("student") {
@@ -45,11 +42,7 @@ object StudentRoutes2 {
 
   def examRequestedRoute(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): StandardRoute = {
     import actors._
-    complete(userActions.ask(StudentActions.RequestExamCommand("hello", _, examDistributor)).map {
-      case ExamToDisplay(exam) =>
-        println("start exam route")
-        HttpEntity(ContentTypes.`text/plain(UTF-8)`, s"no content yet, start exam route, description: $exam")
-    })
+    complete(userActions.ask(StudentActions.RequestExamCommand("hello", _, examDistributor)).mapTo[ExamToDisplay])
   }
 
   def examEvalRequested(request: HttpRequest)(implicit actors: RoutesActorsPack): Route = {
@@ -58,4 +51,11 @@ object StudentRoutes2 {
     println(s"exam eval endpoint, request: $request")
     complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "exam eval endpoint, no content yet"))
   }
+}
+
+trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
+  implicit val answerFormat: RootJsonFormat[Answer] = jsonFormat1(Answer)
+  implicit val blankQuestionFormat: RootJsonFormat[BlankQuestion] = jsonFormat3(BlankQuestion)
+  implicit val studentsExamFormat: RootJsonFormat[StudentsExam] = jsonFormat1(StudentsExam)
+  implicit val examToDisplayFormat: RootJsonFormat[ExamToDisplay] = jsonFormat1(ExamToDisplay)
 }

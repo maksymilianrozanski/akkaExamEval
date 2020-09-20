@@ -1,13 +1,13 @@
 package exams
 
 import akka.NotUsed
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
-import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.scaladsl.adapter.TypedActorSystemOps
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
-import exams.http.{RoutesActorsPack, StudentActions, StudentRoutes}
+import exams.http.{RoutesActorsPack, StudentActions, StudentRoutes2}
 
 import scala.util.{Failure, Success}
 
@@ -48,8 +48,9 @@ object Main {
       context.watch(studentActions)
       implicit val timeout: Timeout = Timeout.create(context.system.settings.config.getDuration("my-app.routes.ask-timeout"))
       implicit val actorPack: RoutesActorsPack = RoutesActorsPack(studentActions, context, context.system, generator, timeout)
-      val routes = new StudentRoutes()
-      startHttpServer(routes.studentRoutes, context.system)
+      val routes = StudentRoutes2.createStudentRoutes(actorPack)
+
+      startHttpServer(routes, context.system)
 
       Behaviors.receiveSignal {
         case (_, Terminated(_)) => Behaviors.stopped
