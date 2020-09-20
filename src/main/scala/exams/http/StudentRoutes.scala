@@ -8,7 +8,6 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest}
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import akka.util.Timeout
-import exams.data.TeachersExam.toStudentsExam
 import exams.data._
 import exams.http.StudentActions.ExamToDisplay
 import exams.{ExamDistributor, RequestExamEvaluation}
@@ -46,10 +45,12 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
   }
 
   def examEvalRequested(request: HttpRequest)(implicit actors: RoutesActorsPack): Route = {
-    //todo: replace generated exam with parsed JSON
-    actors.examDistributor ! RequestExamEvaluation(CompletedExam(toStudentsExam(ExamGenerator.sampleExam())))
     println(s"exam eval endpoint, request: $request")
-    complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "exam eval endpoint, no content yet"))
+    entity(as[CompletedExam]) {
+      exam =>
+        actors.examDistributor ! RequestExamEvaluation(exam)
+        complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
+    }
   }
 }
 
@@ -57,5 +58,6 @@ trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
   implicit val answerFormat: RootJsonFormat[Answer] = jsonFormat1(Answer)
   implicit val blankQuestionFormat: RootJsonFormat[BlankQuestion] = jsonFormat3(BlankQuestion)
   implicit val studentsExamFormat: RootJsonFormat[StudentsExam] = jsonFormat1(StudentsExam)
+  implicit val completedExamFormat: RootJsonFormat[CompletedExam] = jsonFormat1(CompletedExam)
   implicit val examToDisplayFormat: RootJsonFormat[ExamToDisplay] = jsonFormat1(ExamToDisplay)
 }

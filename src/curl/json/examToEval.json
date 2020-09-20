@@ -1,0 +1,34 @@
+{
+  "selectedAnswers": {
+    "questions": [
+      {
+        "text": "Do you like scala?",
+        "answers": [
+          {
+            "text": "yes"
+          },
+          {
+            "text": "no"
+          }
+        ],
+        "selectedAnswer": [
+          0
+        ]
+      },
+      {
+        "text": "Do you like akka?",
+        "answers": [
+          {
+            "text": "no"
+          },
+          {
+            "text": "yes"
+          }
+        ],
+        "selectedAnswer": [
+          1
+        ]
+      }
+    ]
+  }
+}
