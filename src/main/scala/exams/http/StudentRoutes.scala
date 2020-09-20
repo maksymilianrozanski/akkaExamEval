@@ -48,9 +48,7 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
     println(s"exam eval endpoint, request: $request")
     entity(as[CompletedExam]) {
       exam =>
-        //        val answers = exam.selectedAnswers.questions.map(_.selectedAnswer)
         actors.examDistributor ! RequestExamEvaluationCompact(exam.examId, exam.selectedAnswers)
-        //        actors.examDistributor ! RequestExamEvaluation(exam)
         complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
     }
   }
