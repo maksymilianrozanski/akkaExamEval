@@ -2,7 +2,8 @@ package exams
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import exams.data.{CompletedExam, StudentsExam}
+import exams.ExamDistributor.{ExamDistributor, RequestExam}
+import exams.data.StudentsExam
 import exams.http.StudentActions.ExamToDisplay
 
 sealed trait Student

@@ -1,9 +1,11 @@
 package exams.data
 
+import exams.ExamDistributor.Answers
+
 //data
 sealed trait Exam
 final case class EmptyExam(questions: TeachersExam) extends Exam
-final case class CompletedExam(selectedAnswers: StudentsExam) extends Exam
+final case class CompletedExam(examId: String, selectedAnswers: Answers) extends Exam
 
 case class TeachersExam(questions: List[Question])
 object TeachersExam {

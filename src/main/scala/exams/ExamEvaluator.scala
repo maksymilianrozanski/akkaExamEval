@@ -2,30 +2,36 @@ package exams
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import exams.data.{CompletedExam, TeachersExam}
+import exams.ExamDistributor.Answers
+import exams.data.TeachersExam
 
 sealed trait ExamEvaluator
-final case class EvaluateAnswers(teachersExam: TeachersExam, selectedAnswers: CompletedExam) extends ExamEvaluator
-
+final case class EvaluateAnswersCompact(examId: String, studentId: String, teachersExam: TeachersExam, answers: Answers) extends ExamEvaluator
 
 object ExamEvaluator {
   def apply(): Behavior[ExamEvaluator] = evaluator()
 
   def evaluator(): Behavior[ExamEvaluator] = Behaviors.receive {
-    case (context, EvaluateAnswers(teachersExam, completedExam)) =>
-      context.log.info("Sending exam result to student")
-      val result = percentOfCorrectAnswers(teachersExam, completedExam)
-      context.log.info(s"Exam result: $result, not saving or sending yet.")
+    case (context, EvaluateAnswersCompact(examId, studentId, teachersExam, answers)) =>
+      context.log.info("Received exam evaluation request")
+      val result = percentOfCorrectAnswersCompact(teachersExam, answers)
+      context.log.info("exam {} of student {} result: {}", examId, studentId, result)
       Behaviors.same
   }
 
-  private def percentOfCorrectAnswers(teachersExam: TeachersExam, answers: CompletedExam): Double = {
-    val validAnswers = teachersExam.questions.map(_.correctAnswer)
+  private def percentOfCorrectAnswersCompact(teachersExam: TeachersExam, answers: Answers) = {
+    val validAnswers = teachersExam.questions.map(_.correctAnswer).map(_.map(_.toString))
     assert(validAnswers.nonEmpty, "exam should contain at least one question")
-    assert(answers.selectedAnswers.questions.length == validAnswers.length, "length of student's answers should be equal to list of valid answers")
-    val studentsAnswers = answers.selectedAnswers.questions.map(_.selectedAnswer)
-    val points = validAnswers.zip(studentsAnswers).map(pair =>
-      if (pair._1 == pair._2) 1 else 0
+    assert(answers.length == validAnswers.length, "length of student's answers should be equal to list of valid answers")
+    percentOfPoints(validAnswers, answers)
+  }
+
+  private def percentOfPoints[T](validAnswers: List[T], studentsAnswers: List[T]) = {
+    val points = validAnswers.zip(studentsAnswers).map(
+      pair => {
+        println(s"correct answer: ${pair._1}, selected answer: ${pair._2}, point?:${pair._1 == pair._2}")
+        if (pair._1 == pair._2) 1 else 0
+      }
     ).sum
     points.toDouble / validAnswers.length.toDouble
   }

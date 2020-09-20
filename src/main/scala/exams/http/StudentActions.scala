@@ -1,9 +1,10 @@
 package exams.http
 
-import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior}
+import exams.ExamDistributor.{ExamDistributor, RequestExam}
+import exams.Student
 import exams.data.StudentsExam
-import exams.{ExamDistributor, RequestExam, Student}
 
 object StudentActions {
 

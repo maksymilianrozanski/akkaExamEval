@@ -7,6 +7,7 @@ import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
+import exams.ExamDistributor.ExamDistributor
 import exams.http.{RoutesActorsPack, StudentActions, StudentRoutes2}
 
 import scala.util.{Failure, Success}

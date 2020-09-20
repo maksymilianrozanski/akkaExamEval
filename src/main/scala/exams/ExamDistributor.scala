@@ -4,25 +4,25 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
-import exams.data.{CompletedExam, ExamGenerator, StudentsExam, TeachersExam}
-
-
-//commands
-sealed trait ExamDistributor
-final case class RequestExam(studentId: String, student: ActorRef[Student]) extends ExamDistributor
-final case class RequestExamEvaluation(completedExam: CompletedExam) extends ExamDistributor
-final case class RequestExamEvaluationCompact(examId: String, answers: List[List[String]]) extends ExamDistributor
-
-//events
-sealed trait ExamDistributorEvents
-final case class ExamAdded(examId: String, studentId: String, exam: TeachersExam) extends ExamDistributorEvents
-
+import exams.data.{ExamGenerator, TeachersExam}
 
 object ExamDistributor {
+  type Answers = List[List[String]]
+
+  //commands
+  sealed trait ExamDistributor
+  final case class RequestExam(studentId: String, student: ActorRef[Student]) extends ExamDistributor
+  final case class RequestExamEvaluationCompact(examId: String, answers: Answers) extends ExamDistributor
+
+  //events
+  sealed trait ExamDistributorEvents
+  final case class ExamAdded(examId: String, studentId: String, exam: TeachersExam) extends ExamDistributorEvents
+  final case class ExamCompleted(examId: String, answers: Answers) extends ExamDistributorEvents
 
   type ExamId = String
   type StudentId = String
-  case class ExamDistributorState(openExams: Map[ExamId, (StudentId, TeachersExam)])
+  case class PersistedExam(studentId: StudentId, exam: TeachersExam, answers: Option[Answers])
+  case class ExamDistributorState(openExams: Map[ExamId, PersistedExam])
 
   import exams.data.TeachersExam._
 
@@ -32,30 +32,12 @@ object ExamDistributor {
     EventSourcedBehavior[ExamDistributor, ExamDistributorEvents, ExamDistributorState](
       persistenceId = PersistenceId.ofUniqueId("examDistributor"),
       emptyState = ExamDistributorState(Map()),
-      commandHandler = distributorCommandHandler(context) _,
+      commandHandler = distributorCommandHandler(context, evaluator) _,
       eventHandler = distributorEventHandler
     )
-
-//    Behaviors.receiveMessage[ExamDistributor] {
-//      case request@RequestExam(studentId, student) =>
-//        context.log.info(s"Receive RequestExam: ${request}")
-//        val exam: StudentsExam = ExamGenerator.sampleExam()
-//        student ! GiveExamToStudent(exam)
-//        Behaviors.same
-//      case RequestExamEvaluation(completedExam) =>
-//        context.log.info(s"Received exam evaluation request $completedExam")
-//        //todo: send persisted teacher's exam to evaluator instead of generating new
-//        val exam = ExamGenerator.sampleExam()
-//        evaluator ! EvaluateAnswers(exam, completedExam)
-//        Behaviors.same
-//      case request@RequestExamEvaluationCompact(examId, answers) =>
-//        context.log.info("Received RequestExamEvaluationCompact {}, not implemented yet", request)
-//        //todo: not implemented
-//        Behaviors.same
-//    }
   })
 
-  def distributorCommandHandler(context: ActorContext[ExamDistributor])(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
+  def distributorCommandHandler(context: ActorContext[ExamDistributor], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
       case RequestExam(studentId, studentRef) =>
         val exam: TeachersExam = ExamGenerator.sampleExam()
@@ -65,13 +47,34 @@ object ExamDistributor {
             context.log.info("persisted examId: {}", examId)
             studentRef ! GiveExamToStudent(exam)
           })
-      case RequestExamEvaluation(completedExam) => ???
-      case RequestExamEvaluationCompact(examId, answers) => ???
+      case RequestExamEvaluationCompact(examId, answers) =>
+        // 1 - find exam of id in persisted
+        state.openExams.get(examId) match {
+          case Some(value) =>
+            // 2 - persist answers
+            //todo: check length of answers before persisting
+            Effect.persist(ExamCompleted(examId, answers))
+              .thenRun((s: ExamDistributorState) => {
+                context.log.info("persisted ExamCompleted, id: {}", examId)
+                // 3 - send answers to evaluator
+                evaluator ! EvaluateAnswersCompact(examId, value.studentId, value.exam, answers)
+              })
+          case None =>
+            context.log.info("Received RequestExamEvaluationCompact, not found examId {}", examId)
+            Effect.none
+        }
     }
 
   def distributorEventHandler(state: ExamDistributorState, event: ExamDistributorEvents): ExamDistributorState =
     event match {
-      case ExamAdded(examId, studentId, exam) => state.copy(openExams = state.openExams.updated(examId, (studentId, exam)))
+      case ExamAdded(examId, studentId, exam) => state.copy(openExams = state.openExams.updated(examId, PersistedExam(studentId, exam, None)))
+      case ExamCompleted(examId, answers) =>
+        val currentWithoutAnswers = state.openExams.get(examId)
+        currentWithoutAnswers match {
+          case Some(value) => state.copy(openExams = state.openExams.updated(examId, value.copy(answers = Some(answers))))
+          case None =>
+            println(s"distributorEventHandler: Not found examId $examId !")
+            state
+        }
     }
-
 }
