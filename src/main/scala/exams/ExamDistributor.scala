@@ -3,7 +3,7 @@ package exams
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
+import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
 import exams.data.{ExamGenerator, TeachersExam}
 
 object ExamDistributor {
@@ -39,14 +39,7 @@ object ExamDistributor {
 
   def distributorCommandHandler(context: ActorContext[ExamDistributor], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
-      case RequestExam(studentId, studentRef) =>
-        val examId = state.openExams.size.toString
-        val exam: TeachersExam = ExamGenerator.sampleExam(examId)
-        Effect.persist(ExamAdded(examId, studentId, exam))
-          .thenRun((s: ExamDistributorState) => {
-            context.log.info("persisted examId: {}", examId)
-            studentRef ! GiveExamToStudent(exam)
-          })
+      case request: RequestExam => onRequestExam(context)(ExamGenerator.sampleExam)(state)(request)
       case RequestExamEvaluationCompact(examId, answers) =>
         // 1 - find exam of id in persisted
         state.openExams.get(examId) match {
@@ -64,6 +57,16 @@ object ExamDistributor {
             Effect.none
         }
     }
+
+  def onRequestExam(context: ActorContext[ExamDistributor])(generator: String => TeachersExam)(state: ExamDistributorState)(requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
+    val examId = state.openExams.size.toString
+    val exam = generator(examId)
+    Effect.persist(ExamAdded(examId, requestExam.studentId, exam))
+      .thenRun((s: ExamDistributorState) => {
+        context.log.info("persisted examId: {}", examId)
+        requestExam.student ! GiveExamToStudent(exam)
+      })
+  }
 
   def distributorEventHandler(state: ExamDistributorState, event: ExamDistributorEvents): ExamDistributorState =
     event match {
