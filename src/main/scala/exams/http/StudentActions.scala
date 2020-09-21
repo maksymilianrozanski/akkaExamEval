@@ -9,24 +9,24 @@ import exams.data.StudentsExam
 object StudentActions {
 
   sealed trait Command
-  final case class RequestExamCommand(code: String, replyTo: ActorRef[ExamToDisplay], distributor: ActorRef[ExamDistributor]) extends Command
-  final case class SendExamToEvaluation(exam: RequestExamEvaluationCompact, sendTo: ActorRef[ExamDistributor]) extends Command
+  final case class RequestExamCommand(code: String, replyTo: ActorRef[ExamToDisplay]) extends Command
+  final case class SendExamToEvaluation(exam: RequestExamEvaluationCompact) extends Command
 
   final case class ActionPerformed(description: String)
   final case class ExamToDisplay(exam: StudentsExam)
 
-  def apply(): Behavior[Command] = registry()
+  def apply()(implicit distributor: ActorRef[ExamDistributor]): Behavior[Command] = registry(distributor)
 
-  def registry(): Behavior[Command] = {
+  def registry(distributor: ActorRef[ExamDistributor]): Behavior[Command] = {
     Behaviors.setup(context =>
       Behaviors.receiveMessage {
-        case RequestExamCommand(code, displayReceiver, distributor) =>
+        case RequestExamCommand(code, displayReceiver) =>
           context.log.info("received starting exam request")
           val student = context.spawnAnonymous(Student(displayReceiver))
           distributor ! RequestExam(code, student)
           Behaviors.same
-        case SendExamToEvaluation(exam, sendTo) =>
-          sendTo ! exam
+        case SendExamToEvaluation(exam) =>
+          distributor ! exam
           Behaviors.same
       })
   }

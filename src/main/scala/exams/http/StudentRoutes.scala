@@ -41,14 +41,14 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   def examRequestedRoute(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): StandardRoute = {
     import actors._
-    complete(userActions.ask(StudentActions.RequestExamCommand("hello", _, examDistributor)).mapTo[ExamToDisplay])
+    complete(userActions.ask((replyTo: ActorRef[ExamToDisplay]) => StudentActions.RequestExamCommand("hello", replyTo)).mapTo[ExamToDisplay])
   }
 
   def examEvalRequested(request: HttpRequest)(implicit actors: RoutesActorsPack): Route = {
     println(s"exam eval endpoint, request: $request")
     entity(as[CompletedExam]) {
       exam =>
-        actors.userActions ! SendExamToEvaluation(RequestExamEvaluationCompact(exam.examId, exam.selectedAnswers), actors.examDistributor)
+        actors.userActions ! SendExamToEvaluation(RequestExamEvaluationCompact(exam.examId, exam.selectedAnswers))
         complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
     }
   }

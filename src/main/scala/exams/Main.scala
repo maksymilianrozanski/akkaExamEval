@@ -34,7 +34,7 @@ object Main {
   def apply(): Behavior[NotUsed] =
     Behaviors.setup { context =>
       val examEvaluator = context.spawnAnonymous(ExamEvaluator())
-      implicit val generator: ActorRef[ExamDistributor] = context.spawn(ExamDistributor(examEvaluator), "distributor")
+      implicit val distributor: ActorRef[ExamDistributor] = context.spawn(ExamDistributor(examEvaluator), "distributor")
       //      val student1 = context.spawn(Student(), "student1")
       //      val student2 = context.spawn(Student(), "student2")
       //      val student3 = context.spawn(Student(), "student3")
@@ -48,7 +48,7 @@ object Main {
       implicit val studentActions: ActorRef[StudentActions.Command] = context.spawn(StudentActions(), "studentActions")
       context.watch(studentActions)
       implicit val timeout: Timeout = Timeout.create(context.system.settings.config.getDuration("my-app.routes.ask-timeout"))
-      implicit val actorPack: RoutesActorsPack = RoutesActorsPack(studentActions, context, context.system, generator, timeout)
+      implicit val actorPack: RoutesActorsPack = RoutesActorsPack(studentActions, context, context.system, distributor, timeout)
       val routes = StudentRoutes2.createStudentRoutes(actorPack)
 
       startHttpServer(routes, context.system)
