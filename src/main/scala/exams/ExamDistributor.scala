@@ -39,7 +39,7 @@ object ExamDistributor {
 
   def distributorCommandHandler(context: ActorContext[ExamDistributor], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
-      case request: RequestExam => onRequestExam(ExamGenerator.sampleExam)(state)(request)
+      case request: RequestExam => onRequestExam(ExamGenerator.sampleExam)(state, request)
       case RequestExamEvaluationCompact(examId, answers) =>
         // 1 - find exam of id in persisted
         state.openExams.get(examId) match {
@@ -58,7 +58,7 @@ object ExamDistributor {
         }
     }
 
-  def onRequestExam(generator: String => TeachersExam)(state: ExamDistributorState)(requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
+  def onRequestExam(generator: String => TeachersExam)(state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
     val examId = state.openExams.size.toString
     val exam = generator(examId)
     Effect.persist(ExamAdded(examId, requestExam.studentId, exam))
