@@ -39,7 +39,7 @@ object ExamDistributor {
 
   def distributorCommandHandler(context: ActorContext[ExamDistributor], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
-      case request: RequestExam => onRequestExam(context)(ExamGenerator.sampleExam)(state)(request)
+      case request: RequestExam => onRequestExam(ExamGenerator.sampleExam)(state)(request)
       case RequestExamEvaluationCompact(examId, answers) =>
         // 1 - find exam of id in persisted
         state.openExams.get(examId) match {
@@ -58,19 +58,18 @@ object ExamDistributor {
         }
     }
 
-  def onRequestExam(context: ActorContext[ExamDistributor])(generator: String => TeachersExam)(state: ExamDistributorState)(requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
+  def onRequestExam(generator: String => TeachersExam)(state: ExamDistributorState)(requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
     val examId = state.openExams.size.toString
     val exam = generator(examId)
     Effect.persist(ExamAdded(examId, requestExam.studentId, exam))
       .thenRun((s: ExamDistributorState) => {
-        context.log.info("persisted examId: {}", examId)
         requestExam.student ! GiveExamToStudent(exam)
       })
   }
 
   def distributorEventHandler(state: ExamDistributorState, event: ExamDistributorEvents): ExamDistributorState =
     event match {
-      case ExamAdded(examId, studentId, exam) => state.copy(openExams = state.openExams.updated(examId, PersistedExam(studentId, exam, None)))
+      case examAdded@ExamAdded(_, _, _) => examAddedHandler(state, examAdded)
       case ExamCompleted(examId, answers) =>
         val currentWithoutAnswers = state.openExams.get(examId)
         currentWithoutAnswers match {
@@ -80,4 +79,7 @@ object ExamDistributor {
             state
         }
     }
+
+  def examAddedHandler(state: ExamDistributorState, event: ExamAdded): ExamDistributorState =
+    state.copy(openExams = state.openExams.updated(event.examId, PersistedExam(event.studentId, event.exam, None)))
 }
