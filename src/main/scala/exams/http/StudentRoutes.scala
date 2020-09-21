@@ -10,7 +10,7 @@ import akka.http.scaladsl.server.{Route, StandardRoute}
 import akka.util.Timeout
 import exams.ExamDistributor.{ExamDistributor, RequestExamEvaluationCompact}
 import exams.data._
-import exams.http.StudentActions.ExamToDisplay
+import exams.http.StudentActions.{ExamToDisplay, SendExamToEvaluation}
 import spray.json._
 
 case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
@@ -48,7 +48,7 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
     println(s"exam eval endpoint, request: $request")
     entity(as[CompletedExam]) {
       exam =>
-        actors.examDistributor ! RequestExamEvaluationCompact(exam.examId, exam.selectedAnswers)
+        actors.userActions ! SendExamToEvaluation(RequestExamEvaluationCompact(exam.examId, exam.selectedAnswers), actors.examDistributor)
         complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
     }
   }
