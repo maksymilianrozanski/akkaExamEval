@@ -76,7 +76,7 @@ object ExamDistributor {
 
   def distributorEventHandler(state: ExamDistributorState, event: ExamDistributorEvents): ExamDistributorState =
     event match {
-      case examAdded@ExamAdded(_, _) => examAddedHandler(state, examAdded)
+      case examAdded: ExamAdded => examAddedHandler(state, examAdded)
       case examCompleted: ExamCompleted => examCompletedHandler(state, examCompleted)
     }
 
