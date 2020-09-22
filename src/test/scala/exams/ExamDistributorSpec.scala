@@ -85,23 +85,28 @@ class ExamDistributorSpec
     }
   }
 
+  private val persistedExam1 = PersistedExam("student123", TeachersExam("ex123", List()))
+  private val persistedExam2 = PersistedExam("student123456", TeachersExam("ex567",
+    List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))
+  private val persistedExam3 = PersistedExam("student123456", TeachersExam("ex568",
+    List(
+      Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))),
+      Question(BlankQuestion(text = "some text2", answers = List(Answer("yes"), Answer("no"), Answer("None"))), correctAnswers = List(Answer("no")))))
+  )
+
+  private val emptyExams = ExamDistributor.emptyState
+  private val oneExam = ExamDistributorState(Map("ex123" -> persistedExam1), Map())
+  private val twoExams = ExamDistributorState(Map("ex123" -> persistedExam1, "ex567" -> persistedExam2), Map())
+  private val threeExams = ExamDistributorState(Map("ex123" -> persistedExam1, "ex567" -> persistedExam2, "ex568" -> persistedExam3), Map())
+
   "ExamDistributor" must {
-
-    val empty = ExamDistributor.emptyState
-
-    val persisted1 = PersistedExam("student123", TeachersExam("ex123", List()))
-    val persisted2 = PersistedExam("student123456", TeachersExam("ex567",
-      List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))
-
-    val oneExam = ExamDistributorState(Map("ex123" -> persisted1), Map())
-    val twoExams = ExamDistributorState(Map("ex123" -> persisted1, "ex567" -> persisted2), Map())
 
     "examAddedHandler" must {
 
       "add exam to empty ExamDistributorState" in {
         val examAdded = ExamAdded("student123", TeachersExam("ex123", List()))
 
-        val result = ExamDistributor.examAddedHandler(empty, examAdded)
+        val result = ExamDistributor.examAddedHandler(emptyExams, examAdded)
         assert(oneExam == result)
       }
 
@@ -122,7 +127,7 @@ class ExamDistributorSpec
 
         val expected = ExamDistributorState(
           exams = Map(
-            "ex123" -> persisted1,
+            "ex123" -> persistedExam1,
             "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
               List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))),
           answers = Map(examCompleted.examId -> PersistedAnswers(examCompleted.answers)))
@@ -130,6 +135,32 @@ class ExamDistributorSpec
         val result = ExamDistributor.examCompletedHandler(twoExams, examCompleted)
         assert(result == expected)
 
+      }
+    }
+  }
+
+  private val evaluator = TestInbox[ExamEvaluator]()
+
+  def requestExamEvaluationTestKit(initialState: ExamDistributorState): EventSourcedBehaviorTestKit[RequestExamEvaluation, ExamCompleted, ExamDistributorState] =
+    EventSourcedBehaviorTestKit(system, Behaviors.setup[RequestExamEvaluation] { context =>
+      EventSourcedBehavior(
+        persistenceId = PersistenceId.ofUniqueId("uniqueId"),
+        emptyState = initialState,
+        commandHandler = ExamDistributor.onRequestExamEvaluation(context, evaluator.ref) _,
+        eventHandler = ExamDistributor.examCompletedHandler
+      )
+    }, serializationSettings = disabled)
+
+  "ExamDistributor's onRequestExamEvaluation" must {
+    val initialState = persistedExam3
+    val testKit = requestExamEvaluationTestKit(threeExams)
+    "persist ExamCompleted" when {
+      "answers length is equal to persisted exam's questions length" in {
+        val answers = List(List(Answer("yes"), Answer("no")), List(Answer("None")))
+        val command = RequestExamEvaluation(initialState.exam.examId, answers)
+        val result = testKit.runCommand(command).events
+        val expected = Seq(ExamCompleted(persistedExam3.exam.examId, answers))
+        assert(result == expected)
       }
     }
   }
