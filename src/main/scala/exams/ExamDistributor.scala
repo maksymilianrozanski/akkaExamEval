@@ -16,7 +16,7 @@ object ExamDistributor {
   //commands
   sealed trait ExamDistributor
   final case class RequestExam(studentId: String, student: ActorRef[Student]) extends ExamDistributor
-  final case class RequestExamEvaluationCompact(examId: String, answers: Answers) extends ExamDistributor
+  final case class RequestExamEvaluation(examId: String, answers: Answers) extends ExamDistributor
 
   //events
   sealed trait ExamDistributorEvents
@@ -46,7 +46,7 @@ object ExamDistributor {
   def distributorCommandHandler(context: ActorContext[ExamDistributor], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
       case request: RequestExam => onRequestExam(context)(ExamGenerator.sampleExam)(state, request)
-      case RequestExamEvaluationCompact(examId, answers) =>
+      case RequestExamEvaluation(examId, answers) =>
         // 1 - find exam of id in persisted
         state.exams.get(examId) match {
           case Some(value) =>
@@ -56,10 +56,10 @@ object ExamDistributor {
               .thenRun((s: ExamDistributorState) => {
                 context.log.info("persisted ExamCompleted, id: {}", examId)
                 // 3 - send answers to evaluator
-                evaluator ! EvaluateAnswersCompact(examId, value.studentId, value.exam, answers)
+                evaluator ! EvaluateAnswers(examId, value.studentId, value.exam, answers)
               })
           case None =>
-            context.log.info("Received RequestExamEvaluationCompact, not found examId {}", examId)
+            context.log.info("Received RequestExamEvaluation, not found examId {}", examId)
             Effect.none
         }
     }

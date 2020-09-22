@@ -91,8 +91,7 @@ class ExamDistributorSpec
 
     val persisted1 = PersistedExam("student123", TeachersExam("ex123", List()))
     val persisted2 = PersistedExam("student123456", TeachersExam("ex567",
-      List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))),
-        correctAnswers = List("yes")))))
+      List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))
 
     val oneExam = ExamDistributorState(Map("ex123" -> persisted1), Map())
     val twoExams = ExamDistributorState(Map("ex123" -> persisted1, "ex567" -> persisted2), Map())
@@ -108,8 +107,7 @@ class ExamDistributorSpec
 
       "add exam to non-empty ExamDistributorState" in {
         val examAdded = ExamAdded("student123456", TeachersExam("ex567",
-          List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))),
-            correctAnswers = List("yes")))))
+          List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))
 
         val result = ExamDistributor.examAddedHandler(oneExam, examAdded)
 
@@ -126,8 +124,7 @@ class ExamDistributorSpec
           exams = Map(
             "ex123" -> persisted1,
             "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
-              List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))),
-                correctAnswers = List("yes")))))),
+              List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))),
           answers = Map(examCompleted.examId -> PersistedAnswers(examCompleted.answers)))
 
         val result = ExamDistributor.examCompletedHandler(twoExams, examCompleted)

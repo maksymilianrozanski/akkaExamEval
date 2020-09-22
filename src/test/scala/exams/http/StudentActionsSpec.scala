@@ -4,7 +4,7 @@ package exams.http
 import akka.actor.testkit.typed.Effect.SpawnedAnonymous
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import akka.actor.typed.ActorRef
-import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluationCompact}
+import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
 import exams.Student
 import exams.data.Answer
 import exams.http.StudentActions.{ExamToDisplay, RequestExamCommand}
@@ -16,7 +16,7 @@ class StudentActionsSpec extends AnyFlatSpec with should.Matchers {
   "StudentActions" should "redirect message to ExamDistributor" in {
     val inbox = TestInbox[ExamDistributor]()
     val testKit = BehaviorTestKit(StudentActions()(inbox.ref))
-    val messageContent = RequestExamEvaluationCompact("exam123",
+    val messageContent = RequestExamEvaluation("exam123",
       List(
         List(Answer("1")),
         List(Answer("2"), Answer("3"))
