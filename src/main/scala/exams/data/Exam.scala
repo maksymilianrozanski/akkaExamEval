@@ -16,6 +16,6 @@ object TeachersExam {
 
 case class StudentsExam(examId: ExamId, questions: List[BlankQuestion])
 
-case class Question(question: BlankQuestion, correctAnswer: List[Int])
-case class BlankQuestion(text: String, answers: List[Answer], selectedAnswer: List[Int])
+case class Question(question: BlankQuestion, correctAnswers: List[String])
+case class BlankQuestion(text: String, answers: List[Answer], selectedAnswers: List[String])
 case class Answer(text: String)

@@ -61,7 +61,7 @@ class ExamDistributorSpec
     //setup
     val student = TestInbox[Student]()
     //given
-    val nonEmptyState = ExamDistributorState(Map("123" -> PersistedExam("1234", generator("123"), None)))
+    val nonEmptyState = ExamDistributorState(Map("123" -> PersistedExam("1234", generator("123"))))
     val studentId = "124"
 
     "given command and non-empty state" when {
@@ -85,34 +85,60 @@ class ExamDistributorSpec
     }
   }
 
-  "ExamDistributor examAddedHandler" must {
+  "ExamDistributor" must {
+
     val empty = ExamDistributor.emptyState
 
-    val persisted1 = PersistedExam("student123", TeachersExam("ex123", List()), None)
+    val persisted1 = PersistedExam("student123", TeachersExam("ex123", List()))
     val persisted2 = PersistedExam("student123456", TeachersExam("ex567",
-      List(Question(BlankQuestion("some text",
-        List(Answer("yes"), Answer("no")),
-        List()), List(0)))), None)
+      List(Question(BlankQuestion(text = "some text",
+        answers = List(Answer("yes"), Answer("no")),
+        selectedAnswers = List()),
+        correctAnswers = List("yes")))))
 
     val oneExam = ExamDistributorState(Map("ex123" -> persisted1))
     val twoExams = ExamDistributorState(Map("ex123" -> persisted1, "ex567" -> persisted2))
 
-    "add exam to empty ExamDistributorState" in {
-      val examAdded = ExamAdded("student123", TeachersExam("ex123", List()))
+    "examAddedHandler" must {
 
-      val result = ExamDistributor.examAddedHandler(empty, examAdded)
-      assert(oneExam == result)
+      "add exam to empty ExamDistributorState" in {
+        val examAdded = ExamAdded("student123", TeachersExam("ex123", List()))
+
+        val result = ExamDistributor.examAddedHandler(empty, examAdded)
+        assert(oneExam == result)
+      }
+
+      "add exam to non-empty ExamDistributorState" in {
+        val examAdded = ExamAdded("student123456", TeachersExam("ex567",
+          List(Question(BlankQuestion(text = "some text",
+            answers = List(Answer("yes"), Answer("no")),
+            selectedAnswers = List()),
+            correctAnswers = List("yes")))))
+
+        val result = ExamDistributor.examAddedHandler(oneExam, examAdded)
+
+        assert(twoExams == result)
+      }
     }
 
-    "add exam to non-empty ExamDistributorState" in {
-      val examAdded = ExamAdded("student123456", TeachersExam("ex567",
-        List(Question(BlankQuestion("some text",
-          List(Answer("yes"), Answer("no")),
-          List()), List(0)))))
+    "examCompletedHandler" must {
 
-      val result = ExamDistributor.examAddedHandler(oneExam, examAdded)
+      "add answers to persisted exam" in {
 
-      assert(twoExams == result)
+        val examCompleted = ExamCompleted("ex567", List(List("yes")))
+
+        val expected = ExamDistributorState(Map(
+          "ex123" -> persisted1,
+          "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
+            List(Question(BlankQuestion(text = "some text",
+              answers = List(Answer("yes"), Answer("no")),
+              selectedAnswers = List("yes")),
+              correctAnswers = List("yes")))))))
+
+        val result = ExamDistributor.examCompletedHandler(twoExams, examCompleted)
+        assert(result == expected)
+
+      }
     }
   }
 }

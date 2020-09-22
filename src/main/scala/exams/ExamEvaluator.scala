@@ -20,7 +20,7 @@ object ExamEvaluator {
   }
 
   private def percentOfCorrectAnswersCompact(teachersExam: TeachersExam, answers: Answers) = {
-    val validAnswers = teachersExam.questions.map(_.correctAnswer).map(_.map(_.toString))
+    val validAnswers = teachersExam.questions.map(_.correctAnswers).map(_.map(_.toString))
     assert(validAnswers.nonEmpty, "exam should contain at least one question")
     assert(answers.length == validAnswers.length, "length of student's answers should be equal to list of valid answers")
     percentOfPoints(validAnswers, answers)

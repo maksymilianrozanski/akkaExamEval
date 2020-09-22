@@ -7,9 +7,10 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
-import exams.data.{ExamGenerator, TeachersExam}
+import exams.data.{BlankQuestion, ExamGenerator, Question, TeachersExam}
 
 object ExamDistributor {
+
   type Answers = List[List[String]]
 
   //commands
@@ -24,7 +25,7 @@ object ExamDistributor {
 
   type ExamId = String
   type StudentId = String
-  case class PersistedExam(studentId: StudentId, exam: TeachersExam, answers: Option[Answers])
+  case class PersistedExam(studentId: StudentId, exam: TeachersExam)
   case class ExamDistributorState(openExams: Map[ExamId, PersistedExam])
   val emptyState: ExamDistributorState = ExamDistributorState(Map())
 
@@ -75,16 +76,26 @@ object ExamDistributor {
   def distributorEventHandler(state: ExamDistributorState, event: ExamDistributorEvents): ExamDistributorState =
     event match {
       case examAdded@ExamAdded(_, _) => examAddedHandler(state, examAdded)
-      case ExamCompleted(examId, answers) =>
-        val currentWithoutAnswers = state.openExams.get(examId)
-        currentWithoutAnswers match {
-          case Some(value) => state.copy(openExams = state.openExams.updated(examId, value.copy(answers = Some(answers))))
-          case None =>
-            println(s"distributorEventHandler: Not found examId $examId !")
-            state
-        }
+      case examCompleted: ExamCompleted => examCompletedHandler(state, examCompleted)
     }
 
   def examAddedHandler(state: ExamDistributorState, event: ExamAdded): ExamDistributorState =
-    state.copy(openExams = state.openExams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam, None)))
+    state.copy(openExams = state.openExams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)))
+
+  def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState = {
+    (state.openExams.get(event.examId) match {
+      case Some(exam) =>
+        val questions = exam.exam.questions
+        assert(questions.length == event.answers.length)
+        Some(questions.zip(event.answers).map {
+          case (question, answers) => Question(BlankQuestion(text = question.question.text,
+            answers = question.question.answers, selectedAnswers = answers), correctAnswers = question.correctAnswers)
+        })
+      case None => None
+    }) match {
+      case None => state
+      case Some(x) => state.copy(openExams = state.openExams.updated(event.examId,
+        PersistedExam(state.openExams(event.examId).studentId, TeachersExam(event.examId, x))))
+    }
+  }
 }
