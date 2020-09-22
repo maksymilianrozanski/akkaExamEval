@@ -7,7 +7,7 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.Serializati
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.ExamDistributor._
-import exams.data.TeachersExam
+import exams.data.{Answer, BlankQuestion, Question, TeachersExam}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -36,8 +36,8 @@ class ExamDistributorSpec
     val studentId = "123"
 
     "given command and empty state" when {
-    val testKit = requestExamTestKit(initialState)
-    val command = ExamDistributor.RequestExam(studentId, student.ref)
+      val testKit = requestExamTestKit(initialState)
+      val command = ExamDistributor.RequestExam(studentId, student.ref)
 
       "ExamDistributor" must {
         //when
@@ -45,7 +45,7 @@ class ExamDistributorSpec
         "persist ExamAdded" in {
           //then
           val persistedEvents = result.events
-          val expectedEvents = Seq(ExamAdded("0", studentId, generator("0")))
+          val expectedEvents = Seq(ExamAdded(studentId, generator("0")))
           assert(expectedEvents == persistedEvents)
         }
 
@@ -74,7 +74,7 @@ class ExamDistributorSpec
         "persist ExamAdded" in {
           //then
           val persistedEvents = result.events
-          val expectedEvents = Seq(ExamAdded("1", studentId, generator("1")))
+          val expectedEvents = Seq(ExamAdded(studentId, generator("1")))
           assert(expectedEvents == persistedEvents)
         }
 
@@ -82,6 +82,37 @@ class ExamDistributorSpec
           student.expectMessage(GiveExamToStudent(generator("1")))
         }
       }
+    }
+  }
+
+  "ExamDistributor examAddedHandler" must {
+    val empty = ExamDistributor.emptyState
+
+    val persisted1 = PersistedExam("student123", TeachersExam("ex123", List()), None)
+    val persisted2 = PersistedExam("student123456", TeachersExam("ex567",
+      List(Question(BlankQuestion("some text",
+        List(Answer("yes"), Answer("no")),
+        List()), List(0)))), None)
+
+    val oneExam = ExamDistributorState(Map("ex123" -> persisted1))
+    val twoExams = ExamDistributorState(Map("ex123" -> persisted1, "ex567" -> persisted2))
+
+    "add exam to empty ExamDistributorState" in {
+      val examAdded = ExamAdded("student123", TeachersExam("ex123", List()))
+
+      val result = ExamDistributor.examAddedHandler(empty, examAdded)
+      assert(oneExam == result)
+    }
+
+    "add exam to non-empty ExamDistributorState" in {
+      val examAdded = ExamAdded("student123456", TeachersExam("ex567",
+        List(Question(BlankQuestion("some text",
+          List(Answer("yes"), Answer("no")),
+          List()), List(0)))))
+
+      val result = ExamDistributor.examAddedHandler(oneExam, examAdded)
+
+      assert(twoExams == result)
     }
   }
 }

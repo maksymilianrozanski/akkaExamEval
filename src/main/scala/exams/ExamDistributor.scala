@@ -19,7 +19,7 @@ object ExamDistributor {
 
   //events
   sealed trait ExamDistributorEvents
-  final case class ExamAdded(examId: String, studentId: String, exam: TeachersExam) extends ExamDistributorEvents
+  final case class ExamAdded(studentId: String, exam: TeachersExam) extends ExamDistributorEvents
   final case class ExamCompleted(examId: String, answers: Answers) extends ExamDistributorEvents
 
   type ExamId = String
@@ -65,7 +65,7 @@ object ExamDistributor {
   def onRequestExam[T >: RequestExam](context: ActorContext[T])(generator: String => TeachersExam)(state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
     val examId = state.openExams.size.toString
     val exam = generator(examId)
-    Effect.persist(ExamAdded(examId, requestExam.studentId, exam))
+    Effect.persist(ExamAdded(requestExam.studentId, exam))
       .thenRun((s: ExamDistributorState) => {
         context.log.info("persisted examId {}", examId)
         requestExam.student ! GiveExamToStudent(exam)
@@ -74,7 +74,7 @@ object ExamDistributor {
 
   def distributorEventHandler(state: ExamDistributorState, event: ExamDistributorEvents): ExamDistributorState =
     event match {
-      case examAdded@ExamAdded(_, _, _) => examAddedHandler(state, examAdded)
+      case examAdded@ExamAdded(_, _) => examAddedHandler(state, examAdded)
       case ExamCompleted(examId, answers) =>
         val currentWithoutAnswers = state.openExams.get(examId)
         currentWithoutAnswers match {
@@ -86,5 +86,5 @@ object ExamDistributor {
     }
 
   def examAddedHandler(state: ExamDistributorState, event: ExamAdded): ExamDistributorState =
-    state.copy(openExams = state.openExams.updated(event.examId, PersistedExam(event.studentId, event.exam, None)))
+    state.copy(openExams = state.openExams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam, None)))
 }
