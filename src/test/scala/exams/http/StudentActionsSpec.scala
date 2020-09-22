@@ -6,6 +6,7 @@ import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import akka.actor.typed.ActorRef
 import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluationCompact}
 import exams.Student
+import exams.data.Answer
 import exams.http.StudentActions.{ExamToDisplay, RequestExamCommand}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
@@ -15,7 +16,11 @@ class StudentActionsSpec extends AnyFlatSpec with should.Matchers {
   "StudentActions" should "redirect message to ExamDistributor" in {
     val inbox = TestInbox[ExamDistributor]()
     val testKit = BehaviorTestKit(StudentActions()(inbox.ref))
-    val messageContent = RequestExamEvaluationCompact("exam123", List(List("1"), List("2", "3")))
+    val messageContent = RequestExamEvaluationCompact("exam123",
+      List(
+        List(Answer("1")),
+        List(Answer("2"), Answer("3"))
+      ))
     testKit.run(StudentActions.SendExamToEvaluation(messageContent))
     inbox.expectMessage(messageContent)
   }

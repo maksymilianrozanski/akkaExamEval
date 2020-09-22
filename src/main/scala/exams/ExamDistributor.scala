@@ -7,11 +7,11 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
-import exams.data.{BlankQuestion, ExamGenerator, Question, TeachersExam}
+import exams.data.{Answer, BlankQuestion, ExamGenerator, Question, TeachersExam}
 
 object ExamDistributor {
 
-  type Answers = List[List[String]]
+  type Answers = List[List[Answer]]
 
   //commands
   sealed trait ExamDistributor
@@ -83,19 +83,11 @@ object ExamDistributor {
     state.copy(openExams = state.openExams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)))
 
   def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState = {
-    (state.openExams.get(event.examId) match {
-      case Some(exam) =>
-        val questions = exam.exam.questions
-        assert(questions.length == event.answers.length)
-        Some(questions.zip(event.answers).map {
-          case (question, answers) => Question(BlankQuestion(text = question.question.text,
-            answers = question.question.answers, selectedAnswers = answers), correctAnswers = question.correctAnswers)
-        })
-      case None => None
-    }) match {
-      case None => state
-      case Some(x) => state.copy(openExams = state.openExams.updated(event.examId,
-        PersistedExam(state.openExams(event.examId).studentId, TeachersExam(event.examId, x))))
+    state.openExams.get(event.examId) match {
+      case Some(PersistedExam(studentId, exam)) =>
+        Some(PersistedExam(studentId, TeachersExam.withSelectedAnswers(exam)(event.answers)))
+          .map(x => state.copy(openExams = state.openExams.updated(event.examId, x))).get
+      case _ => state
     }
   }
 }
