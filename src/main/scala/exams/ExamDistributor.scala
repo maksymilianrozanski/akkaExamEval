@@ -26,7 +26,7 @@ object ExamDistributor {
   type ExamId = String
   type StudentId = String
   case class PersistedExam(studentId: StudentId, exam: TeachersExam)
-  case class ExamDistributorState(openExams: Map[ExamId, PersistedExam])
+  case class ExamDistributorState(exams: Map[ExamId, PersistedExam])
   val emptyState: ExamDistributorState = ExamDistributorState(Map())
 
   import exams.data.TeachersExam._
@@ -47,7 +47,7 @@ object ExamDistributor {
       case request: RequestExam => onRequestExam(context)(ExamGenerator.sampleExam)(state, request)
       case RequestExamEvaluationCompact(examId, answers) =>
         // 1 - find exam of id in persisted
-        state.openExams.get(examId) match {
+        state.exams.get(examId) match {
           case Some(value) =>
             // 2 - persist answers
             //todo: check length of answers before persisting
@@ -64,7 +64,7 @@ object ExamDistributor {
     }
 
   def onRequestExam[T >: RequestExam](context: ActorContext[T])(generator: String => TeachersExam)(state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
-    val examId = state.openExams.size.toString
+    val examId = state.exams.size.toString
     val exam = generator(examId)
     Effect.persist(ExamAdded(requestExam.studentId, exam))
       .thenRun((s: ExamDistributorState) => {
@@ -80,13 +80,13 @@ object ExamDistributor {
     }
 
   def examAddedHandler(state: ExamDistributorState, event: ExamAdded): ExamDistributorState =
-    state.copy(openExams = state.openExams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)))
+    state.copy(exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)))
 
   def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState = {
-    state.openExams.get(event.examId) match {
+    state.exams.get(event.examId) match {
       case Some(PersistedExam(studentId, exam)) =>
         Some(PersistedExam(studentId, TeachersExam.withSelectedAnswers(exam)(event.answers)))
-          .map(x => state.copy(openExams = state.openExams.updated(event.examId, x))).get
+          .map(x => state.copy(exams = state.exams.updated(event.examId, x))).get
       case _ => state
     }
   }
