@@ -1,5 +1,8 @@
 package exams
 
+
+import java.util.logging.Logger
+
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
@@ -39,7 +42,7 @@ object ExamDistributor {
 
   def distributorCommandHandler(context: ActorContext[ExamDistributor], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
-      case request: RequestExam => onRequestExam(ExamGenerator.sampleExam)(state, request)
+      case request: RequestExam => onRequestExam(context)(ExamGenerator.sampleExam)(state, request)
       case RequestExamEvaluationCompact(examId, answers) =>
         // 1 - find exam of id in persisted
         state.openExams.get(examId) match {
@@ -58,11 +61,12 @@ object ExamDistributor {
         }
     }
 
-  def onRequestExam(generator: String => TeachersExam)(state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
+  def onRequestExam[T >: RequestExam](context: ActorContext[T])(generator: String => TeachersExam)(state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
     val examId = state.openExams.size.toString
     val exam = generator(examId)
     Effect.persist(ExamAdded(examId, requestExam.studentId, exam))
       .thenRun((s: ExamDistributorState) => {
+        context.log.info("persisted examId {}", examId)
         requestExam.student ! GiveExamToStudent(exam)
       })
   }

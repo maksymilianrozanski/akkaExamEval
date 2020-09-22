@@ -1,13 +1,12 @@
 package exams
 
 import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox}
-import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.disabled
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
-import exams.ExamDistributor.{ExamAdded, ExamDistributorState, PersistedExam, RequestExam, examAddedHandler, onRequestExam}
+import akka.persistence.typed.scaladsl.EventSourcedBehavior
+import exams.ExamDistributor._
 import exams.data.TeachersExam
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -23,7 +22,7 @@ class ExamDistributorSpec
       EventSourcedBehavior(
         persistenceId = PersistenceId.ofUniqueId("uniqueId"),
         emptyState = initialState,
-        commandHandler = onRequestExam(generator) _,
+        commandHandler = onRequestExam(context)(generator) _,
         eventHandler = examAddedHandler
       )
     }, serializationSettings = disabled)
