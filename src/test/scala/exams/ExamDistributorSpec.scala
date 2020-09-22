@@ -32,7 +32,7 @@ class ExamDistributorSpec
     //setup
     val student = TestInbox[Student]()
     //given
-    val initialState = ExamDistributorState(Map())
+    val initialState = ExamDistributor.emptyState
     val studentId = "123"
 
     "given command and empty state" when {

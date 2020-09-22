@@ -26,6 +26,7 @@ object ExamDistributor {
   type StudentId = String
   case class PersistedExam(studentId: StudentId, exam: TeachersExam, answers: Option[Answers])
   case class ExamDistributorState(openExams: Map[ExamId, PersistedExam])
+  val emptyState: ExamDistributorState = ExamDistributorState(Map())
 
   import exams.data.TeachersExam._
 
@@ -34,7 +35,7 @@ object ExamDistributor {
   def distributor(evaluator: ActorRef[ExamEvaluator]): Behavior[ExamDistributor] = Behaviors.setup[ExamDistributor](context => {
     EventSourcedBehavior[ExamDistributor, ExamDistributorEvents, ExamDistributorState](
       persistenceId = PersistenceId.ofUniqueId("examDistributor"),
-      emptyState = ExamDistributorState(Map()),
+      emptyState = emptyState,
       commandHandler = distributorCommandHandler(context, evaluator) _,
       eventHandler = distributorEventHandler
     )
