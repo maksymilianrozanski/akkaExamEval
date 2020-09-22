@@ -46,6 +46,21 @@ object ExamDistributor {
   def distributorCommandHandler(context: ActorContext[ExamDistributor], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
       case request: RequestExam => onRequestExam(context)(ExamGenerator.sampleExam)(state, request)
+      case request: RequestExamEvaluation => onRequestExamEvaluation(context, evaluator)(state, request)
+    }
+
+  def onRequestExam[T >: RequestExam](context: ActorContext[T])(generator: String => TeachersExam)(state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
+    val examId = state.exams.size.toString
+    val exam = generator(examId)
+    Effect.persist(ExamAdded(requestExam.studentId, exam))
+      .thenRun((s: ExamDistributorState) => {
+        context.log.info("persisted examId {}", examId)
+        requestExam.student ! GiveExamToStudent(exam)
+      })
+  }
+
+  def onRequestExamEvaluation[T >: RequestExamEvaluation](context: ActorContext[T], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: RequestExamEvaluation): EffectBuilder[ExamCompleted, ExamDistributorState] = {
+    command match {
       case RequestExamEvaluation(examId, answers) =>
         // 1 - find exam of id in persisted
         state.exams.get(examId) match {
@@ -63,15 +78,6 @@ object ExamDistributor {
             Effect.none
         }
     }
-
-  def onRequestExam[T >: RequestExam](context: ActorContext[T])(generator: String => TeachersExam)(state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
-    val examId = state.exams.size.toString
-    val exam = generator(examId)
-    Effect.persist(ExamAdded(requestExam.studentId, exam))
-      .thenRun((s: ExamDistributorState) => {
-        context.log.info("persisted examId {}", examId)
-        requestExam.student ! GiveExamToStudent(exam)
-      })
   }
 
   def distributorEventHandler(state: ExamDistributorState, event: ExamDistributorEvents): ExamDistributorState =
