@@ -26,8 +26,9 @@ object ExamDistributor {
   type ExamId = String
   type StudentId = String
   case class PersistedExam(studentId: StudentId, exam: TeachersExam)
-  case class ExamDistributorState(exams: Map[ExamId, PersistedExam])
-  val emptyState: ExamDistributorState = ExamDistributorState(Map())
+  case class PersistedAnswers(answers: Answers)
+  case class ExamDistributorState(exams: Map[ExamId, PersistedExam], answers: Map[ExamId, PersistedAnswers])
+  val emptyState: ExamDistributorState = ExamDistributorState(Map(), Map())
 
   import exams.data.TeachersExam._
 
@@ -82,12 +83,7 @@ object ExamDistributor {
   def examAddedHandler(state: ExamDistributorState, event: ExamAdded): ExamDistributorState =
     state.copy(exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)))
 
-  def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState = {
-    state.exams.get(event.examId) match {
-      case Some(PersistedExam(studentId, exam)) =>
-        Some(PersistedExam(studentId, TeachersExam.withSelectedAnswers(exam)(event.answers)))
-          .map(x => state.copy(exams = state.exams.updated(event.examId, x))).get
-      case _ => state
-    }
-  }
+  def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState =
+    state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)))
+
 }
