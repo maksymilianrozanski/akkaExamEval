@@ -65,20 +65,26 @@ object ExamDistributor {
         // 1 - find exam of id in persisted
         state.exams.get(examId) match {
           case Some(value) =>
+            if (answersLengthIsValid(value, answers))
             // 2 - persist answers
-            //todo: check length of answers before persisting
-            Effect.persist(ExamCompleted(examId, answers))
-              .thenRun((s: ExamDistributorState) => {
-                context.log.info("persisted ExamCompleted, id: {}", examId)
-                // 3 - send answers to evaluator
-                evaluator ! EvaluateAnswers(examId, value.studentId, value.exam, answers)
-              })
+              Effect.persist(ExamCompleted(examId, answers))
+                .thenRun((s: ExamDistributorState) => {
+                  context.log.info("persisted ExamCompleted, id: {}", examId)
+                  // 3 - send answers to evaluator
+                  evaluator ! EvaluateAnswers(examId, value.studentId, value.exam, answers)
+                })
+            else Effect.none.thenRun(_ =>
+              context.log.info("Answer's length:({}) isn't equal to expected: ({})", answers.length, value.exam.questions.length)
+            )
           case None =>
             context.log.info("Received RequestExamEvaluation, not found examId {}", examId)
             Effect.none
         }
     }
   }
+
+  private def answersLengthIsValid(persistedExam: PersistedExam, answers: Answers) =
+    persistedExam.exam.questions.lengthCompare(answers) == 0
 
   def distributorEventHandler(state: ExamDistributorState, event: ExamDistributorEvents): ExamDistributorState =
     event match {

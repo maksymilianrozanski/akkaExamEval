@@ -163,5 +163,23 @@ class ExamDistributorSpec
         assert(result == expected)
       }
     }
+
+    "not persist event" when {
+      "answers length is not equal to persisted exam's questions length" in {
+        val answers = List(List(Answer("no")))
+        val command = RequestExamEvaluation(initialState.exam.examId, answers)
+        val result = testKit.runCommand(command).events
+        val expected = Seq()
+        assert(result == expected)
+      }
+
+      "answers id is not contained in persisted exams" in {
+        val answers = List(List(Answer("yes"), Answer("no")), List(Answer("None")))
+        val command = RequestExamEvaluation("invalidId", answers)
+        val result = testKit.runCommand(command).events
+        val expected = Seq()
+        assert(result == expected)
+      }
+    }
   }
 }
