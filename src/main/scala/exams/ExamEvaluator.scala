@@ -26,7 +26,7 @@ object ExamEvaluator {
     percentOfPoints(validAnswers, answers)
   }
 
-  private def percentOfPoints[T](validAnswers: List[T], studentsAnswers: List[T]) = {
+  private[exams] def percentOfPoints[T](validAnswers: List[T], studentsAnswers: List[T]) = {
     val points = validAnswers.zip(studentsAnswers).map(
       pair => {
         println(s"correct answer: ${pair._1}, selected answer: ${pair._2}, point?:${pair._1 == pair._2}")
