@@ -1,4 +1,4 @@
-package exams
+package exams.evaluator
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
@@ -26,7 +26,7 @@ object ExamEvaluator {
     percentOfPoints(validAnswers, answers)
   }
 
-  private[exams] def percentOfPoints[T](validAnswers: List[T], studentsAnswers: List[T]) = {
+  private[evaluator] def percentOfPoints[T](validAnswers: List[T], studentsAnswers: List[T]) = {
     val points = validAnswers.zip(studentsAnswers).map(
       pair => {
         println(s"correct answer: ${pair._1}, selected answer: ${pair._2}, point?:${pair._1 == pair._2}")

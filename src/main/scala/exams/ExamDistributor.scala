@@ -8,6 +8,7 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
 import exams.data.{Answer, BlankQuestion, ExamGenerator, Question, TeachersExam}
+import exams.evaluator.{EvaluateAnswers, ExamEvaluator}
 
 object ExamDistributor {
 

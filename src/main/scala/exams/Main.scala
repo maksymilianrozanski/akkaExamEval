@@ -8,6 +8,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import exams.ExamDistributor.ExamDistributor
+import exams.evaluator.ExamEvaluator
 import exams.http.{RoutesActorsPack, StudentActions, StudentRoutes2}
 
 import scala.util.{Failure, Success}
