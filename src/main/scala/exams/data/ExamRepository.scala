@@ -34,15 +34,28 @@ object ExamRepository {
       case addQuestionsSet: AddQuestionsSet => onAddQuestionsSet(context)(state, addQuestionsSet)
     }
 
-  def onAddQuestionsSet(context: ActorContext[ExamRepository])(state: ExamRepositoryState, command: AddQuestionsSet): EffectBuilder[QuestionsSetAdded, ExamRepositoryState] = {
-    if (state.questions.exists(_.setId == command.questionsSet.setId))
-      Effect.none.thenRun { s: ExamRepositoryState =>
-        context.log.info("Questions set with provided id {} already exist - not saving.", command.questionsSet.setId)
-      } else
-      Effect.persist(QuestionsSetAdded(command.questionsSet)).thenRun((s: ExamRepositoryState) =>
-        context.log.info("Persisted {} questions with id: {}", command.questionsSet.questions.size,
-          command.questionsSet.setId))
-  }
+  def onAddQuestionsSet(context: ActorContext[ExamRepository])(state: ExamRepositoryState, command: AddQuestionsSet)
+  : EffectBuilder[QuestionsSetAdded, ExamRepositoryState] =
+    questionsNonEmpty(command).flatMap(idNotExists(state)(_))
+    match {
+      case Right(command) =>
+        Effect.persist(QuestionsSetAdded(command.questionsSet)).thenRun((s: ExamRepositoryState) =>
+          context.log.info("Persisted {} questions with id: {}", command.questionsSet.questions.size,
+            command.questionsSet.setId))
+      case Left(error) =>
+        Effect.none.thenRun {
+          _: ExamRepositoryState =>
+            context.log.info(error)
+        }
+    }
+
+  private def idNotExists(state: ExamRepositoryState)(command: AddQuestionsSet) =
+    if (!state.questions.exists(_.setId == command.questionsSet.setId)) Right(command)
+    else Left(s"set with id: ${command.questionsSet.setId} already exists")
+
+  private def questionsNonEmpty(command: AddQuestionsSet) =
+    if (command.questionsSet.questions.nonEmpty) Right(command)
+    else Left(s"questions set ${command.questionsSet.setId} is empty")
 
   def eventHandler(state: ExamRepositoryState, events: ExamRepositoryEvents): ExamRepositoryState =
     events match {
