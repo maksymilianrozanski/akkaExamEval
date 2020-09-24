@@ -64,7 +64,6 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
       val result = testKit.runCommand(command)
 
       "not persist event" in {
-        //todo: logic not implemented
         assertResult(Seq())(result.events)
       }
     }
