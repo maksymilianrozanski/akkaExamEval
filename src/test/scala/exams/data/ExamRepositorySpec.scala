@@ -35,17 +35,7 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
 
     val initialState = ExamRepositoryState(persistedSets)
 
-    "state contains set with command's setId" should {
-      val withExistingId = QuestionsSet("2", "new set", Set(question4))
-      val testKit = examRepositoryTestKit(initialState)
-      val command = AddQuestionsSet(withExistingId)
-      val result = testKit.runCommand(command)
-      "not persist events" in {
-        assertResult(Seq())(result.events)
-      }
-    }
-
-    "state does not contain set with command's setId" should {
+    "state does not contain set with command's setId and questions set is not empty" should {
       val setToSave = QuestionsSet("3", "new set", Set(question4))
       val testKit = examRepositoryTestKit(initialState)
       val expected = QuestionsSetAdded(setToSave)
@@ -57,10 +47,31 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
       }
     }
 
+    "state contains set with command's setId" should {
+      val withExistingId = QuestionsSet("2", "new set", Set(question4))
+      val testKit = examRepositoryTestKit(initialState)
+      val command = AddQuestionsSet(withExistingId)
+      val result = testKit.runCommand(command)
+      "not persist events" in {
+        assertResult(Seq())(result.events)
+      }
+    }
+
     "questions set is empty" should {
       val setWithNoQuestions = QuestionsSet("3", "new set", Set())
       val testKit = examRepositoryTestKit(initialState)
       val command = AddQuestionsSet(setWithNoQuestions)
+      val result = testKit.runCommand(command)
+
+      "not persist event" in {
+        assertResult(Seq())(result.events)
+      }
+    }
+
+    "state contains set with command's setId and questions set is empty" should {
+      val withExistingIdAndEmpty = QuestionsSet("2", "new set", Set())
+      val testKit = examRepositoryTestKit(initialState)
+      val command = AddQuestionsSet(withExistingIdAndEmpty)
       val result = testKit.runCommand(command)
 
       "not persist event" in {
