@@ -1,6 +1,6 @@
 package exams.evaluator
 
-import akka.actor.typed.Behavior
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
@@ -11,6 +11,7 @@ object ExamEvaluator {
 
   sealed trait ExamEvaluator
   final case class EvaluateAnswers(studentId: String, teachersExam: TeachersExam, answers: Answers) extends ExamEvaluator
+  final case class RequestResults(replyTo: ActorRef[List[ExamResult]]) extends ExamEvaluator
 
   sealed trait ExamEvaluatorEvents
   final case class ExamEvaluated(examResult: ExamResult) extends ExamEvaluatorEvents
@@ -30,10 +31,20 @@ object ExamEvaluator {
     )
   })
 
-  private[evaluator] def commandHandler(context: ActorContext[ExamEvaluator])(state: ExamEvaluatorState, command: ExamEvaluator): EffectBuilder[ExamEvaluatorEvents, ExamEvaluatorState] =
+  private[evaluator]
+  def commandHandler(context: ActorContext[ExamEvaluator])(state: ExamEvaluatorState, command: ExamEvaluator)
+  : Effect[ExamEvaluated, ExamEvaluatorState] =
     command match {
       case evaluateAnswers: EvaluateAnswers => onEvaluateExamCommand(context)(state, evaluateAnswers)
+      case requestResults: RequestResults => onRequestResultsCommand(context)(requestResults)
     }
+
+  private[evaluator] def onRequestResultsCommand[T >: RequestResults](context: ActorContext[T])(command: RequestResults) =
+    Effect.none.thenReply(command.replyTo)((s: ExamEvaluatorState) => {
+      val results = s.results
+      context.log.info("Sending back all results {}", results)
+      results
+    })
 
   private[evaluator] def eventHandler(state: ExamEvaluatorState, event: ExamEvaluatorEvents): ExamEvaluatorState =
     event match {
