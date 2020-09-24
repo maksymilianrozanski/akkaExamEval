@@ -10,7 +10,7 @@ import exams.data.TeachersExam
 object ExamEvaluator {
 
   sealed trait ExamEvaluator
-  final case class EvaluateAnswers(examId: String, studentId: String, teachersExam: TeachersExam, answers: Answers) extends ExamEvaluator
+  final case class EvaluateAnswers(studentId: String, teachersExam: TeachersExam, answers: Answers) extends ExamEvaluator
 
   sealed trait ExamEvaluatorEvents
   final case class ExamEvaluated(examResult: ExamResult) extends ExamEvaluatorEvents
@@ -43,13 +43,13 @@ object ExamEvaluator {
   private[evaluator] def onEvaluateExamCommand[T >: EvaluateAnswers](context: ActorContext[T])(state: ExamEvaluatorState, command: EvaluateAnswers)
   : EffectBuilder[ExamEvaluated, ExamEvaluatorState] =
     command match {
-      case EvaluateAnswers(examId, studentId, teachersExam, answers) =>
+      case EvaluateAnswers(studentId, teachersExam, answers) =>
         context.log.info("Received exam evaluation request")
         val examResult = percentOfCorrectAnswers(teachersExam, answers)
-        context.log.info("exam {} of student {} result: {}", examId, studentId, examResult)
-        Effect.persist(ExamEvaluated(ExamResult(examId, studentId, examResult)))
+        context.log.info("exam {} of student {} result: {}", teachersExam.examId, studentId, examResult)
+        Effect.persist(ExamEvaluated(ExamResult(teachersExam.examId, studentId, examResult)))
           .thenRun((s: ExamEvaluatorState) =>
-            context.log.info("persisted exam result {}", examId))
+            context.log.info("persisted exam result {}", teachersExam.examId))
     }
 
   private[evaluator] def onExamEvaluatedEvent(state: ExamEvaluatorState, event: ExamEvaluated): ExamEvaluatorState =

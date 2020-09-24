@@ -70,7 +70,7 @@ object ExamDistributor {
                 .thenRun((s: ExamDistributorState) => {
                   context.log.info("persisted ExamCompleted, id: {}", examId)
                   // 3 - send answers to evaluator
-                  evaluator ! EvaluateAnswers(examId, value.studentId, value.exam, answers)
+                  evaluator ! EvaluateAnswers(value.studentId, value.exam, answers)
                 })
             else Effect.none.thenRun(_ =>
               context.log.info("Answer's length:({}) isn't equal to expected: ({})", answers.length, value.exam.questions.length)

@@ -62,8 +62,8 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
     }
 
     "ExamEvaluator" when {
-      val command = ExamEvaluator.EvaluateAnswers("exam123", "student234",
-        TeachersExam("exam123", questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))),
+      val command = ExamEvaluator.EvaluateAnswers("student234", TeachersExam("exam123",
+        questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))),
         List(List(Answer("yes"))))
 
       val expectedEvent = ExamEvaluator.ExamEvaluated(ExamResult("exam123", "student234", 0))
