@@ -135,5 +135,31 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
         }
       }
     }
+
+    "onRequestSingleResultCommand" when {
+      val persistedResults = List(
+        ExamResult("exam100", "student1", 0.7),
+        ExamResult("exam123", "student2", 0.8),
+        ExamResult("exam124", "student3", 0.9))
+      "persisted results contains requested examId" should {
+        val testInbox = TestInbox[Option[ExamResult]]()
+        val command = ExamEvaluator.RequestSingleResult("exam123", testInbox.ref)
+        val testKit = examEvaluatorTestKit(ExamEvaluatorState(persistedResults))
+        testKit.runCommand(command)
+        "reply with ExamResult" in {
+          testInbox.expectMessage(Some(persistedResults(1)))
+        }
+      }
+
+      "persisted results do not contain requested examId" should {
+        val testInbox = TestInbox[Option[ExamResult]]()
+        val command = ExamEvaluator.RequestSingleResult("exam12", testInbox.ref)
+        val testKit = examEvaluatorTestKit(ExamEvaluatorState(persistedResults))
+        testKit.runCommand(command)
+        "reply with None" in {
+          testInbox.expectMessage(None)
+        }
+      }
+    }
   }
 }

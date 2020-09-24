@@ -4,7 +4,7 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
-import exams.ExamDistributor.Answers
+import exams.ExamDistributor.{Answers, ExamId}
 import exams.data.TeachersExam
 
 object ExamEvaluator {
@@ -12,6 +12,7 @@ object ExamEvaluator {
   sealed trait ExamEvaluator
   final case class EvaluateAnswers(studentId: String, teachersExam: TeachersExam, answers: Answers) extends ExamEvaluator
   final case class RequestResults(replyTo: ActorRef[List[ExamResult]]) extends ExamEvaluator
+  final case class RequestSingleResult(examId: ExamId, replyTo: ActorRef[Option[ExamResult]]) extends ExamEvaluator
 
   sealed trait ExamEvaluatorEvents
   final case class ExamEvaluated(examResult: ExamResult) extends ExamEvaluatorEvents
@@ -37,6 +38,7 @@ object ExamEvaluator {
     command match {
       case evaluateAnswers: EvaluateAnswers => onEvaluateExamCommand(context)(state, evaluateAnswers)
       case requestResults: RequestResults => onRequestResultsCommand(context)(requestResults)
+      case requestSingleResult: RequestSingleResult => onRequestSingleResultCommand(context)(requestSingleResult)
     }
 
   private[evaluator] def onRequestResultsCommand[T >: RequestResults](context: ActorContext[T])(command: RequestResults) =
@@ -45,6 +47,19 @@ object ExamEvaluator {
       context.log.info("Sending back all results {}", results)
       results
     })
+
+  private[evaluator] def onRequestSingleResultCommand[T >: RequestSingleResult](context: ActorContext[T])(command: RequestSingleResult) =
+    Effect.none.thenReply(command.replyTo) { s: ExamEvaluatorState =>
+      val result = s.results.find(_.examId == command.examId)
+      result match {
+        case result@Some(examResult) =>
+          context.log.info(s"Found exam result: $examResult")
+          result
+        case None =>
+          context.log.info(s"Not found result with requested examId(${command.examId})")
+          None
+      }
+    }
 
   private[evaluator] def eventHandler(state: ExamEvaluatorState, event: ExamEvaluatorEvents): ExamEvaluatorState =
     event match {
