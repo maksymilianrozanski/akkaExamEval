@@ -43,13 +43,13 @@ object ExamEvaluator {
   private[evaluator] def onEvaluateExamCommand[T >: EvaluateAnswers](context: ActorContext[T])(state: ExamEvaluatorState, command: EvaluateAnswers)
   : EffectBuilder[ExamEvaluated, ExamEvaluatorState] =
     command match {
-      case EvaluateAnswers(studentId, teachersExam, answers) =>
+      case EvaluateAnswers(studentId, teachersExam@TeachersExam(examId, _), answers) =>
         context.log.info("Received exam evaluation request")
         val examResult = percentOfCorrectAnswers(teachersExam, answers)
-        context.log.info("exam {} of student {} result: {}", teachersExam.examId, studentId, examResult)
-        Effect.persist(ExamEvaluated(ExamResult(teachersExam.examId, studentId, examResult)))
+        context.log.info("exam {} of student {} result: {}", examId, studentId, examResult)
+        Effect.persist(ExamEvaluated(ExamResult(examId, studentId, examResult)))
           .thenRun((s: ExamEvaluatorState) =>
-            context.log.info("persisted exam result {}", teachersExam.examId))
+            context.log.info("persisted exam result {}", examId))
     }
 
   private[evaluator] def onExamEvaluatedEvent(state: ExamEvaluatorState, event: ExamEvaluated): ExamEvaluatorState =
