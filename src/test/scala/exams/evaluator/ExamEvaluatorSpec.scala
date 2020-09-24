@@ -49,14 +49,14 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
   }
 
   "ExamEvaluator" must {
-    def evaluateAnswersCommandHandlerTestKit(initialState: ExamEvaluatorState): EventSourcedBehaviorTestKit[
-      ExamEvaluator.EvaluateAnswers, ExamEvaluator.ExamEvaluated, ExamEvaluator.ExamEvaluatorState] = {
+    def examEvaluatorTestKit(initialState: ExamEvaluatorState): EventSourcedBehaviorTestKit[
+      ExamEvaluator.ExamEvaluator, ExamEvaluator.ExamEvaluatorEvents, ExamEvaluator.ExamEvaluatorState] = {
       EventSourcedBehaviorTestKit(system, Behaviors.setup { context =>
         EventSourcedBehavior(
           persistenceId = PersistenceId.ofUniqueId("uniqueId"),
           emptyState = initialState,
-          commandHandler = ExamEvaluator.onEvaluateExamCommand(context),
-          eventHandler = ExamEvaluator.onExamEvaluatedEvent
+          commandHandler = ExamEvaluator.commandHandler(context) _,
+          eventHandler = ExamEvaluator.eventHandler
         )
       }, serializationSettings = disabled)
     }
@@ -69,7 +69,7 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
       val expectedEvent = ExamEvaluator.ExamEvaluated(ExamResult("exam123", "student234", 0))
 
       "empty initial state" should {
-        val testKit = evaluateAnswersCommandHandlerTestKit(ExamEvaluator.emptyState)
+        val testKit = examEvaluatorTestKit(ExamEvaluator.emptyState)
         val expected = expectedEvent
         val result = testKit.runCommand(command).event
         "return ExamEvaluated event" in {
@@ -80,7 +80,7 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
       "non empty initial state" should {
         val initialState = ExamEvaluatorState(List(
           ExamResult("exam123", "student123", 0.2), ExamResult("exam125", "student125", 0.8)))
-        val testKit = evaluateAnswersCommandHandlerTestKit(initialState)
+        val testKit = examEvaluatorTestKit(initialState)
         val expected = expectedEvent
         val result = testKit.runCommand(command).event
         "return ExamEvaluated event" in {
@@ -108,18 +108,6 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
           assert(result == expected)
         }
       }
-    }
-
-    def examEvaluatorTestKit(initialState: ExamEvaluatorState): EventSourcedBehaviorTestKit[
-      ExamEvaluator.ExamEvaluator, ExamEvaluator.ExamEvaluatorEvents, ExamEvaluator.ExamEvaluatorState] = {
-      EventSourcedBehaviorTestKit(system, Behaviors.setup { context =>
-        EventSourcedBehavior(
-          persistenceId = PersistenceId.ofUniqueId("uniqueId"),
-          emptyState = initialState,
-          commandHandler = ExamEvaluator.commandHandler(context) _,
-          eventHandler = ExamEvaluator.eventHandler
-        )
-      }, serializationSettings = disabled)
     }
 
     "onRequestResultsCommand" when {
