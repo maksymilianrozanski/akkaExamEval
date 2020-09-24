@@ -8,7 +8,7 @@ import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.ExamDistributor._
 import exams.data.{Answer, BlankQuestion, Question, TeachersExam}
-import exams.evaluator.{EvaluateAnswers, ExamEvaluator}
+import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
 

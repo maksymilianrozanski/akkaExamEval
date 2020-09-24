@@ -1,23 +1,59 @@
 package exams.evaluator
 
 import akka.actor.typed.Behavior
-import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import akka.persistence.typed.PersistenceId
+import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
 import exams.ExamDistributor.Answers
 import exams.data.TeachersExam
 
-sealed trait ExamEvaluator
-final case class EvaluateAnswers(examId: String, studentId: String, teachersExam: TeachersExam, answers: Answers) extends ExamEvaluator
-
 object ExamEvaluator {
+
+  sealed trait ExamEvaluator
+  final case class EvaluateAnswers(examId: String, studentId: String, teachersExam: TeachersExam, answers: Answers) extends ExamEvaluator
+
+  sealed trait ExamEvaluatorEvents
+  final case class ExamEvaluated(examResult: ExamResult) extends ExamEvaluatorEvents
+
+  val emptyState: ExamEvaluatorState = ExamEvaluatorState(List())
+  final case class ExamEvaluatorState(results: List[ExamResult])
+  case class ExamResult(examId: String, studentId: String, result: Double)
+
   def apply(): Behavior[ExamEvaluator] = evaluator()
 
-  def evaluator(): Behavior[ExamEvaluator] = Behaviors.receive {
-    case (context, EvaluateAnswers(examId, studentId, teachersExam, answers)) =>
-      context.log.info("Received exam evaluation request")
-      val result = percentOfCorrectAnswers(teachersExam, answers)
-      context.log.info("exam {} of student {} result: {}", examId, studentId, result)
-      Behaviors.same
-  }
+  private[evaluator] def evaluator(): Behavior[ExamEvaluator] = Behaviors.setup[ExamEvaluator](context => {
+    EventSourcedBehavior[ExamEvaluator, ExamEvaluatorEvents, ExamEvaluatorState](
+      persistenceId = PersistenceId.ofUniqueId("examEvaluator"),
+      emptyState = emptyState,
+      commandHandler = commandHandler(context) _,
+      eventHandler = eventHandler
+    )
+  })
+
+  private[evaluator] def commandHandler(context: ActorContext[ExamEvaluator])(state: ExamEvaluatorState, command: ExamEvaluator): EffectBuilder[ExamEvaluatorEvents, ExamEvaluatorState] =
+    command match {
+      case evaluateAnswers: EvaluateAnswers => onEvaluateExamCommand(context)(state, evaluateAnswers)
+    }
+
+  private[evaluator] def eventHandler(state: ExamEvaluatorState, event: ExamEvaluatorEvents): ExamEvaluatorState =
+    event match {
+      case examEvaluated: ExamEvaluated => onExamEvaluatedEvent(state, examEvaluated)
+    }
+
+  private[evaluator] def onEvaluateExamCommand[T >: EvaluateAnswers](context: ActorContext[T])(state: ExamEvaluatorState, command: EvaluateAnswers)
+  : EffectBuilder[ExamEvaluated, ExamEvaluatorState] =
+    command match {
+      case EvaluateAnswers(examId, studentId, teachersExam, answers) =>
+        context.log.info("Received exam evaluation request")
+        val examResult = percentOfCorrectAnswers(teachersExam, answers)
+        context.log.info("exam {} of student {} result: {}", examId, studentId, examResult)
+        Effect.persist(ExamEvaluated(ExamResult(examId, studentId, examResult)))
+          .thenRun((s: ExamEvaluatorState) =>
+            context.log.info("persisted exam result {}", examId))
+    }
+
+  private[evaluator] def onExamEvaluatedEvent(state: ExamEvaluatorState, event: ExamEvaluated): ExamEvaluatorState =
+    ExamEvaluatorState(state.results :+ event.examResult)
 
   private[evaluator] def percentOfCorrectAnswers(teachersExam: TeachersExam, answers: Answers) = {
     val validAnswers = teachersExam.questions.map(_.correctAnswers).map(_.map(_.toString))

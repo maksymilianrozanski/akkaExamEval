@@ -1,14 +1,12 @@
 package exams
 
 
-import java.util.logging.Logger
-
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
-import exams.data.{Answer, BlankQuestion, ExamGenerator, Question, TeachersExam}
-import exams.evaluator.{EvaluateAnswers, ExamEvaluator}
+import exams.data.{Answer, ExamGenerator, TeachersExam}
+import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
 
 object ExamDistributor {
 
