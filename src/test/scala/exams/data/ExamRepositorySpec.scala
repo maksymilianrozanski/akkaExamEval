@@ -77,6 +77,29 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
         assertResult(Seq())(result.events)
       }
     }
+
+    "receive TakeQuestionsSet" should {
+      "send questions set exists" in {
+        val testInbox = TestInbox[Option[QuestionsSet]]()
+        val command = TakeQuestionsSet("2", testInbox.ref)
+
+        val expected = Some(persistedSets(1))
+        val testKit = examRepositoryTestKit(initialState)
+
+        testKit.runCommand(command)
+        testInbox.expectMessage(expected)
+      }
+
+      "send None if set does not exist" in {
+        val testInbox = TestInbox[Option[QuestionsSet]]()
+        val command = TakeQuestionsSet("10", testInbox.ref)
+        val expected = None
+        val testKit = examRepositoryTestKit(initialState)
+
+        testKit.runCommand(command)
+        testInbox.expectMessage(expected)
+      }
+    }
   }
 
   "ExamRepository eventHandler should add" should {
@@ -95,31 +118,6 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
         val result = ExamRepository.eventHandler(initialState, event)
         val expected = initialState.copy(questions = initialState.questions :+ addedSet)
         assertResult(expected)(result)
-      }
-    }
-  }
-
-  "ExamRepository" when {
-    "TakeQuestionsSet received" should {
-      "send questions set exists" in {
-        val testInbox = TestInbox[Option[QuestionsSet]]()
-        val command = TakeQuestionsSet("2", testInbox.ref)
-
-        val expected = Some(persistedSets(1))
-        val testKit = examRepositoryTestKit(ExamRepositoryState(persistedSets))
-
-        testKit.runCommand(command)
-        testInbox.expectMessage(expected)
-      }
-
-      "send None if set does not exist" in {
-        val testInbox = TestInbox[Option[QuestionsSet]]()
-        val command = TakeQuestionsSet("10", testInbox.ref)
-        val expected = None
-        val testKit = examRepositoryTestKit(ExamRepositoryState(persistedSets))
-
-        testKit.runCommand(command)
-        testInbox.expectMessage(expected)
       }
     }
   }
