@@ -1,6 +1,6 @@
 package exams.data
 
-import akka.actor.typed.Behavior
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
@@ -11,6 +11,7 @@ object ExamRepository {
 
   sealed trait ExamRepository
   final case class AddQuestionsSet(questionsSet: QuestionsSet) extends ExamRepository
+  final case class TakeQuestionsSet(setId: String, replyTo: ActorRef[Option[QuestionsSet]]) extends ExamRepository
 
   sealed trait ExamRepositoryEvents
   final case class QuestionsSetAdded(questions: QuestionsSet) extends ExamRepositoryEvents
@@ -32,6 +33,7 @@ object ExamRepository {
   def commandHandler(context: ActorContext[ExamRepository])(state: ExamRepositoryState, command: ExamRepository): Effect[ExamRepositoryEvents, ExamRepositoryState] =
     command match {
       case addQuestionsSet: AddQuestionsSet => onAddQuestionsSet(context)(state, addQuestionsSet)
+      case takeQuestionsSet: TakeQuestionsSet => onTakeQuestionsSet(context)(state, takeQuestionsSet)
     }
 
   def onAddQuestionsSet(context: ActorContext[ExamRepository])(state: ExamRepositoryState, command: AddQuestionsSet)
@@ -48,6 +50,19 @@ object ExamRepository {
             context.log.info(error)
         }
     }
+
+  private def onTakeQuestionsSet(context: ActorContext[ExamRepository])(state: ExamRepositoryState, command: TakeQuestionsSet) = {
+    Effect.none.thenReply(command.replyTo) { (s: ExamRepositoryState) =>
+      val result = s.questions.find(_.setId == command.setId)
+      result match {
+        case Some(_) =>
+          context.log.info("Found set with setId: {}", command.setId)
+        case None =>
+          context.log.info("Set with setId: {} not found", command.setId)
+      }
+      result
+    }
+  }
 
   private def idNotExists(state: ExamRepositoryState)(command: AddQuestionsSet) =
     if (!state.questions.exists(_.setId == command.questionsSet.setId)) Right(command)

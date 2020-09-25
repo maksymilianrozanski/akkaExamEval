@@ -1,12 +1,12 @@
 package exams.data
 
-import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
+import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.disabled
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
-import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, ExamRepositoryEvents, ExamRepositoryState, QuestionsSet, QuestionsSetAdded}
+import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, ExamRepositoryEvents, ExamRepositoryState, QuestionsSet, QuestionsSetAdded, TakeQuestionsSet, commandHandler}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config) with AnyWordSpecLike {
@@ -27,10 +27,10 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
   private val question2 = Question(BlankQuestion("question 2 text", List(Answer("yes"), Answer("no"))), List(Answer("yes")))
   private val question3 = Question(BlankQuestion("question 3 text", List(Answer("yes"), Answer("no"))), List())
   private val question4 = Question(BlankQuestion("new question", List(Answer("yes"), Answer("no"))), List(Answer("no")))
+  val persistedSets = List(
+    QuestionsSet("1", "test set1", Set(question1, question2)),
+    QuestionsSet("2", "test set2", Set(question3)))
   "ExamRepository" when {
-    val persistedSets = List(
-      QuestionsSet("1", "test set1", Set(question1, question2)),
-      QuestionsSet("2", "test set2", Set(question3)))
 
     val initialState = ExamRepositoryState(persistedSets)
 
@@ -95,6 +95,31 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
         val result = ExamRepository.eventHandler(initialState, event)
         val expected = initialState.copy(questions = initialState.questions :+ addedSet)
         assertResult(expected)(result)
+      }
+    }
+  }
+
+  "ExamRepository" when {
+    "TakeQuestionsSet received" should {
+      "send questions set exists" in {
+        val testInbox = TestInbox[Option[QuestionsSet]]()
+        val command = TakeQuestionsSet("2", testInbox.ref)
+
+        val expected = Some(persistedSets(1))
+        val testKit = examRepositoryTestKit(ExamRepositoryState(persistedSets))
+
+        testKit.runCommand(command)
+        testInbox.expectMessage(expected)
+      }
+
+      "send None if set does not exist" in {
+        val testInbox = TestInbox[Option[QuestionsSet]]()
+        val command = TakeQuestionsSet("10", testInbox.ref)
+        val expected = None
+        val testKit = examRepositoryTestKit(ExamRepositoryState(persistedSets))
+
+        testKit.runCommand(command)
+        testInbox.expectMessage(expected)
       }
     }
   }
