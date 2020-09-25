@@ -7,11 +7,13 @@ import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehav
 
 object ExamRepository {
 
+  type SetId = String
+
   def apply(): Behavior[ExamRepository] = examRepository()
 
   sealed trait ExamRepository
   final case class AddQuestionsSet(questionsSet: QuestionsSet) extends ExamRepository
-  final case class TakeQuestionsSet(setId: String, replyTo: ActorRef[Option[QuestionsSet]]) extends ExamRepository
+  final case class TakeQuestionsSet(setId: SetId, replyTo: ActorRef[Option[QuestionsSet]]) extends ExamRepository
 
   sealed trait ExamRepositoryEvents
   final case class QuestionsSetAdded(questions: QuestionsSet) extends ExamRepositoryEvents
@@ -19,7 +21,7 @@ object ExamRepository {
   val emptyState: ExamRepositoryState = ExamRepositoryState(List())
   case class ExamRepositoryState(questions: List[QuestionsSet])
 
-  case class QuestionsSet(setId: String, description: String, questions: Set[Question])
+  case class QuestionsSet(setId: SetId, description: String, questions: Set[Question])
 
   def examRepository(): Behavior[ExamRepository] = Behaviors.setup[ExamRepository] { context =>
     EventSourcedBehavior[ExamRepository, ExamRepositoryEvents, ExamRepositoryState](
