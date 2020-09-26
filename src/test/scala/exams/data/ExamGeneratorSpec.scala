@@ -1,10 +1,8 @@
 package exams.data
 
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
-import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import exams.ExamDistributor.ExamDistributor
-import exams.data.ExamGenerator.{ExamGenerator, ExamOutput, ReceivedExamRequest, ReceivedSetFromRepo, State}
+import exams.data.ExamGenerator.{ExamOutput, ReceivedExamRequest, ReceivedSetFromRepo, State}
 import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet}
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -61,37 +59,68 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
       }
     }
 
-    "receive questions set" should {
+    "receive questions set" when {
       import StubQuestions._
 
       val initialState = State(Set(examRequest1, examRequest2, examRequest3))
       val questionsSetFromRepo = (examRequest1.examId, Some(QuestionsSet(examRequest1.setId, "set description", Set(question1, question2))))
-      val message = ReceivedSetFromRepo(questionsSetFromRepo)
 
-      val repository = TestInbox[ExamRepository]()
-      val distributor = TestInbox[ExamOutput]()
-      val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(distributor.ref)(initialState))
+      "receive questions set from repository" when {
+        "examId in message from repository exists in current state" should {
+          val repository = TestInbox[ExamRepository]()
+          val distributor = TestInbox[ExamOutput]()
+          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(distributor.ref)(initialState))
+          val message = ReceivedSetFromRepo(questionsSetFromRepo)
+          testKit.run(message)
+          "send generated TeachersExam to ExamDistributor" in {
+            val distributorMessage = distributor.receiveMessage()
+            assertResult(examRequest1)(distributorMessage._1)
 
-      testKit.run(message)
+            distributorMessage._2 match {
+              case Some(TeachersExam(examId, questions)) =>
+                assertResult(examRequest1.examId)(examId)
+                assertResult(questionsSetFromRepo._2.get.questions,
+                  "Generated TeachersExam should contain the same questions as questions in message from repository")(questions.toSet)
+              case None =>
+                fail("generatedExam should match to Some")
+            }
+          }
 
-      "send generated TeachersExam to ExamDistributor" in {
-        val distributorMessage = distributor.receiveMessage()
-        assertResult(examRequest1)(distributorMessage._1)
-
-        distributorMessage._2 match {
-          case Some(TeachersExam(examId, questions)) =>
-            assertResult(examRequest1.examId)(examId)
-            assertResult(questionsSetFromRepo._2.get.questions,
-              "Generated TeachersExam should contain the same questions as questions in message from repository")(questions.toSet)
-          case None =>
-            fail("generatedExam should match to Some")
+          "remove ExamRequest from state" in {
+            testKit.run(message)
+            assertResult(Behaviors.stopped,
+              "receiving message with examId not existing in current state should stop the actor")(testKit.returnedBehavior)
+          }
         }
-      }
 
-      "remove ExamRequest from state" in {
-        testKit.run(message)
-        assertResult(Behaviors.stopped,
-          "receiving message with examId not existing in current state should stop the actor")(testKit.returnedBehavior)
+        "examId in message from repository doesn't exist in current state" should {
+          val repository = TestInbox[ExamRepository]()
+          val distributor = TestInbox[ExamOutput]()
+          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(distributor.ref)(initialState))
+          val message = ReceivedSetFromRepo(("unknown-id", questionsSetFromRepo._2))
+          "stop the actor" in {
+            testKit.run(message)
+            assertResult(Behaviors.stopped,
+              "receiving message with examId not existing in current state should stop the actor")(testKit.returnedBehavior)
+          }
+        }
+
+        "receive response from repository with 'None' questions-set" should {
+          val repository = TestInbox[ExamRepository]()
+          val distributor = TestInbox[ExamOutput]()
+          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(distributor.ref)(initialState))
+          val message = ReceivedSetFromRepo((examRequest1.examId, None))
+          testKit.run(message)
+          "send message to distributor" in {
+            assertResult((examRequest1, None))(distributor.receiveMessage())
+          }
+
+          "remove request from the state" in {
+            testKit.run(message)
+            assertResult(Behaviors.stopped,
+              "receiving message with examId not existing in current state should stop the actor")(testKit.returnedBehavior)
+          }
+        }
       }
     }
   }
