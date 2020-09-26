@@ -1,8 +1,10 @@
 package exams.data
 
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
+import akka.actor.typed.Behavior
+import akka.actor.typed.scaladsl.Behaviors
 import exams.ExamDistributor.ExamDistributor
-import exams.data.ExamGenerator.{ExamOutput, ReceivedExamRequest, ReceivedSetFromRepo, State}
+import exams.data.ExamGenerator.{ExamGenerator, ExamOutput, ReceivedExamRequest, ReceivedSetFromRepo, State}
 import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet}
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -87,7 +89,9 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
       }
 
       "remove ExamRequest from state" in {
-
+        testKit.run(message)
+        assertResult(Behaviors.stopped,
+          "receiving message with examId not existing in current state should stop the actor")(testKit.returnedBehavior)
       }
     }
   }
