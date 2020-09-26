@@ -1,6 +1,9 @@
 package exams.data
 
+import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.scaladsl.Behaviors
 import exams.ExamDistributor.ExamId
+import exams.data.ExamRepository.{ExamRepository, QuestionsSet, SetId, TakeQuestionsSet}
 
 object ExamGenerator {
 

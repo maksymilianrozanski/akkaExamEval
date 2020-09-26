@@ -4,16 +4,18 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
+import exams.ExamDistributor.ExamId
 
 object ExamRepository {
 
   type SetId = String
+  type TakeQuestionsSetReply = (ExamId, Option[QuestionsSet])
 
   def apply(): Behavior[ExamRepository] = examRepository()
 
   sealed trait ExamRepository
   final case class AddQuestionsSet(questionsSet: QuestionsSet) extends ExamRepository
-  final case class TakeQuestionsSet(setId: SetId, replyTo: ActorRef[Option[QuestionsSet]]) extends ExamRepository
+  final case class TakeQuestionsSet(setId: SetId, examId: ExamId, replyTo: ActorRef[TakeQuestionsSetReply]) extends ExamRepository
 
   sealed trait ExamRepositoryEvents
   final case class QuestionsSetAdded(questions: QuestionsSet) extends ExamRepositoryEvents
@@ -62,7 +64,7 @@ object ExamRepository {
         case None =>
           context.log.info("Set with setId: {} not found", command.setId)
       }
-      result
+      (command.examId, result)
     }
   }
 

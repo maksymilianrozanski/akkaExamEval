@@ -6,7 +6,7 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.disabled
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
-import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, ExamRepositoryEvents, ExamRepositoryState, QuestionsSet, QuestionsSetAdded, TakeQuestionsSet, commandHandler}
+import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, ExamRepositoryEvents, ExamRepositoryState, QuestionsSet, QuestionsSetAdded, TakeQuestionsSet, TakeQuestionsSetReply, commandHandler}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config) with AnyWordSpecLike {
@@ -80,24 +80,24 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
 
     "receive TakeQuestionsSet" should {
       "send questions set exists" in {
-        val testInbox = TestInbox[Option[QuestionsSet]]()
-        val command = TakeQuestionsSet("2", testInbox.ref)
+        val testInbox = TestInbox[TakeQuestionsSetReply]()
+        val command = TakeQuestionsSet("2", "1234", testInbox.ref)
 
         val expected = Some(persistedSets(1))
         val testKit = examRepositoryTestKit(initialState)
 
         testKit.runCommand(command)
-        testInbox.expectMessage(expected)
+        testInbox.expectMessage((command.examId, expected))
       }
 
       "send None if set does not exist" in {
-        val testInbox = TestInbox[Option[QuestionsSet]]()
-        val command = TakeQuestionsSet("10", testInbox.ref)
+        val testInbox = TestInbox[TakeQuestionsSetReply]()
+        val command = TakeQuestionsSet("10", "12345" , testInbox.ref)
         val expected = None
         val testKit = examRepositoryTestKit(initialState)
 
         testKit.runCommand(command)
-        testInbox.expectMessage(expected)
+        testInbox.expectMessage((command.examId, expected))
       }
     }
   }

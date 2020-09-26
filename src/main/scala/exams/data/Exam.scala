@@ -1,7 +1,7 @@
 package exams.data
 
-import exams.ExamDistributor.Answers
-import exams.ExamDistributor.ExamId
+import exams.ExamDistributor.{Answers, ExamId, StudentId}
+import exams.data.ExamRepository.SetId
 
 //data
 sealed trait Exam
@@ -19,3 +19,5 @@ case class StudentsExam(examId: ExamId, questions: List[BlankQuestion])
 case class Question(blank: BlankQuestion, correctAnswers: List[Answer])
 case class BlankQuestion(text: String, answers: List[Answer])
 case class Answer(text: String)
+
+case class ExamRequest(examId: ExamId, studentId: StudentId, maxQuestions: Int, setId: SetId)
