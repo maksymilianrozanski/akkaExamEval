@@ -2,15 +2,19 @@ package exams.data
 
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import exams.ExamDistributor.ExamDistributor
-import exams.data.ExamGenerator.{ReceivedExamRequest, State}
+import exams.data.ExamGenerator.{ExamOutput, ReceivedExamRequest, ReceivedSetFromRepo, State}
 import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class ExamGeneratorSpec extends AnyWordSpecLike {
 
+  private val examRequest1 = ExamRequest("exam12", "student12", 2, "set1")
+  private val examRequest2 = ExamRequest("exam13", "student13", 3, "set2")
+  private val examRequest3 = ExamRequest("exam14", "student14", 3, "set2")
+
   "ExamGenerator" when {
     val repository = TestInbox[ExamRepository]()
-    val distributor = TestInbox[ExamDistributor]()
+    val distributor = TestInbox[ExamOutput]()
 
     "receive ExamRequest" should {
       val examRequest = ExamRequest("exam123", "student123", 2, "set2")
@@ -56,9 +60,30 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
     }
 
     "receive questions set" should {
+      import StubQuestions._
+
+      val initialState = State(Set(examRequest1, examRequest2, examRequest3))
+      val questionsSetFromRepo = (examRequest1.examId, Some(QuestionsSet(examRequest1.setId, "set description", Set(question1, question2))))
+      val message = ReceivedSetFromRepo(questionsSetFromRepo)
+
+      val repository = TestInbox[ExamRepository]()
+      val distributor = TestInbox[ExamOutput]()
+      val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(distributor.ref)(initialState))
+
+      testKit.run(message)
 
       "send generated TeachersExam to ExamDistributor" in {
+        val distributorMessage = distributor.receiveMessage()
+        assertResult(examRequest1)(distributorMessage._1)
 
+        distributorMessage._2 match {
+          case Some(TeachersExam(examId, questions)) =>
+            assertResult(examRequest1.examId)(examId)
+            assertResult(questionsSetFromRepo._2.get.questions,
+              "Generated TeachersExam should contain the same questions as questions in message from repository")(questions.toSet)
+          case None =>
+            fail("generatedExam should match to Some")
+        }
       }
 
       "remove ExamRequest from state" in {

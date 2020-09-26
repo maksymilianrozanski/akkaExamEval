@@ -1,11 +1,13 @@
 package exams.data
 
-import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
-import exams.ExamDistributor.{ExamDistributor, ExamId}
-import exams.data.ExamRepository.{ExamRepository, QuestionsSet, SetId, TakeQuestionsSet, TakeQuestionsSetReply}
+import akka.actor.typed.{ActorRef, Behavior}
+import exams.ExamDistributor.ExamId
+import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet, TakeQuestionsSetReply}
 
 object ExamGenerator {
+
+  type ExamOutput = (ExamRequest, Option[TeachersExam])
 
   def sampleExam(id: ExamId): TeachersExam = {
     val q1Answers = List(Answer("yes"), Answer("no"))
@@ -23,10 +25,14 @@ object ExamGenerator {
 
   case class State(requests: Set[ExamRequest])
 
-  def apply(repository: ActorRef[ExamRepository])(distributor: ActorRef[ExamDistributor])(state: State): Behavior[ExamGenerator] =
+  def apply(repository: ActorRef[ExamRepository])(distributor: ActorRef[ExamOutput])(state: State): Behavior[ExamGenerator] =
     generator(repository)(distributor)(state)
 
-  def generator(repository: ActorRef[ExamRepository])(distributor: ActorRef[ExamDistributor])(state: State): Behavior[ExamGenerator] =
+  sealed trait ExamGeneratorErrors
+  private case class NotFoundResponse(examId: ExamId) extends ExamGeneratorErrors
+  final case class EmptyRepositoryResponse(request: ExamRequest) extends ExamGeneratorErrors
+
+  def generator(repository: ActorRef[ExamRepository])(distributor: ActorRef[ExamOutput])(state: State): Behavior[ExamGenerator] =
     Behaviors.setup { context =>
       val responseMapper: ActorRef[TakeQuestionsSetReply] =
         context.messageAdapter(response => ReceivedSetFromRepo(response))
@@ -36,16 +42,44 @@ object ExamGenerator {
           val newState = state.copy(requests = state.requests + examRequest)
           repository ! TakeQuestionsSet(setId, examId, responseMapper)
           generator(repository)(distributor)(newState)
-        case ReceivedSetFromRepo(set) =>
-          //get ExamRequest from current state
+        case ReceivedSetFromRepo(set@(examId, optionSet)) =>
 
-          //create TeachersExam
+          val eitherExam = for (
+            i <- persistedRequest(state)(examId);
+            j <- eitherQuestionsSet(i)(optionSet)
+          ) yield (i, createExam(j)(i))
 
-          //send TeachersExam to ExamDistributor
-
-          //remove ExamRequest from state
-          ???
+          eitherExam match {
+            case Right(exam@(request, teachersExam)) =>
+              distributor ! (request, Some(teachersExam))
+              generator(repository)(distributor)(stateWithDropped(state)(examId))
+            case Left(value) =>
+              value match {
+                case EmptyRepositoryResponse(request) =>
+                  context.log.info("Repository returned no questions for examId:{} request", examId)
+                  distributor ! (request, None)
+                  generator(repository)(distributor)(stateWithDropped(state)(examId))
+                case NotFoundResponse(examId) =>
+                  context.log.error("Not found request corresponding to examId: {}! stopping the actor", examId)
+                  Behaviors.stopped
+              }
+          }
       }
+    }
+
+  private def stateWithDropped(state: State)(idToDrop: ExamId) =
+    state.copy(requests = state.requests.dropWhile(_.examId == idToDrop))
+
+  private def persistedRequest(state: State)(examId: ExamId): Either[ExamGeneratorErrors, ExamRequest] =
+    state.requests.find(_.examId == examId) match {
+      case Some(value) => Right(value)
+      case None => Left(NotFoundResponse(examId))
+    }
+
+  private def eitherQuestionsSet(request: ExamRequest)(questionsSet: Option[QuestionsSet]): Either[ExamGeneratorErrors, QuestionsSet] =
+    questionsSet match {
+      case Some(value) => Right(value)
+      case None => Left(EmptyRepositoryResponse(request))
     }
 
   private[data] def createExam(questionsSet: QuestionsSet)(examRequest: ExamRequest) = {
