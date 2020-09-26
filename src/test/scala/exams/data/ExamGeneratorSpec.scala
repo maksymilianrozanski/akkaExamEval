@@ -3,7 +3,7 @@ package exams.data
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import exams.ExamDistributor.ExamDistributor
 import exams.data.ExamGenerator.{ReceivedExamRequest, State}
-import exams.data.ExamRepository.{ExamRepository, TakeQuestionsSet}
+import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class ExamGeneratorSpec extends AnyWordSpecLike {
@@ -68,19 +68,39 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
   }
 
   "createExam" when {
+    import StubQuestions._
+    val set = QuestionsSet("set3", "set's description", Set(question1, question2, question3, question4))
+    val examFromQuestionsSet = ExamGenerator.createExam(set) _
 
-    "maxQuestions is higher or equal size of set" should {
+    "maxQuestions is lower than size of set" must {
+      val request = ExamRequest("exam123", "student123", 3, "set3")
+      val result = examFromQuestionsSet(request)
 
-      "create exam containing all set's questions" in {
-
+      "create exam containing request.maxQuestions questions" in {
+        assertResult(3)(result.questions.length)
+        assert(result.questions.forall(set.questions.contains))
       }
+      "create exam with correct examId" in assertResult(request.examId)(result.examId)
     }
 
-    "maxQuestions is lower than size of set" should {
-
-      "create exam containing maxQuestions number of questions" in {
-
+    "maxQuestions is equal size of set" should {
+      val request = ExamRequest("exam124", "student124", 4, "set3")
+      val result = examFromQuestionsSet(request)
+      "create exam containing all set's questions" in {
+        assertResult(4)(result.questions.length)
+        assert(result.questions.forall(set.questions.contains))
       }
+      "create exam with correct examId" in assertResult(request.examId)(result.examId)
+    }
+
+    "maxQuestions is higher than size of set" should {
+      val request = ExamRequest("exam124", "student124", 5, "set3")
+      val result = examFromQuestionsSet(request)
+      "create exam all questions from the set" in {
+        assertResult(4)(result.questions.length)
+        assert(result.questions.forall(set.questions.contains))
+      }
+      "create exam with correct examId" in assertResult(request.examId)(result.examId)
     }
   }
 }

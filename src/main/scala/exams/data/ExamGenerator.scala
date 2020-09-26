@@ -19,7 +19,7 @@ object ExamGenerator {
   //incoming msg from ExamDistributor
   final case class ReceivedExamRequest(examRequest: ExamRequest) extends ExamGenerator
 
- final case class ReceivedSetFromRepo(set: TakeQuestionsSetReply) extends ExamGenerator
+  final case class ReceivedSetFromRepo(set: TakeQuestionsSetReply) extends ExamGenerator
 
   case class State(requests: Set[ExamRequest])
 
@@ -47,4 +47,9 @@ object ExamGenerator {
           ???
       }
     }
+
+  private[data] def createExam(questionsSet: QuestionsSet)(examRequest: ExamRequest) = {
+    //todo: add taking random questions
+    TeachersExam(examRequest.examId, questionsSet.questions.take(examRequest.maxQuestions).toList)
+  }
 }

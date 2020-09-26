@@ -6,7 +6,7 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.disabled
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
-import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, ExamRepositoryEvents, ExamRepositoryState, QuestionsSet, QuestionsSetAdded, TakeQuestionsSet, TakeQuestionsSetReply, commandHandler}
+import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, ExamRepositoryEvents, ExamRepositoryState, QuestionsSet, QuestionsSetAdded, TakeQuestionsSet, TakeQuestionsSetReply}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config) with AnyWordSpecLike {
@@ -23,10 +23,8 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
     }, serializationSettings = disabled)
   }
 
-  private val question1 = Question(BlankQuestion("question text", List(Answer("yes"), Answer("no"))), List(Answer("no")))
-  private val question2 = Question(BlankQuestion("question 2 text", List(Answer("yes"), Answer("no"))), List(Answer("yes")))
-  private val question3 = Question(BlankQuestion("question 3 text", List(Answer("yes"), Answer("no"))), List())
-  private val question4 = Question(BlankQuestion("new question", List(Answer("yes"), Answer("no"))), List(Answer("no")))
+  import StubQuestions._
+
   val persistedSets = List(
     QuestionsSet("1", "test set1", Set(question1, question2)),
     QuestionsSet("2", "test set2", Set(question3)))
@@ -92,7 +90,7 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
 
       "send None if set does not exist" in {
         val testInbox = TestInbox[TakeQuestionsSetReply]()
-        val command = TakeQuestionsSet("10", "12345" , testInbox.ref)
+        val command = TakeQuestionsSet("10", "12345", testInbox.ref)
         val expected = None
         val testKit = examRepositoryTestKit(initialState)
 
