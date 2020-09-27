@@ -24,6 +24,8 @@ object ExamGenerator {
   final case class ReceivedSetFromRepo(set: TakeQuestionsSetReply) extends ExamGenerator
 
   case class State(requests: Set[ExamRequestWithRef])
+  //todo: remove state from apply
+  val emptyState: State = State(Set())
 
   def apply(repository: ActorRef[ExamRepository])(state: State): Behavior[ExamGenerator] =
     generator(repository)(state)

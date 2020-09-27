@@ -5,6 +5,7 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
+import exams.data.ExamGenerator.ExamGenerator
 import exams.data.{Answer, ExamGenerator, TeachersExam}
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
 
@@ -31,9 +32,10 @@ object ExamDistributor {
 
   import exams.data.TeachersExam._
 
-  def apply(evaluator: ActorRef[ExamEvaluator]): Behavior[ExamDistributor] = distributor(evaluator)
+  case class ActorsPack(evaluator: ActorRef[ExamEvaluator], generator: ActorRef[ExamGenerator])
+  def apply(evaluator: ActorRef[ExamEvaluator], actorsPack: ActorsPack): Behavior[ExamDistributor] = distributor(evaluator, actorsPack)
 
-  def distributor(evaluator: ActorRef[ExamEvaluator]): Behavior[ExamDistributor] = Behaviors.setup[ExamDistributor](context => {
+  def distributor(evaluator: ActorRef[ExamEvaluator], actorsPack: ActorsPack): Behavior[ExamDistributor] = Behaviors.setup[ExamDistributor](context => {
     EventSourcedBehavior[ExamDistributor, ExamDistributorEvents, ExamDistributorState](
       persistenceId = PersistenceId.ofUniqueId("examDistributor"),
       emptyState = emptyState,

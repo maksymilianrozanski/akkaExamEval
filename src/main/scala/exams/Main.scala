@@ -8,6 +8,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import exams.ExamDistributor.ExamDistributor
+import exams.data.{ExamGenerator, ExamRepository}
 import exams.evaluator.ExamEvaluator
 import exams.http.{RoutesActorsPack, StudentActions, StudentRoutes2}
 
@@ -35,7 +36,10 @@ object Main {
   def apply(): Behavior[NotUsed] =
     Behaviors.setup { context =>
       val examEvaluator = context.spawnAnonymous(ExamEvaluator())
-      implicit val distributor: ActorRef[ExamDistributor] = context.spawn(ExamDistributor(examEvaluator), "distributor")
+      val repository = context.spawnAnonymous(ExamRepository())
+      val examGenerator = context.spawnAnonymous(ExamGenerator(repository)(ExamGenerator.emptyState))
+      val distributorActors = ExamDistributor.ActorsPack(examEvaluator, examGenerator)
+      implicit val distributor: ActorRef[ExamDistributor] = context.spawn(ExamDistributor(examEvaluator, distributorActors), "distributor")
       //      val student1 = context.spawn(Student(), "student1")
       //      val student2 = context.spawn(Student(), "student2")
       //      val student3 = context.spawn(Student(), "student3")
