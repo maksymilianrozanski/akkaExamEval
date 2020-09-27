@@ -33,21 +33,21 @@ object ExamDistributor {
   import exams.data.TeachersExam._
 
   case class ActorsPack(evaluator: ActorRef[ExamEvaluator], generator: ActorRef[ExamGenerator])
-  def apply(evaluator: ActorRef[ExamEvaluator], actorsPack: ActorsPack): Behavior[ExamDistributor] = distributor(evaluator, actorsPack)
+  def apply(evaluator: ActorRef[ExamEvaluator], actorsPack: ActorsPack): Behavior[ExamDistributor] = distributor(actorsPack)
 
-  def distributor(evaluator: ActorRef[ExamEvaluator], actorsPack: ActorsPack): Behavior[ExamDistributor] = Behaviors.setup[ExamDistributor](context => {
+  def distributor(actorsPack: ActorsPack): Behavior[ExamDistributor] = Behaviors.setup[ExamDistributor](context => {
     EventSourcedBehavior[ExamDistributor, ExamDistributorEvents, ExamDistributorState](
       persistenceId = PersistenceId.ofUniqueId("examDistributor"),
       emptyState = emptyState,
-      commandHandler = distributorCommandHandler(context, evaluator) _,
+      commandHandler = distributorCommandHandler(context, actorsPack) _,
       eventHandler = distributorEventHandler
     )
   })
 
-  def distributorCommandHandler(context: ActorContext[ExamDistributor], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
+  def distributorCommandHandler(context: ActorContext[ExamDistributor], actors: ActorsPack)(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
       case request: RequestExam => onRequestExam(context)(ExamGenerator.sampleExam)(state, request)
-      case request: RequestExamEvaluation => onRequestExamEvaluation(context, evaluator)(state, request)
+      case request: RequestExamEvaluation => onRequestExamEvaluation(context, actors.evaluator)(state, request)
     }
 
   def onRequestExam[T >: RequestExam](context: ActorContext[T])(generator: String => TeachersExam)(state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
