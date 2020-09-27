@@ -71,7 +71,7 @@ object ExamGenerator {
     }
 
   private def stateWithDropped(state: State)(idToDrop: ExamId) =
-    state.copy(requests = state.requests.dropWhile(_._1.examId == idToDrop))
+    state.copy(requests = state.requests.filterNot(_._1.examId == idToDrop))
 
   private def persistedRequest(state: State)(examId: ExamId) =
     state.requests.find(_._1.examId == examId) match {
