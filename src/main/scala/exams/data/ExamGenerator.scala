@@ -28,9 +28,9 @@ object ExamGenerator {
   def apply(repository: ActorRef[ExamRepository])(state: State): Behavior[ExamGenerator] =
     generator(repository)(state)
 
-  sealed trait ExamGeneratorErrors
+  private sealed trait ExamGeneratorErrors
   private case class NotFoundResponse(examId: ExamId) extends ExamGeneratorErrors
-  final case class EmptyRepositoryResponse(request: ExamRequestWithRef) extends ExamGeneratorErrors
+  private final case class EmptyRepositoryResponse(request: ExamRequestWithRef) extends ExamGeneratorErrors
 
   def generator(repository: ActorRef[ExamRepository])(state: State): Behavior[ExamGenerator] =
     Behaviors.setup { context =>
