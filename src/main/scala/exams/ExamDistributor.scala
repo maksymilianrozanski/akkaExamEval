@@ -24,7 +24,7 @@ object ExamDistributor {
    */
   final case class RequestExam2(studentsRequest: StudentsRequest, student: ActorRef[Student]) extends ExamDistributor
   final case class RequestExamEvaluation(examId: String, answers: Answers) extends ExamDistributor
-  private case class ReceivedGeneratedExam(exam: ExamOutput) extends ExamDistributor
+  private[exams] case class ReceivedGeneratedExam(exam: ExamOutput) extends ExamDistributor
 
   //events
   sealed trait ExamDistributorEvents
@@ -90,8 +90,35 @@ object ExamDistributor {
       }
   }
 
-  def onReceivingGeneratedExam(context: ActorContext[ExamDistributor])(state: ExamDistributorState, message: ReceivedGeneratedExam) = ???
+  def onReceivingGeneratedExam[T >: ReceivedGeneratedExam]
+  (context: ActorContext[T])(state: ExamDistributorState, message: ReceivedGeneratedExam): Effect[ExamDistributorEvents, ExamDistributorState] = {
+    message match {
+      case ReceivedGeneratedExam(exam@(request@ExamRequest(examId, studentId, maxQuestions, setId), maybeExam)) =>
 
+        val studentAndExam = (state.requests.get(examId), maybeExam)
+        studentAndExam match {
+          case (Some(studentRef), Some(exam)) =>
+            Effect.persist(ExamAdded(studentId, exam)).thenReply(studentRef) {
+              (_: ExamDistributorState) =>
+                context.log.info("Sending generated exam(examId: {}) to student", examId)
+                GiveExamToStudent(exam)
+            }
+
+          case (Some(studentRef), None) =>
+            //empty generatorResponse
+            Effect.persist(ExamRequestRemoved(examId)).thenReply(studentRef) {
+              (_: ExamDistributorState) =>
+              context.log.info("Generating exam not successful")
+              GeneratingExamFailed
+            }
+
+          case (None, _) =>
+            //student ref not found - corrupted state
+            Effect.stop().thenRun((_: ExamDistributorState) =>
+              context.log.error("Student ref corresponding to ExamId: {} not found!", examId))
+        }
+    }
+  }
 
   def onRequestExamEvaluation[T >: RequestExamEvaluation](context: ActorContext[T], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: RequestExamEvaluation): EffectBuilder[ExamCompleted, ExamDistributorState] = {
     command match {
@@ -120,7 +147,6 @@ object ExamDistributor {
   private def answersLengthIsValid(persistedExam: PersistedExam, answers: Answers) =
     persistedExam.exam.questions.lengthCompare(answers) == 0
 
-
   def distributorEventHandler(state: ExamDistributorState, event: ExamDistributorEvents): ExamDistributorState =
     event match {
       case examRequested: ExamRequested => onExamRequestedHandler(state, examRequested)
@@ -136,7 +162,9 @@ object ExamDistributor {
     state.copy(requests = state.requests.filterNot(_._1 == event.examId))
 
   def examAddedHandler(state: ExamDistributorState, event: ExamAdded): ExamDistributorState =
-    state.copy(exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)), requests = Map())
+    state.copy(
+      exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)),
+      requests = state.requests.filterNot(_._1 == event.exam.examId))
 
   def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState =
     state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)), requests = Map())

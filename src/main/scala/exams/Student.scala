@@ -11,6 +11,7 @@ final case class RequestExamCommand(code: String, distributor: ActorRef[ExamDist
 
 final case class GiveExamToStudent(emptyExam: StudentsExam) extends Student
 final case class GiveResultToStudent(result: Double) extends Student
+case object GeneratingExamFailed extends Student
 
 object Student {
   def apply(displayReceiver: ActorRef[ExamToDisplay]): Behavior[Student] = stateless(displayReceiver)
@@ -28,6 +29,9 @@ object Student {
         case RequestExamCommand(code, distributor) =>
           context.log.info("received starting exam request")
           distributor ! RequestExam(code, context.self)
+          Behaviors.same
+        case GeneratingExamFailed =>
+          context.log.info("student received GeneratingExamFailed message")
           Behaviors.same
       }
     )
