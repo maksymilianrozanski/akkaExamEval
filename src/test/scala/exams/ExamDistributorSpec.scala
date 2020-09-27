@@ -8,7 +8,7 @@ import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.ExamDistributor._
 import exams.data.ExamGenerator.ExamGenerator
-import exams.data.{Answer, BlankQuestion, Question, StudentsRequest, TeachersExam}
+import exams.data.{Answer, BlankQuestion, ExamGenerator, ExamRequest, Question, StudentsRequest, TeachersExam}
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -123,9 +123,9 @@ class ExamDistributorSpec
         val examCompleted = ExamCompleted("ex567", List(List(Answer("yes"))))
 
         val expected = ExamDistributorState(exams = Map(
-                  "ex123" -> persistedExam1,
-                  "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
-                    List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))), answers = Map(examCompleted.examId -> PersistedAnswers(examCompleted.answers)), Map(), 0)
+          "ex123" -> persistedExam1,
+          "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
+            List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))), answers = Map(examCompleted.examId -> PersistedAnswers(examCompleted.answers)), Map(), 0)
 
         val result = ExamDistributor.examCompletedHandler(twoExams, examCompleted)
         assert(result == expected)
@@ -135,15 +135,21 @@ class ExamDistributorSpec
     "onExamRequestedHandler" must {
       val student1 = TestInbox[Student]()
       val existingRequest = "123" -> student1.ref
-      val initialState = ExamDistributor.emptyState.copy(requests = Map(existingRequest), lastExamId = 0)
+      val initialState = ExamDistributor.emptyState.copy(requests = Map(existingRequest), lastExamId = 11)
 
       val id2: ExamId = "1234"
       val student2 = TestInbox[Student]()
       val event = ExamRequested(id2, student2.ref)
+
+      val result = onExamRequestedHandler(initialState, event)
+
       "add request to the state" in {
-        val expected = ExamDistributor.emptyState.copy(requests = Map(existingRequest, id2 -> student2.ref), lastExamId = 0)
-        val result = onExamRequestedHandler(initialState, event)
-        assertResult(expected)(result)
+        val expectedRequests = Map(existingRequest, id2 -> student2.ref)
+        assertResult(expectedRequests)(result.requests)
+      }
+
+      "increase lastExamId by 1" in {
+        assertResult(initialState.lastExamId + 1)(result.lastExamId)
       }
     }
 

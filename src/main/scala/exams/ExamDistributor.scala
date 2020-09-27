@@ -6,7 +6,7 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
 import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
-import exams.data.{Answer, ExamGenerator, StudentsRequest, TeachersExam}
+import exams.data.{Answer, ExamGenerator, ExamRequest, StudentsRequest, TeachersExam}
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
 
 object ExamDistributor {
@@ -119,15 +119,15 @@ object ExamDistributor {
     }
 
   def onExamRequestedHandler(state: ExamDistributorState, event: ExamRequested): ExamDistributorState =
-    state.copy(requests = state.requests.updated(event.examId, event.student), lastExamId = 0)
+    state.copy(requests = state.requests.updated(event.examId, event.student), lastExamId = state.lastExamId + 1)
 
   def onExamRequestRemovedHandler(state: ExamDistributorState, event: ExamRequestRemoved): ExamDistributorState =
-    state.copy(requests = state.requests.filterNot(_._1 == event.examId), lastExamId = 0)
+    state.copy(requests = state.requests.filterNot(_._1 == event.examId))
 
   def examAddedHandler(state: ExamDistributorState, event: ExamAdded): ExamDistributorState =
-    state.copy(exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)), requests = Map(), lastExamId = 0)
+    state.copy(exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)), requests = Map())
 
   def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState =
-    state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)), requests = Map(), lastExamId = 0)
+    state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)), requests = Map())
 
 }
