@@ -132,6 +132,18 @@ class ExamDistributorSpec
         assert(result == expected)
       }
     }
+
+    "onExamRequestedHandler" must {
+      "add request to the state" in {
+
+      }
+    }
+
+    "onExamRequestRemovedHandler" must {
+      "remove request from the state" in {
+
+      }
+    }
   }
 
   def requestExamEvaluationTestKit(evaluator: TestInbox[ExamEvaluator])(initialState: ExamDistributorState): EventSourcedBehaviorTestKit[RequestExamEvaluation, ExamCompleted, ExamDistributorState] =
@@ -193,6 +205,41 @@ class ExamDistributorSpec
 
       "not send message to evaluator" in {
         assert(!evaluator.hasMessages)
+      }
+    }
+  }
+
+  "ExamDistributor" when {
+
+    "receive RequestExam2 message" should {
+
+      "add request to the state" in {
+
+      }
+
+      "send message to ExamGenerator" in {
+
+      }
+    }
+  }
+
+  "ExamDistributor" when {
+    "receive message from ExamGenerator" when {
+      "state contains request with given ExamId" should {
+
+        "send message to Student" in {
+
+        }
+
+        "remove request from State" in {
+
+        }
+      }
+
+      "state does not contain request with given ExamId" should {
+        "stop the actor" in {
+
+        }
       }
     }
   }

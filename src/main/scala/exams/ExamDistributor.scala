@@ -5,8 +5,8 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
-import exams.data.ExamGenerator.ExamGenerator
-import exams.data.{Answer, ExamGenerator, TeachersExam}
+import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
+import exams.data.{Answer, ExamGenerator, StudentsRequest, TeachersExam}
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
 
 object ExamDistributor {
@@ -16,10 +16,20 @@ object ExamDistributor {
   //commands
   sealed trait ExamDistributor
   final case class RequestExam(studentId: String, student: ActorRef[Student]) extends ExamDistributor
+  /**
+   * incoming message - Requests generating new exam
+   *
+   * @param studentsRequest request exam with n questions from specific set
+   * @param student         ActorRef to actor who requested the exam
+   */
+  final case class RequestExam2(studentsRequest: StudentsRequest, student: ActorRef[Student]) extends ExamDistributor
   final case class RequestExamEvaluation(examId: String, answers: Answers) extends ExamDistributor
+  private case class ReceivedGeneratedExam(exam: ExamOutput) extends ExamDistributor
 
   //events
   sealed trait ExamDistributorEvents
+  final case class ExamRequested(examId: ExamId, student: ActorRef[Student]) extends ExamDistributorEvents
+  final case class ExamRequestRemoved(examId: ExamId) extends ExamDistributorEvents
   final case class ExamAdded(studentId: String, exam: TeachersExam) extends ExamDistributorEvents
   final case class ExamCompleted(examId: String, answers: Answers) extends ExamDistributorEvents
 
@@ -36,6 +46,9 @@ object ExamDistributor {
   def apply(evaluator: ActorRef[ExamEvaluator], actorsPack: ActorsPack): Behavior[ExamDistributor] = distributor(actorsPack)
 
   def distributor(actorsPack: ActorsPack): Behavior[ExamDistributor] = Behaviors.setup[ExamDistributor](context => {
+    val messageAdapter: ActorRef[ExamOutput] =
+      context.messageAdapter(response => ReceivedGeneratedExam(response))
+
     EventSourcedBehavior[ExamDistributor, ExamDistributorEvents, ExamDistributorState](
       persistenceId = PersistenceId.ofUniqueId("examDistributor"),
       emptyState = emptyState,
@@ -47,7 +60,9 @@ object ExamDistributor {
   def distributorCommandHandler(context: ActorContext[ExamDistributor], actors: ActorsPack)(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
       case request: RequestExam => onRequestExam(context)(ExamGenerator.sampleExam)(state, request)
+      case request: RequestExam2 => onRequestExam2(context)(actors.generator)(state, request)
       case request: RequestExamEvaluation => onRequestExamEvaluation(context, actors.evaluator)(state, request)
+      case message: ReceivedGeneratedExam => onReceivingGeneratedExam(context)(state, message)
     }
 
   def onRequestExam[T >: RequestExam](context: ActorContext[T])(generator: String => TeachersExam)(state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
@@ -59,6 +74,12 @@ object ExamDistributor {
         requestExam.student ! GiveExamToStudent(exam)
       })
   }
+
+  def onRequestExam2(context: ActorContext[ExamDistributor])(generator: ActorRef[ExamGenerator])(state: ExamDistributorState, command: RequestExam2): EffectBuilder[ExamRequested, ExamDistributorState] =
+    ???
+
+  def onReceivingGeneratedExam(context: ActorContext[ExamDistributor])(state: ExamDistributorState, message: ReceivedGeneratedExam) = ???
+
 
   def onRequestExamEvaluation[T >: RequestExamEvaluation](context: ActorContext[T], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: RequestExamEvaluation): EffectBuilder[ExamCompleted, ExamDistributorState] = {
     command match {
@@ -87,11 +108,18 @@ object ExamDistributor {
   private def answersLengthIsValid(persistedExam: PersistedExam, answers: Answers) =
     persistedExam.exam.questions.lengthCompare(answers) == 0
 
+
   def distributorEventHandler(state: ExamDistributorState, event: ExamDistributorEvents): ExamDistributorState =
     event match {
+      case examRequested: ExamRequested => onExamRequestedHandler(state, examRequested)
+      case requestRemoved: ExamRequestRemoved => onExamRequestRemovedHandler(state, requestRemoved)
       case examAdded: ExamAdded => examAddedHandler(state, examAdded)
       case examCompleted: ExamCompleted => examCompletedHandler(state, examCompleted)
     }
+
+  def onExamRequestedHandler(state: ExamDistributorState, event: ExamRequested): ExamDistributorState = ???
+
+  def onExamRequestRemovedHandler(state: ExamDistributorState, event: ExamRequestRemoved): ExamDistributorState = ???
 
   def examAddedHandler(state: ExamDistributorState, event: ExamAdded): ExamDistributorState =
     state.copy(exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)))

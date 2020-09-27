@@ -20,4 +20,5 @@ case class Question(blank: BlankQuestion, correctAnswers: List[Answer])
 case class BlankQuestion(text: String, answers: List[Answer])
 case class Answer(text: String)
 
+case class StudentsRequest(studentId: StudentId, maxQuestions: Int, setId: SetId)
 case class ExamRequest(examId: ExamId, studentId: StudentId, maxQuestions: Int, setId: SetId)
