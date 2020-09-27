@@ -37,8 +37,9 @@ object ExamDistributor {
   type StudentId = String
   case class PersistedExam(studentId: StudentId, exam: TeachersExam)
   case class PersistedAnswers(answers: Answers)
-  case class ExamDistributorState(exams: Map[ExamId, PersistedExam], answers: Map[ExamId, PersistedAnswers], requests: Map[ExamId, ActorRef[Student]])
-  val emptyState: ExamDistributorState = ExamDistributorState(Map(), Map(), Map())
+  case class ExamDistributorState(exams: Map[ExamId, PersistedExam], answers: Map[ExamId, PersistedAnswers],
+                                  requests: Map[ExamId, ActorRef[Student]], lastExamId: Int)
+  val emptyState: ExamDistributorState = ExamDistributorState(Map(), Map(), Map(), 0)
 
   import exams.data.TeachersExam._
 
@@ -75,7 +76,7 @@ object ExamDistributor {
       })
   }
 
-  def onRequestExam2(context: ActorContext[ExamDistributor])(generator: ActorRef[ExamGenerator])(state: ExamDistributorState, command: RequestExam2): EffectBuilder[ExamRequested, ExamDistributorState] =
+  def onRequestExam2[T >: RequestExam2](context: ActorContext[T])(generator: ActorRef[ExamGenerator])(state: ExamDistributorState, command: RequestExam2): EffectBuilder[ExamRequested, ExamDistributorState] =
     ???
 
   def onReceivingGeneratedExam(context: ActorContext[ExamDistributor])(state: ExamDistributorState, message: ReceivedGeneratedExam) = ???
@@ -118,15 +119,15 @@ object ExamDistributor {
     }
 
   def onExamRequestedHandler(state: ExamDistributorState, event: ExamRequested): ExamDistributorState =
-    state.copy(requests = state.requests.updated(event.examId, event.student))
+    state.copy(requests = state.requests.updated(event.examId, event.student), lastExamId = 0)
 
   def onExamRequestRemovedHandler(state: ExamDistributorState, event: ExamRequestRemoved): ExamDistributorState =
-    state.copy(requests = state.requests.filterNot(_._1 == event.examId))
+    state.copy(requests = state.requests.filterNot(_._1 == event.examId), lastExamId = 0)
 
   def examAddedHandler(state: ExamDistributorState, event: ExamAdded): ExamDistributorState =
-    state.copy(exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)), requests = Map())
+    state.copy(exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)), requests = Map(), lastExamId = 0)
 
   def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState =
-    state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)), requests = Map())
+    state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)), requests = Map(), lastExamId = 0)
 
 }

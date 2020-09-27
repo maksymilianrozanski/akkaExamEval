@@ -7,7 +7,8 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.Serializati
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.ExamDistributor._
-import exams.data.{Answer, BlankQuestion, Question, TeachersExam}
+import exams.data.ExamGenerator.ExamGenerator
+import exams.data.{Answer, BlankQuestion, Question, StudentsRequest, TeachersExam}
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -60,7 +61,7 @@ class ExamDistributorSpec
     //setup
     val student = TestInbox[Student]()
     //given
-    val nonEmptyState = ExamDistributorState(Map("123" -> PersistedExam("1234", generator("123"))), Map(), Map())
+    val nonEmptyState = ExamDistributorState(Map("123" -> PersistedExam("1234", generator("123"))), Map(), Map(), 0)
     val studentId = "124"
 
     "given command and non-empty state" when {
@@ -94,9 +95,9 @@ class ExamDistributorSpec
   )
 
   private val emptyExams = ExamDistributor.emptyState
-  private val oneExam = ExamDistributorState(Map("ex123" -> persistedExam1), Map(), Map())
-  private val twoExams = ExamDistributorState(Map("ex123" -> persistedExam1, "ex567" -> persistedExam2), Map(), Map())
-  private val threeExams = ExamDistributorState(Map("ex123" -> persistedExam1, "ex567" -> persistedExam2, "ex568" -> persistedExam3), Map(), Map())
+  private val oneExam = ExamDistributorState(Map("ex123" -> persistedExam1), Map(), Map(), 0)
+  private val twoExams = ExamDistributorState(Map("ex123" -> persistedExam1, "ex567" -> persistedExam2), Map(), Map(), 0)
+  private val threeExams = ExamDistributorState(Map("ex123" -> persistedExam1, "ex567" -> persistedExam2, "ex568" -> persistedExam3), Map(), Map(), 0)
 
   "ExamDistributor" must {
     "examAddedHandler" must {
@@ -122,9 +123,9 @@ class ExamDistributorSpec
         val examCompleted = ExamCompleted("ex567", List(List(Answer("yes"))))
 
         val expected = ExamDistributorState(exams = Map(
-          "ex123" -> persistedExam1,
-          "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
-            List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))), answers = Map(examCompleted.examId -> PersistedAnswers(examCompleted.answers)), Map())
+                  "ex123" -> persistedExam1,
+                  "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
+                    List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))), answers = Map(examCompleted.examId -> PersistedAnswers(examCompleted.answers)), Map(), 0)
 
         val result = ExamDistributor.examCompletedHandler(twoExams, examCompleted)
         assert(result == expected)
@@ -134,13 +135,13 @@ class ExamDistributorSpec
     "onExamRequestedHandler" must {
       val student1 = TestInbox[Student]()
       val existingRequest = "123" -> student1.ref
-      val initialState = ExamDistributor.emptyState.copy(requests = Map(existingRequest))
+      val initialState = ExamDistributor.emptyState.copy(requests = Map(existingRequest), lastExamId = 0)
 
       val id2: ExamId = "1234"
       val student2 = TestInbox[Student]()
       val event = ExamRequested(id2, student2.ref)
       "add request to the state" in {
-        val expected = ExamDistributor.emptyState.copy(requests = Map(existingRequest, id2 -> student2.ref))
+        val expected = ExamDistributor.emptyState.copy(requests = Map(existingRequest, id2 -> student2.ref), lastExamId = 0)
         val result = onExamRequestedHandler(initialState, event)
         assertResult(expected)(result)
       }
@@ -151,12 +152,12 @@ class ExamDistributorSpec
       val student2 = TestInbox[Student]()
       val persisted1 = "1" -> student1.ref
       val persisted2 = "2" -> student2.ref
-      val initialState = ExamDistributor.emptyState.copy(requests = Map(persisted1, persisted2))
+      val initialState = ExamDistributor.emptyState.copy(requests = Map(persisted1, persisted2), lastExamId = 0)
 
       val event = ExamRequestRemoved("2")
 
       "remove request from the state" in {
-        val expected = initialState.copy(requests = Map(persisted1))
+        val expected = initialState.copy(requests = Map(persisted1), lastExamId = 0)
         val result = onExamRequestRemovedHandler(initialState, event)
         assertResult(expected)(result)
       }
