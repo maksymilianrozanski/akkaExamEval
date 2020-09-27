@@ -120,7 +120,8 @@ object ExamDistributor {
   def onExamRequestedHandler(state: ExamDistributorState, event: ExamRequested): ExamDistributorState =
     state.copy(requests = state.requests.updated(event.examId, event.student))
 
-  def onExamRequestRemovedHandler(state: ExamDistributorState, event: ExamRequestRemoved): ExamDistributorState = ???
+  def onExamRequestRemovedHandler(state: ExamDistributorState, event: ExamRequestRemoved): ExamDistributorState =
+    state.copy(requests = state.requests.filterNot(_._1 == event.examId))
 
   def examAddedHandler(state: ExamDistributorState, event: ExamAdded): ExamDistributorState =
     state.copy(exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)), requests = Map())

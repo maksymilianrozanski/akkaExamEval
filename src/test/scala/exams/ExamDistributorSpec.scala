@@ -147,8 +147,18 @@ class ExamDistributorSpec
     }
 
     "onExamRequestRemovedHandler" must {
-      "remove request from the state" in {
+      val student1 = TestInbox[Student]()
+      val student2 = TestInbox[Student]()
+      val persisted1 = "1" -> student1.ref
+      val persisted2 = "2" -> student2.ref
+      val initialState = ExamDistributor.emptyState.copy(requests = Map(persisted1, persisted2))
 
+      val event = ExamRequestRemoved("2")
+
+      "remove request from the state" in {
+        val expected = initialState.copy(requests = Map(persisted1))
+        val result = onExamRequestRemovedHandler(initialState, event)
+        assertResult(expected)(result)
       }
     }
   }
