@@ -117,7 +117,8 @@ object ExamDistributor {
       case examCompleted: ExamCompleted => examCompletedHandler(state, examCompleted)
     }
 
-  def onExamRequestedHandler(state: ExamDistributorState, event: ExamRequested): ExamDistributorState = ???
+  def onExamRequestedHandler(state: ExamDistributorState, event: ExamRequested): ExamDistributorState =
+    state.copy(requests = state.requests.updated(event.examId, event.student))
 
   def onExamRequestRemovedHandler(state: ExamDistributorState, event: ExamRequestRemoved): ExamDistributorState = ???
 

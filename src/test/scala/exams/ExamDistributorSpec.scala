@@ -122,9 +122,9 @@ class ExamDistributorSpec
         val examCompleted = ExamCompleted("ex567", List(List(Answer("yes"))))
 
         val expected = ExamDistributorState(exams = Map(
-                    "ex123" -> persistedExam1,
-                    "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
-                      List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))), answers = Map(examCompleted.examId -> PersistedAnswers(examCompleted.answers)), Map())
+          "ex123" -> persistedExam1,
+          "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
+            List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))), answers = Map(examCompleted.examId -> PersistedAnswers(examCompleted.answers)), Map())
 
         val result = ExamDistributor.examCompletedHandler(twoExams, examCompleted)
         assert(result == expected)
@@ -132,8 +132,17 @@ class ExamDistributorSpec
     }
 
     "onExamRequestedHandler" must {
-      "add request to the state" in {
+      val student1 = TestInbox[Student]()
+      val existingRequest = "123" -> student1.ref
+      val initialState = ExamDistributor.emptyState.copy(requests = Map(existingRequest))
 
+      val id2: ExamId = "1234"
+      val student2 = TestInbox[Student]()
+      val event = ExamRequested(id2, student2.ref)
+      "add request to the state" in {
+        val expected = ExamDistributor.emptyState.copy(requests = Map(existingRequest, id2 -> student2.ref))
+        val result = onExamRequestedHandler(initialState, event)
+        assertResult(expected)(result)
       }
     }
 
