@@ -7,7 +7,7 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.Serializati
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.ExamDistributor._
-import exams.data.ExamGenerator.ExamGenerator
+import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
 import exams.data.{Answer, BlankQuestion, ExamGenerator, ExamRequest, Question, StudentsRequest, TeachersExam}
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
 import org.scalatest.BeforeAndAfterEach
@@ -233,16 +233,41 @@ class ExamDistributorSpec
     }
   }
 
+  def requestExam2TestKit(generator: TestInbox[ExamGenerator], messageAdapter: TestInbox[ExamOutput])(initialState: ExamDistributorState)
+  : EventSourcedBehaviorTestKit[RequestExam2, ExamRequested, ExamDistributorState] =
+    EventSourcedBehaviorTestKit(system, Behaviors.setup[RequestExam2] { context =>
+      EventSourcedBehavior(
+        persistenceId = PersistenceId.ofUniqueId("uniqueId"),
+        emptyState = initialState,
+        commandHandler = onRequestExam2(context)(generator.ref, messageAdapter.ref) _,
+        eventHandler = onExamRequestedHandler
+      )
+    }, serializationSettings = disabled)
+
   "ExamDistributor" when {
+    val generatorInbox = TestInbox[ExamGenerator]()
+    val fakeMessageAdapter = TestInbox[ExamOutput]()
+    val studentInbox = TestInbox[Student]()
+    val initialState = ExamDistributor.emptyState.copy(lastExamId = 10)
 
+    val studentsRequest = StudentsRequest("student123", 2, "set2")
+    val command = RequestExam2(studentsRequest, studentInbox.ref)
+    val testKit = requestExam2TestKit(generatorInbox, fakeMessageAdapter)(initialState)
     "receive RequestExam2 message" should {
-
-      "add request to the state" in {
-
+      val expectedId = (initialState.lastExamId + 1).toString
+      val event = testKit.runCommand(command).event
+      "generate ExamId and return ExamRequested event" in {
+        assertResult(ExamRequested(expectedId, studentInbox.ref))(event)
       }
-
+      val receivedMessage = generatorInbox.receiveMessage()
       "send message to ExamGenerator" in {
-
+        receivedMessage match {
+          case ExamGenerator.ReceivedExamRequest(examRequest, replyTo) =>
+            assertResult(ExamRequest(expectedId, studentsRequest.studentId, studentsRequest.maxQuestions,
+              studentsRequest.setId))(examRequest)
+            assertResult(fakeMessageAdapter.ref, "message should contain reference to message adapter")(replyTo)
+          case notMatched => fail(s"should match to ExamGenerator.ReceivedExamRequest, actual: $notMatched")
+        }
       }
     }
   }
