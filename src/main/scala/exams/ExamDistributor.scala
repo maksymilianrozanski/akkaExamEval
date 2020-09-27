@@ -37,8 +37,8 @@ object ExamDistributor {
   type StudentId = String
   case class PersistedExam(studentId: StudentId, exam: TeachersExam)
   case class PersistedAnswers(answers: Answers)
-  case class ExamDistributorState(exams: Map[ExamId, PersistedExam], answers: Map[ExamId, PersistedAnswers])
-  val emptyState: ExamDistributorState = ExamDistributorState(Map(), Map())
+  case class ExamDistributorState(exams: Map[ExamId, PersistedExam], answers: Map[ExamId, PersistedAnswers], requests: Map[ExamId, ActorRef[Student]])
+  val emptyState: ExamDistributorState = ExamDistributorState(Map(), Map(), Map())
 
   import exams.data.TeachersExam._
 
@@ -122,9 +122,9 @@ object ExamDistributor {
   def onExamRequestRemovedHandler(state: ExamDistributorState, event: ExamRequestRemoved): ExamDistributorState = ???
 
   def examAddedHandler(state: ExamDistributorState, event: ExamAdded): ExamDistributorState =
-    state.copy(exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)))
+    state.copy(exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)), requests = Map())
 
   def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState =
-    state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)))
+    state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)), requests = Map())
 
 }

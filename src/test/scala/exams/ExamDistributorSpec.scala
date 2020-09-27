@@ -60,7 +60,7 @@ class ExamDistributorSpec
     //setup
     val student = TestInbox[Student]()
     //given
-    val nonEmptyState = ExamDistributorState(Map("123" -> PersistedExam("1234", generator("123"))), Map())
+    val nonEmptyState = ExamDistributorState(Map("123" -> PersistedExam("1234", generator("123"))), Map(), Map())
     val studentId = "124"
 
     "given command and non-empty state" when {
@@ -94,9 +94,9 @@ class ExamDistributorSpec
   )
 
   private val emptyExams = ExamDistributor.emptyState
-  private val oneExam = ExamDistributorState(Map("ex123" -> persistedExam1), Map())
-  private val twoExams = ExamDistributorState(Map("ex123" -> persistedExam1, "ex567" -> persistedExam2), Map())
-  private val threeExams = ExamDistributorState(Map("ex123" -> persistedExam1, "ex567" -> persistedExam2, "ex568" -> persistedExam3), Map())
+  private val oneExam = ExamDistributorState(Map("ex123" -> persistedExam1), Map(), Map())
+  private val twoExams = ExamDistributorState(Map("ex123" -> persistedExam1, "ex567" -> persistedExam2), Map(), Map())
+  private val threeExams = ExamDistributorState(Map("ex123" -> persistedExam1, "ex567" -> persistedExam2, "ex568" -> persistedExam3), Map(), Map())
 
   "ExamDistributor" must {
     "examAddedHandler" must {
@@ -121,12 +121,10 @@ class ExamDistributorSpec
       "add answers to persisted exam" in {
         val examCompleted = ExamCompleted("ex567", List(List(Answer("yes"))))
 
-        val expected = ExamDistributorState(
-          exams = Map(
-            "ex123" -> persistedExam1,
-            "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
-              List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))),
-          answers = Map(examCompleted.examId -> PersistedAnswers(examCompleted.answers)))
+        val expected = ExamDistributorState(exams = Map(
+                    "ex123" -> persistedExam1,
+                    "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
+                      List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))), answers = Map(examCompleted.examId -> PersistedAnswers(examCompleted.answers)), Map())
 
         val result = ExamDistributor.examCompletedHandler(twoExams, examCompleted)
         assert(result == expected)
