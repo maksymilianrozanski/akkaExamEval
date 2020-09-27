@@ -1,14 +1,17 @@
 package exams
 
+import akka.actor.UnhandledMessage
 import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox}
+import akka.actor.typed.SupervisorStrategy
 import akka.actor.typed.scaladsl.Behaviors
+import akka.pattern.BackoffSupervisor
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.disabled
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.ExamDistributor._
 import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
-import exams.data.StubQuestions.question2
+import exams.data.StubQuestions.{question1, question2}
 import exams.data.{Answer, BlankQuestion, ExamGenerator, ExamRequest, Question, StudentsRequest, TeachersExam}
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
 import org.scalatest.BeforeAndAfterEach
@@ -301,16 +304,14 @@ class ExamDistributorSpec
   }
 
   "ExamDistributor" when {
-    val student1 = TestInbox[Student]()
-    val student2 = TestInbox[Student]()
-
     "receive message from ExamGenerator" when {
       "state contains request with given ExamId" should {
-        import exams.data.StubQuestions._
-
+        val student1 = TestInbox[Student]()
+        val student2 = TestInbox[Student]()
         val initialState = ExamDistributor.emptyState.copy(lastExamId = 20,
           requests = Map("19" -> student1.ref, "20" -> student2.ref))
 
+        import exams.data.StubQuestions._
         val examRequest = ExamRequest("19", "student123", 2, "set1")
         val exam = TeachersExam("19", List(question1, question2))
         val command = ReceivedGeneratedExam(examRequest, Some(exam))
@@ -321,25 +322,26 @@ class ExamDistributorSpec
         "send message to Student" in {
           student1.expectMessage(GiveExamToStudent(exam))
         }
-
         "send message only to correct student" in {
           assertResult(false, "should send message only to student1")(student2.hasMessages)
         }
-
         "return ExamAdded event" in {
           assertResult(ExamAdded(examRequest.studentId, exam))(result.event)
         }
       }
 
-      "state does not contain request with given ExamId" should {
-        "stop the actor" in {
+      "received message contains no exam" should {
+        val student1 = TestInbox[Student]()
+        val student2 = TestInbox[Student]()
+        val initialState = ExamDistributor.emptyState.copy(lastExamId = 20,
+          requests = Map("19" -> student1.ref, "20" -> student2.ref))
 
-        }
-      }
-
-      "received message contains not exam" should {
+        val examRequest = ExamRequest("19", "student123", 2, "set1")
+        val command = ReceivedGeneratedExam(examRequest, None)
+        val testKit = receivedGeneratedExamTestKit(initialState)
+        testKit.runCommand(command)
         "send GeneratingExamFailed to student" in {
-
+          student1.expectMessage(GeneratingExamFailed)
         }
       }
     }

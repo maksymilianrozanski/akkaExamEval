@@ -93,8 +93,7 @@ object ExamDistributor {
   def onReceivingGeneratedExam[T >: ReceivedGeneratedExam]
   (context: ActorContext[T])(state: ExamDistributorState, message: ReceivedGeneratedExam): Effect[ExamDistributorEvents, ExamDistributorState] = {
     message match {
-      case ReceivedGeneratedExam(exam@(request@ExamRequest(examId, studentId, maxQuestions, setId), maybeExam)) =>
-
+      case ReceivedGeneratedExam((ExamRequest(examId, studentId, _, _), maybeExam)) =>
         val studentAndExam = (state.requests.get(examId), maybeExam)
         studentAndExam match {
           case (Some(studentRef), Some(exam)) =>
@@ -103,19 +102,17 @@ object ExamDistributor {
                 context.log.info("Sending generated exam(examId: {}) to student", examId)
                 GiveExamToStudent(exam)
             }
-
           case (Some(studentRef), None) =>
-            //empty generatorResponse
             Effect.persist(ExamRequestRemoved(examId)).thenReply(studentRef) {
               (_: ExamDistributorState) =>
-              context.log.info("Generating exam not successful")
-              GeneratingExamFailed
+                context.log.info("Generating exam not successful")
+                GeneratingExamFailed
             }
-
           case (None, _) =>
-            //student ref not found - corrupted state
-            Effect.stop().thenRun((_: ExamDistributorState) =>
-              context.log.error("Student ref corresponding to ExamId: {} not found!", examId))
+            //student ref not found - corrupted state?
+            context.log.error("Student ref corresponding to ExamId: {} not found!", examId)
+            //todo: add test case
+            Effect.stop()
         }
     }
   }
@@ -168,5 +165,4 @@ object ExamDistributor {
 
   def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState =
     state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)), requests = Map())
-
 }
