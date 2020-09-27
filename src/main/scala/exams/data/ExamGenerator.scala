@@ -20,7 +20,6 @@ object ExamGenerator {
   sealed trait ExamGenerator
   //incoming msg from ExamDistributor
   final case class ReceivedExamRequest(examRequest: ExamRequest) extends ExamGenerator
-
   final case class ReceivedSetFromRepo(set: TakeQuestionsSetReply) extends ExamGenerator
 
   case class State(requests: Set[ExamRequest])
@@ -42,7 +41,7 @@ object ExamGenerator {
           val newState = state.copy(requests = state.requests + examRequest)
           repository ! TakeQuestionsSet(setId, examId, responseMapper)
           generator(repository)(distributor)(newState)
-        case ReceivedSetFromRepo(set@(examId, optionSet)) =>
+        case ReceivedSetFromRepo((examId, optionSet)) =>
 
           val eitherExam = for (
             i <- persistedRequest(state)(examId);
@@ -50,7 +49,7 @@ object ExamGenerator {
           ) yield (i, createExam(j)(i))
 
           eitherExam match {
-            case Right(exam@(request, teachersExam)) =>
+            case Right((request, teachersExam)) =>
               distributor ! (request, Some(teachersExam))
               generator(repository)(distributor)(stateWithDropped(state)(examId))
             case Left(value) =>
