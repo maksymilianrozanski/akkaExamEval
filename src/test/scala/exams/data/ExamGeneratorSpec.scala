@@ -18,9 +18,9 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
 
     "receive ExamRequest" should {
       val examRequest = ExamRequest("exam123", "student123", 2, "set2")
-      val message = ReceivedExamRequest(examRequest)
+      val message = ReceivedExamRequest(examRequest, distributor.ref)
 
-      val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(distributor.ref)(State(Set.empty[ExamRequest])))
+      val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(State(Set.empty)))
       testKit.run(message)
 
       "send message to repository, and message received by repository" should {
@@ -62,14 +62,14 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
     "receive questions set" when {
       import StubQuestions._
 
-      val initialState = State(Set(examRequest1, examRequest2, examRequest3))
       val questionsSetFromRepo = (examRequest1.examId, Some(QuestionsSet(examRequest1.setId, "set description", Set(question1, question2))))
 
       "receive questions set from repository" when {
         "examId in message from repository exists in current state" should {
           val repository = TestInbox[ExamRepository]()
           val distributor = TestInbox[ExamOutput]()
-          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(distributor.ref)(initialState))
+          val initialState = State(Set(examRequest1, examRequest2, examRequest3).map((_, distributor.ref)))
+          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(initialState))
           val message = ReceivedSetFromRepo(questionsSetFromRepo)
           testKit.run(message)
           "send generated TeachersExam to ExamDistributor" in {
@@ -96,7 +96,8 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
         "examId in message from repository doesn't exist in current state" should {
           val repository = TestInbox[ExamRepository]()
           val distributor = TestInbox[ExamOutput]()
-          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(distributor.ref)(initialState))
+          val initialState = State(Set(examRequest1, examRequest2, examRequest3).map((_, distributor.ref)))
+          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(initialState))
           val message = ReceivedSetFromRepo(("unknown-id", questionsSetFromRepo._2))
           "stop the actor" in {
             testKit.run(message)
@@ -108,7 +109,8 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
         "receive response from repository with 'None' questions-set" should {
           val repository = TestInbox[ExamRepository]()
           val distributor = TestInbox[ExamOutput]()
-          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(distributor.ref)(initialState))
+          val initialState = State(Set(examRequest1, examRequest2, examRequest3).map((_, distributor.ref)))
+          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(initialState))
           val message = ReceivedSetFromRepo((examRequest1.examId, None))
           testKit.run(message)
           "send message to distributor" in {
