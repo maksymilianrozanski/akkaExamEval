@@ -40,10 +40,7 @@ object Main {
       val examGenerator = context.spawnAnonymous(ExamGenerator(repository)(ExamGenerator.emptyState))
       val distributorActors = ExamDistributor.ActorsPack(examEvaluator, examGenerator)
       implicit val distributor: ActorRef[ExamDistributor] = context.spawn(ExamDistributor(examEvaluator, distributorActors), "distributor")
-      //      val student1 = context.spawn(Student(), "student1")
-      //      val student2 = context.spawn(Student(), "student2")
-      //      val student3 = context.spawn(Student(), "student3")
-      //      val student4 = context.spawn(Student(), "student4")
+
       //
       //      generator ! RequestExam(student1)
       //      generator ! RequestExam(student2)
@@ -53,7 +50,7 @@ object Main {
       implicit val studentActions: ActorRef[StudentActions.Command] = context.spawn(StudentActions(), "studentActions")
       context.watch(studentActions)
       implicit val timeout: Timeout = Timeout.create(context.system.settings.config.getDuration("my-app.routes.ask-timeout"))
-      implicit val actorPack: RoutesActorsPack = RoutesActorsPack(studentActions, context, context.system, distributor, timeout)
+      implicit val actorPack: RoutesActorsPack = RoutesActorsPack(studentActions, context.system, distributor, timeout)
       val routes = StudentRoutes2.createStudentRoutes(actorPack)
 
       startHttpServer(routes, context.system)

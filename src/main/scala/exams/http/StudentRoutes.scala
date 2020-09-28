@@ -14,7 +14,6 @@ import exams.http.StudentActions.{ExamToDisplay, SendExamToEvaluation}
 import spray.json._
 
 case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
-                            context: ActorContext[_],
                             system: ActorSystem[_],
                             examDistributor: ActorRef[ExamDistributor],
                             implicit val timeout: Timeout)
