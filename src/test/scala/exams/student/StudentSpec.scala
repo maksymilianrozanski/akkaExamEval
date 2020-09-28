@@ -18,6 +18,16 @@ class StudentSpec extends AnyWordSpecLike {
       testKit.run(command)
       "send ExamToDisplay to displayReceiver" in
         displayReceiver.expectMessage(ExamToDisplay(exam))
+      "have 'stopped' behavior" in
+        assertResult(Behaviors.stopped)(testKit.returnedBehavior)
+    }
+
+    "receive GiveResultToStudent" should {
+      val displayReceiver = TestInbox[ExamToDisplay]()
+      val testKit = BehaviorTestKit(Student(displayReceiver.ref))
+      testKit.run(GiveResultToStudent(0.8))
+      "have 'stopped' behavior" in
+        assertResult(Behaviors.stopped)(testKit.returnedBehavior)
     }
 
     "receive RequestExamCommand" should {
@@ -29,16 +39,16 @@ class StudentSpec extends AnyWordSpecLike {
       testKit.run(command)
       "send RequestExam message to ExamDistributor" in
         distributor.expectMessage(RequestExam2(command.code, testKit.ref))
-      "have 'same' behavior" in
-        assertResult(Behaviors.same)(testKit.returnedBehavior)
+      "have 'stopped' behavior" in
+        assertResult(Behaviors.stopped)(testKit.returnedBehavior)
     }
 
     "receive GeneratingExamFailed" should {
       val displayReceiver = TestInbox[ExamToDisplay]()
       val testKit = BehaviorTestKit(Student(displayReceiver.ref))
       testKit.run(GeneratingExamFailed)
-      "have 'same' behavior" in
-        assertResult(Behaviors.same)(testKit.returnedBehavior)
+      "have 'stopped' behavior" in
+        assertResult(Behaviors.stopped)(testKit.returnedBehavior)
     }
   }
 }

@@ -29,10 +29,10 @@ object Student {
         case RequestExamCommand(code, distributor) =>
           context.log.info("received starting exam request")
           distributor ! RequestExam2(code, context.self)
-          Behaviors.same
+          Behaviors.stopped
         case GeneratingExamFailed =>
           context.log.info("student received GeneratingExamFailed message")
-          Behaviors.same
+          Behaviors.stopped
       }
     )
 
