@@ -2,14 +2,15 @@ package exams.http
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
-import exams.data.StudentsExam
+import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExam2, RequestExamEvaluation}
+import exams.data.{StudentsExam, StudentsRequest}
 import exams.student.Student
 
 object StudentActions {
 
   sealed trait Command
   final case class RequestExamCommand(code: String, replyTo: ActorRef[ExamToDisplay]) extends Command
+  final case class RequestExamCommand2(studentsRequest: StudentsRequest, replyTo: ActorRef[ExamToDisplay]) extends Command
   final case class SendExamToEvaluation(exam: RequestExamEvaluation) extends Command
 
   final case class ActionPerformed(description: String)
@@ -24,6 +25,11 @@ object StudentActions {
           context.log.info("received starting exam request")
           val student = context.spawnAnonymous(Student(displayReceiver))
           distributor ! RequestExam(code, student)
+          Behaviors.same
+        case RequestExamCommand2(studentsRequest, displayReceiver) =>
+          context.log.info("received starting exam request(2)")
+          val student = context.spawnAnonymous(Student(displayReceiver))
+          distributor ! RequestExam2(studentsRequest, student)
           Behaviors.same
         case SendExamToEvaluation(exam) =>
           distributor ! exam
