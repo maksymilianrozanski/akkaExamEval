@@ -3,8 +3,8 @@ package exams.http
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
-import exams.Student
 import exams.data.StudentsExam
+import exams.student.Student
 
 object StudentActions {
 

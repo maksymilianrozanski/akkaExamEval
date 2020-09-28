@@ -14,6 +14,7 @@ import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
 import exams.data.StubQuestions.{question1, question2}
 import exams.data.{Answer, BlankQuestion, ExamGenerator, ExamRequest, Question, StudentsRequest, TeachersExam}
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
+import exams.student.{GeneratingExamFailed, GiveExamToStudent, Student}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
 

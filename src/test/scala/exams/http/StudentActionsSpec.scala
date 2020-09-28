@@ -5,9 +5,9 @@ import akka.actor.testkit.typed.Effect.SpawnedAnonymous
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import akka.actor.typed.ActorRef
 import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
-import exams.Student
 import exams.data.Answer
 import exams.http.StudentActions.{ExamToDisplay, RequestExamCommand}
+import exams.student.Student
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
 

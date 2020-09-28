@@ -1,4 +1,4 @@
-package exams
+package exams.student
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}

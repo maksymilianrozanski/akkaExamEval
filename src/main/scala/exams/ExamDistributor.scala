@@ -8,6 +8,7 @@ import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehav
 import exams.data.ExamGenerator.{ExamGenerator, ExamOutput, ReceivedExamRequest}
 import exams.data.{Answer, ExamGenerator, ExamRequest, StudentsRequest, TeachersExam}
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
+import exams.student.{GeneratingExamFailed, GiveExamToStudent, Student}
 
 object ExamDistributor {
 
