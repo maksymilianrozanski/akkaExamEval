@@ -1,7 +1,8 @@
 package exams.student
 
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
-import exams.ExamDistributor.{ExamDistributor, RequestExam}
+import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExam2}
+import exams.data.StudentsRequest
 import exams.http.StudentActions.ExamToDisplay
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -12,10 +13,11 @@ class StudentSpec extends AnyWordSpecLike {
     val displayReceiver = TestInbox[ExamToDisplay]()
     val testKit = BehaviorTestKit(Student(displayReceiver.ref))
     "receive RequestExamCommand" should {
-      val command = RequestExamCommand("code123", distributor.ref)
+      val studentsRequest = StudentsRequest("student123", 3, "set2")
+      val command = RequestExamCommand(studentsRequest, distributor.ref)
       testKit.run(command)
       "send RequestExam message to ExamDistributor" in
-        distributor.expectMessage(RequestExam(command.code, testKit.ref))
+        distributor.expectMessage(RequestExam2(command.code, testKit.ref))
     }
   }
 }

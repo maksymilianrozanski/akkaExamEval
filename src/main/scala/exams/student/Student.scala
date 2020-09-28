@@ -2,12 +2,12 @@ package exams.student
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import exams.ExamDistributor.{ExamDistributor, RequestExam}
-import exams.data.StudentsExam
+import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExam2}
+import exams.data.{StudentsExam, StudentsRequest}
 import exams.http.StudentActions.ExamToDisplay
 
 sealed trait Student
-final case class RequestExamCommand(code: String, distributor: ActorRef[ExamDistributor]) extends Student
+final case class RequestExamCommand(code: StudentsRequest, distributor: ActorRef[ExamDistributor]) extends Student
 
 final case class GiveExamToStudent(emptyExam: StudentsExam) extends Student
 final case class GiveResultToStudent(result: Double) extends Student
@@ -28,7 +28,7 @@ object Student {
           Behaviors.stopped
         case RequestExamCommand(code, distributor) =>
           context.log.info("received starting exam request")
-          distributor ! RequestExam(code, context.self)
+          distributor ! RequestExam2(code, context.self)
           Behaviors.same
         case GeneratingExamFailed =>
           context.log.info("student received GeneratingExamFailed message")
