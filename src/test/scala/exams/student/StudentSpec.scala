@@ -3,13 +3,23 @@ package exams.student
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import akka.actor.typed.scaladsl.Behaviors
 import exams.ExamDistributor.{ExamDistributor, RequestExam2}
-import exams.data.StudentsRequest
+import exams.data.{ExamGenerator, StudentsRequest}
 import exams.http.StudentActions.ExamToDisplay
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class StudentSpec extends AnyWordSpecLike {
 
   "Student" when {
+    "receive GiveExamToStudent" should {
+      val displayReceiver = TestInbox[ExamToDisplay]()
+      val testKit = BehaviorTestKit(Student(displayReceiver.ref))
+      val exam = ExamGenerator.sampleExam("1")
+      val command = GiveExamToStudent(exam)
+      testKit.run(command)
+      "send ExamToDisplay to displayReceiver" in
+        displayReceiver.expectMessage(ExamToDisplay(exam))
+    }
+
     "receive RequestExamCommand" should {
       val distributor = TestInbox[ExamDistributor]()
       val displayReceiver = TestInbox[ExamToDisplay]()
