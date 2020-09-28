@@ -58,7 +58,9 @@ object ExamDistributor {
     )
   })
 
-  def distributorCommandHandler(context: ActorContext[ExamDistributor], actors: ActorsPack, messageAdapter: ActorRef[ExamOutput])(state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
+  def distributorCommandHandler
+  (context: ActorContext[ExamDistributor], actors: ActorsPack, messageAdapter: ActorRef[ExamOutput])
+  (state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
       case request: RequestExam => onRequestExam(context)(ExamGenerator.sampleExam)(state, request)
       case request: RequestExam2 => onRequestExam2(context)(actors.generator, messageAdapter)(state, request)
@@ -66,7 +68,9 @@ object ExamDistributor {
       case message: ReceivedGeneratedExam => onReceivingGeneratedExam(context)(state, message)
     }
 
-  def onRequestExam[T >: RequestExam](context: ActorContext[T])(generator: String => TeachersExam)(state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
+  def onRequestExam[T >: RequestExam]
+  (context: ActorContext[T])(generator: String => TeachersExam)
+  (state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
     val examId = state.exams.size.toString
     val exam = generator(examId)
     Effect.persist(ExamAdded(requestExam.studentId, exam))
@@ -84,14 +88,16 @@ object ExamDistributor {
       .thenReply(generator) {
         state: ExamDistributorState =>
           context.log.info("persisted ExamRequested, id: {}", state.lastExamId)
-          val examRequest = ExamRequest(nextExamId, command.studentsRequest.studentId, command.studentsRequest.maxQuestions, command.studentsRequest.setId)
+          val examRequest = ExamRequest(nextExamId, command.studentsRequest.studentId,
+            command.studentsRequest.maxQuestions, command.studentsRequest.setId)
           val messageToGenerator = ExamGenerator.ReceivedExamRequest(examRequest, messageAdapter)
           messageToGenerator
       }
   }
 
   def onReceivingGeneratedExam[T >: ReceivedGeneratedExam]
-  (context: ActorContext[T])(state: ExamDistributorState, message: ReceivedGeneratedExam): Effect[ExamDistributorEvents, ExamDistributorState] = {
+  (context: ActorContext[T])(state: ExamDistributorState, message: ReceivedGeneratedExam)
+  : Effect[ExamDistributorEvents, ExamDistributorState] = {
     message match {
       case ReceivedGeneratedExam((ExamRequest(examId, studentId, _, _), maybeExam)) =>
         val studentAndExam = (state.requests.get(examId), maybeExam)
@@ -117,7 +123,9 @@ object ExamDistributor {
     }
   }
 
-  def onRequestExamEvaluation[T >: RequestExamEvaluation](context: ActorContext[T], evaluator: ActorRef[ExamEvaluator])(state: ExamDistributorState, command: RequestExamEvaluation): EffectBuilder[ExamCompleted, ExamDistributorState] = {
+  def onRequestExamEvaluation[T >: RequestExamEvaluation]
+  (context: ActorContext[T], evaluator: ActorRef[ExamEvaluator])
+  (state: ExamDistributorState, command: RequestExamEvaluation): EffectBuilder[ExamCompleted, ExamDistributorState] = {
     command match {
       case RequestExamEvaluation(examId, answers) =>
         // 1 - find exam of id in persisted
