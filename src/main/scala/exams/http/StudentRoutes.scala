@@ -9,6 +9,7 @@ import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import akka.util.Timeout
 import exams.ExamDistributor.{ExamDistributor, RequestExamEvaluation}
+import exams.data.ExamRepository.QuestionsSet
 import exams.data._
 import exams.http.StudentActions.{ExamToDisplay, SendExamToEvaluation}
 import spray.json._
@@ -59,4 +60,6 @@ trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
   implicit val studentsExamFormat: RootJsonFormat[StudentsExam] = jsonFormat2(StudentsExam)
   implicit val completedExamFormat: RootJsonFormat[CompletedExam] = jsonFormat2(CompletedExam)
   implicit val examToDisplayFormat: RootJsonFormat[ExamToDisplay] = jsonFormat1(ExamToDisplay)
+  implicit val questionFormat: RootJsonFormat[Question] = jsonFormat2(Question)
+  implicit val questionsSetFormat: RootJsonFormat[QuestionsSet] = jsonFormat3(QuestionsSet)
 }
