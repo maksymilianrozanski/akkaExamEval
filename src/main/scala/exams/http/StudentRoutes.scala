@@ -34,6 +34,10 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
           HttpEntity(ContentTypes.`text/plain(UTF-8)`, "nothing here yet"))
       } ~ (path("start") & get) {
         examRequestedRoute
+      } ~ post {
+        path("start2") {
+          examRequestedRoute2
+        }
       } ~ (path("evaluate") & post & extractRequest) {
         examEvalRequested
       }
@@ -47,6 +51,15 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
   def examRequestedRoute(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): StandardRoute = {
     import actors._
     complete(userActions.ask((replyTo: ActorRef[ExamToDisplay]) => StudentActions.RequestExamCommand("hello", replyTo)).mapTo[ExamToDisplay])
+  }
+
+  def examRequestedRoute2(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): Route = {
+    import actors._
+    entity(as[StudentsRequest]) { request =>
+      complete(actors.userActions.ask((replyTo: ActorRef[ExamToDisplay]) =>
+        StudentActions.RequestExamCommand2(request, replyTo)
+      ).mapTo[ExamToDisplay])
+    }
   }
 
   def examEvalRequested(request: HttpRequest)(implicit actors: RoutesActorsPack): Route = {
@@ -72,6 +85,7 @@ trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
   implicit val studentsExamFormat: RootJsonFormat[StudentsExam] = jsonFormat2(StudentsExam)
   implicit val completedExamFormat: RootJsonFormat[CompletedExam] = jsonFormat2(CompletedExam)
   implicit val examToDisplayFormat: RootJsonFormat[ExamToDisplay] = jsonFormat1(ExamToDisplay)
+  implicit val studentsRequestFormat: RootJsonFormat[StudentsRequest] = jsonFormat3(StudentsRequest)
   implicit val questionFormat: RootJsonFormat[Question] = jsonFormat2(Question)
   implicit val questionsSetFormat: RootJsonFormat[QuestionsSet] = jsonFormat3(QuestionsSet)
 }
