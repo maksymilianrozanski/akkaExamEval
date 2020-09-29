@@ -1,0 +1,42 @@
+{
+  "setId": "set1",
+  "description": "set1 - example description",
+  "questions": [
+    {
+      "blank": {
+        "text": "Do you like cats?",
+        "answers": [
+          {
+            "text": "yes"
+          },
+          {
+            "text": "no"
+          }
+        ]
+      },
+      "correctAnswers": [
+        {
+          "text": "yes"
+        }
+      ]
+    },
+    {
+      "blank": {
+        "text": "Do you like dogs?",
+        "answers": [
+          {
+            "text": "yes"
+          },
+          {
+            "text": "no"
+          }
+        ]
+      },
+      "correctAnswers": [
+        {
+          "text": "yes"
+        }
+      ]
+    }
+  ]
+}

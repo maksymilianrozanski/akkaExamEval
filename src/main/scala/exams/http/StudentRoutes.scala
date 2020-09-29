@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import akka.util.Timeout
 import exams.ExamDistributor.{ExamDistributor, RequestExamEvaluation}
-import exams.data.ExamRepository.QuestionsSet
+import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, QuestionsSet}
 import exams.data._
 import exams.http.StudentActions.{ExamToDisplay, SendExamToEvaluation}
 import spray.json._
@@ -17,6 +17,7 @@ import spray.json._
 case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
                             system: ActorSystem[_],
                             examDistributor: ActorRef[ExamDistributor],
+                            repository: ActorRef[ExamRepository],
                             implicit val timeout: Timeout)
 
 object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
@@ -36,6 +37,10 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
       } ~ (path("evaluate") & post & extractRequest) {
         examEvalRequested
       }
+    } ~ pathPrefix("repo") {
+      (path("add") & post & extractRequest) {
+        addSetToRepo
+      }
     }
   }
 
@@ -50,6 +55,13 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
       exam =>
         actors.userActions ! SendExamToEvaluation(RequestExamEvaluation(exam.examId, exam.selectedAnswers))
         complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
+    }
+  }
+
+  def addSetToRepo(request: HttpRequest)(implicit actors: RoutesActorsPack): Route = {
+    entity(as[QuestionsSet]) { set =>
+      actors.repository ! AddQuestionsSet(set)
+      complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested adding questions set"))
     }
   }
 }
