@@ -33,21 +33,26 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
       (request: StudentsRequest) => actors.userActions.ask((replyTo: ActorRef[ExamToDisplay]) =>
         StudentActions.RequestExamCommand2(request, replyTo))
 
+    implicit def examCompletedFuture: CompletedExam => Unit =
+      (exam: CompletedExam) =>
+        actors.userActions ! SendExamToEvaluation(RequestExamEvaluation(exam.examId, exam.selectedAnswers))
+
     StudentRoutes2.studentRoutes
   }
 
   def studentRoutes(implicit actors: RoutesActorsPack,
                     actorSystem: ActorSystem[_],
-                    studentsRequest: StudentsRequest => Future[ExamToDisplay]): Route = {
+                    studentsRequest: StudentsRequest => Future[ExamToDisplay],
+                    completedExam: CompletedExam => Unit): Route = {
     pathPrefix("student") {
       (pathEndOrSingleSlash & get) {
         complete(
           HttpEntity(ContentTypes.`text/plain(UTF-8)`, "nothing here yet"))
       } ~ post {
         path("start2") {
-          examRequestedRoute3
+          examRequestedRoute
         }
-      } ~ (path("evaluate") & post & extractRequest) {
+      } ~ (path("evaluate") & post & extractRequest) { _ =>
         examEvalRequested
       }
     } ~ pathPrefix("repo") {
@@ -57,14 +62,14 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
     }
   }
 
-  def examRequestedRoute3(implicit future: StudentsRequest => Future[ExamToDisplay]): Route =
+  def examRequestedRoute(implicit future: StudentsRequest => Future[ExamToDisplay]): Route =
     entity(as[StudentsRequest])(request => complete(future(request)))
 
-  def examEvalRequested(request: HttpRequest)(implicit actors: RoutesActorsPack): Route = {
-    println(s"exam eval endpoint, request: $request")
+  def examEvalRequested(implicit future: CompletedExam => Unit): Route = {
     entity(as[CompletedExam]) {
       exam =>
-        actors.userActions ! SendExamToEvaluation(RequestExamEvaluation(exam.examId, exam.selectedAnswers))
+        println(s"exam eval endpoint, request: $exam")
+        future(exam)
         complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
     }
   }
