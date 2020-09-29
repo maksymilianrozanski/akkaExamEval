@@ -37,13 +37,18 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
       (exam: CompletedExam) =>
         actors.userActions ! SendExamToEvaluation(RequestExamEvaluation(exam.examId, exam.selectedAnswers))
 
+    implicit def addingQuestionsSet: QuestionsSet => Unit =
+      (set: QuestionsSet) => actors.repository ! AddQuestionsSet(set)
+
     StudentRoutes2.studentRoutes
   }
 
   def studentRoutes(implicit actors: RoutesActorsPack,
                     actorSystem: ActorSystem[_],
                     studentsRequest: StudentsRequest => Future[ExamToDisplay],
-                    completedExam: CompletedExam => Unit): Route = {
+                    completedExam: CompletedExam => Unit,
+                    addingQuestionsSet: QuestionsSet => Unit
+                   ): Route = {
     pathPrefix("student") {
       (pathEndOrSingleSlash & get) {
         complete(
@@ -56,7 +61,7 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
         examEvalRequested
       }
     } ~ pathPrefix("repo") {
-      (path("add") & post & extractRequest) {
+      (path("add") & post & extractRequest) { _ =>
         addSetToRepo
       }
     }
@@ -74,13 +79,11 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
     }
   }
 
-  def addSetToRepo(request: HttpRequest)(implicit actors: RoutesActorsPack): Route = {
-    entity(as[QuestionsSet]) {
-      set =>
-        actors.repository ! AddQuestionsSet(set)
-        complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested adding questions set"))
+  def addSetToRepo(implicit addingQuestions: QuestionsSet => Unit): Route =
+    entity(as[QuestionsSet]) { set =>
+      addingQuestions(set)
+      complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested adding questions set"))
     }
-  }
 }
 
 trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
