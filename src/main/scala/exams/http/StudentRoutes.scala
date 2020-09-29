@@ -31,7 +31,7 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
 
     implicit def examRequestedFuture: StudentsRequest => Future[ExamToDisplay] =
       (request: StudentsRequest) => actors.userActions.ask((replyTo: ActorRef[ExamToDisplay]) =>
-      StudentActions.RequestExamCommand2(request, replyTo))
+        StudentActions.RequestExamCommand2(request, replyTo))
 
     StudentRoutes2.studentRoutes
   }
@@ -43,8 +43,6 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
       (pathEndOrSingleSlash & get) {
         complete(
           HttpEntity(ContentTypes.`text/plain(UTF-8)`, "nothing here yet"))
-      } ~ (path("start") & get) {
-        examRequestedRoute
       } ~ post {
         path("start2") {
           examRequestedRoute3
@@ -57,11 +55,6 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
         addSetToRepo
       }
     }
-  }
-
-  def examRequestedRoute(implicit actors: RoutesActorsPack, actorSystem: ActorSystem[_]): StandardRoute = {
-    import actors._
-    complete(userActions.ask((replyTo: ActorRef[ExamToDisplay]) => StudentActions.RequestExamCommand("hello", replyTo)).mapTo[ExamToDisplay])
   }
 
   def examRequestedRoute3(implicit future: StudentsRequest => Future[ExamToDisplay]): Route =
