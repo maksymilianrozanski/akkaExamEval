@@ -43,12 +43,9 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
     StudentRoutes2.studentRoutes
   }
 
-  def studentRoutes(implicit actors: RoutesActorsPack,
-                    actorSystem: ActorSystem[_],
-                    studentsRequest: StudentsRequest => Future[ExamToDisplay],
+  def studentRoutes(implicit studentsRequest: StudentsRequest => Future[ExamToDisplay],
                     completedExam: CompletedExam => Unit,
-                    addingQuestionsSet: QuestionsSet => Unit
-                   ): Route = {
+                    addingQuestionsSet: QuestionsSet => Unit): Route = {
     pathPrefix("student") {
       (pathEndOrSingleSlash & get) {
         complete(
