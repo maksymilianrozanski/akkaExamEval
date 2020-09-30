@@ -11,10 +11,10 @@ import akka.util.Timeout
 import exams.ExamDistributor.{ExamDistributor, RequestExamEvaluation}
 import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, QuestionsSet}
 import exams.data._
-import exams.http.StudentActions.{ExamGenerated, SendExamToEvaluation}
+import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, GeneratingFailed, SendExamToEvaluation}
 import spray.json._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
                             system: ActorSystem[_],
@@ -26,11 +26,11 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   def createStudentRoutes(implicit actors: RoutesActorsPack): Route = {
     implicit val actorSystem: ActorSystem[_] = actors.system
-
+    import actorSystem.executionContext
     import actors._
 
-    implicit def examRequestedFuture: StudentsRequest => Future[ExamGenerated] =
-      (request: StudentsRequest) => actors.userActions.ask((replyTo: ActorRef[ExamGenerated]) =>
+    implicit def examRequestedFuture: StudentsRequest => Future[DisplayedToStudent] =
+      (request: StudentsRequest) => actors.userActions.ask((replyTo: ActorRef[DisplayedToStudent]) =>
         StudentActions.RequestExamCommand2(request, replyTo))
 
     implicit def examCompletedFuture: CompletedExam => Unit =
@@ -43,9 +43,9 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
     StudentRoutes2.studentRoutes
   }
 
-  def studentRoutes(implicit studentsRequest: StudentsRequest => Future[ExamGenerated],
+  def studentRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
                     completedExam: CompletedExam => Unit,
-                    addingQuestionsSet: QuestionsSet => Unit): Route = {
+                    addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext): Route = {
     pathPrefix("student") {
       (pathEndOrSingleSlash & get) {
         complete(
@@ -64,8 +64,11 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
     }
   }
 
-  def examRequestedRoute(implicit future: StudentsRequest => Future[ExamGenerated]): Route =
-    entity(as[StudentsRequest])(request => complete(future(request)))
+  def examRequestedRoute(implicit future: StudentsRequest => Future[DisplayedToStudent], ec: ExecutionContext): Route =
+    entity(as[StudentsRequest])(request => complete(future(request).map {
+      case exam: ExamGenerated => DisplayedToStudentFormat.write(exam)
+      case reason: GeneratingFailed => DisplayedToStudentFormat.write(reason)
+    }))
 
   def examEvalRequested(implicit future: CompletedExam => Unit): Route = {
     entity(as[CompletedExam]) {
@@ -89,7 +92,17 @@ trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
   implicit val studentsExamFormat: RootJsonFormat[StudentsExam] = jsonFormat2(StudentsExam)
   implicit val completedExamFormat: RootJsonFormat[CompletedExam] = jsonFormat2(CompletedExam)
   implicit val examToDisplayFormat: RootJsonFormat[ExamGenerated] = jsonFormat1(ExamGenerated)
+  implicit val generatingExamFailedFormat: RootJsonFormat[GeneratingFailed] = jsonFormat1(GeneratingFailed)
   implicit val studentsRequestFormat: RootJsonFormat[StudentsRequest] = jsonFormat3(StudentsRequest)
   implicit val questionFormat: RootJsonFormat[Question] = jsonFormat2(Question)
   implicit val questionsSetFormat: RootJsonFormat[QuestionsSet] = jsonFormat3(QuestionsSet)
+
+  implicit object DisplayedToStudentFormat extends RootJsonWriter[DisplayedToStudent] {
+
+    override def write(obj: DisplayedToStudent): JsValue =
+      obj match {
+        case success: ExamGenerated => examToDisplayFormat.write(success)
+        case failed: GeneratingFailed => generatingExamFailedFormat.write(failed)
+      }
+  }
 }

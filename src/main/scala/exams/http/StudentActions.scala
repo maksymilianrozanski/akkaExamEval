@@ -9,12 +9,12 @@ import exams.student.Student
 object StudentActions {
 
   sealed trait Command
-  final case class RequestExamCommand2(studentsRequest: StudentsRequest, replyTo: ActorRef[ExamGenerated]) extends Command
+  final case class RequestExamCommand2(studentsRequest: StudentsRequest, replyTo: ActorRef[DisplayedToStudent]) extends Command
   final case class SendExamToEvaluation(exam: RequestExamEvaluation) extends Command
 
   sealed trait DisplayedToStudent
   final case class ExamGenerated(exam: StudentsExam) extends DisplayedToStudent
-  case object GeneratingFailed extends DisplayedToStudent
+  case class GeneratingFailed(reason: String) extends DisplayedToStudent
 
   def apply()(implicit distributor: ActorRef[ExamDistributor]): Behavior[Command] = registry(distributor)
 
