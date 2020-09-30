@@ -2,7 +2,7 @@ package exams.student
 
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import akka.actor.typed.scaladsl.Behaviors
-import exams.ExamDistributor.{ExamDistributor, RequestExam2}
+import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam}
 import exams.data.{ExamGenerator, StudentsRequest}
 import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, GeneratingFailed}
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -38,7 +38,7 @@ class StudentSpec extends AnyWordSpecLike {
       val command = RequestExamCommand(studentsRequest, distributor.ref)
       testKit.run(command)
       "send RequestExam message to ExamDistributor" in
-        distributor.expectMessage(RequestExam2(command.code, testKit.ref))
+        distributor.expectMessage(RequestExam(command.code, testKit.ref))
       "have 'stopped' behavior" in
         assertResult(Behaviors.stopped)(testKit.returnedBehavior)
     }

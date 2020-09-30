@@ -7,7 +7,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusC
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
-import exams.ExamDistributor.{ExamDistributor, RequestExamEvaluation}
+import exams.distributor.ExamDistributor.{ExamDistributor, RequestExamEvaluation}
 import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, QuestionsSet}
 import exams.data._
 import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, GeneratingFailed, SendExamToEvaluation}

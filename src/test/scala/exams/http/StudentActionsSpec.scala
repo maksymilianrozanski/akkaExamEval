@@ -3,7 +3,7 @@ package exams.http
 
 import akka.actor.testkit.typed.Effect.SpawnedAnonymous
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
-import exams.ExamDistributor.{ExamDistributor, RequestExam2, RequestExamEvaluation}
+import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
 import exams.data.{Answer, StudentsRequest}
 import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, RequestExamCommand2}
 import exams.student.Student
@@ -23,7 +23,7 @@ class StudentActionsSpec extends AnyWordSpecLike with should.Matchers {
       testKit.run(message)
       "send spawn Student and send message to ExamDistributor when receive RequestExamCommand2" in {
         val spawnedAnonymous = testKit.expectEffectType[SpawnedAnonymous[Student]]
-        val expectedMessage = RequestExam2(studentsRequest, spawnedAnonymous.ref)
+        val expectedMessage = RequestExam(studentsRequest, spawnedAnonymous.ref)
         distributor.expectMessage(expectedMessage)
       }
     }

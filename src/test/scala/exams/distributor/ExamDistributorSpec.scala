@@ -1,18 +1,14 @@
-package exams
+package exams.distributor
 
-import akka.actor.UnhandledMessage
 import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox}
-import akka.actor.typed.SupervisorStrategy
 import akka.actor.typed.scaladsl.Behaviors
-import akka.pattern.BackoffSupervisor
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.disabled
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
-import exams.ExamDistributor._
 import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
-import exams.data.StubQuestions.{question1, question2}
-import exams.data.{Answer, BlankQuestion, ExamGenerator, ExamRequest, Question, StudentsRequest, TeachersExam}
+import exams.data._
+import exams.distributor.ExamDistributor._
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
 import exams.student.{GeneratingExamFailed, GiveExamToStudent, Student}
 import org.scalatest.BeforeAndAfterEach
@@ -21,74 +17,6 @@ import org.scalatest.wordspec.AnyWordSpecLike
 class ExamDistributorSpec
   extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config) with AnyWordSpecLike
     with BeforeAndAfterEach {
-
-  private def generator(id: String) = TeachersExam(id, List())
-
-  def requestExamTestKit(initialState: ExamDistributorState): EventSourcedBehaviorTestKit[RequestExam, ExamAdded, ExamDistributorState] =
-    EventSourcedBehaviorTestKit(system, Behaviors.setup[RequestExam] { context =>
-      EventSourcedBehavior(
-        persistenceId = PersistenceId.ofUniqueId("uniqueId"),
-        emptyState = initialState,
-        commandHandler = onRequestExam(context)(generator) _,
-        eventHandler = examAddedHandler
-      )
-    }, serializationSettings = disabled)
-
-  "ExamDistributor" must {
-    //setup
-    val student = TestInbox[Student]()
-    //given
-    val initialState = ExamDistributor.emptyState
-    val studentId = "123"
-
-    "given command and empty state" when {
-      val testKit = requestExamTestKit(initialState)
-      val command = ExamDistributor.RequestExam(studentId, student.ref)
-
-      "ExamDistributor" must {
-        //when
-        val result = testKit.runCommand(command)
-        "persist ExamAdded" in {
-          //then
-          val persistedEvents = result.events
-          val expectedEvents = Seq(ExamAdded(studentId, generator("0")))
-          assert(expectedEvents == persistedEvents)
-        }
-
-        "send message to the student" in {
-          student.expectMessage(GiveExamToStudent(generator("0")))
-        }
-      }
-    }
-  }
-
-  "ExamDistributor" must {
-    //setup
-    val student = TestInbox[Student]()
-    //given
-    val nonEmptyState = ExamDistributorState(Map("123" -> PersistedExam("1234", generator("123"))), Map(), Map(), 0)
-    val studentId = "124"
-
-    "given command and non-empty state" when {
-      val testKit = requestExamTestKit(nonEmptyState)
-      val command = ExamDistributor.RequestExam(studentId, student.ref)
-
-      "ExamDistributor" must {
-        //when
-        val result = testKit.runCommand(command)
-        "persist ExamAdded" in {
-          //then
-          val persistedEvents = result.events
-          val expectedEvents = Seq(ExamAdded(studentId, generator("1")))
-          assert(expectedEvents == persistedEvents)
-        }
-
-        "send message to the student" in {
-          student.expectMessage(GiveExamToStudent(generator("1")))
-        }
-      }
-    }
-  }
 
   private val persistedExam1 = PersistedExam("student123", TeachersExam("ex123", List()))
   private val persistedExam2 = PersistedExam("student123456", TeachersExam("ex567",
@@ -254,12 +182,12 @@ class ExamDistributorSpec
   }
 
   def requestExam2TestKit(generator: TestInbox[ExamGenerator], messageAdapter: TestInbox[ExamOutput])(initialState: ExamDistributorState)
-  : EventSourcedBehaviorTestKit[RequestExam2, ExamRequested, ExamDistributorState] =
-    EventSourcedBehaviorTestKit(system, Behaviors.setup[RequestExam2] { context =>
+  : EventSourcedBehaviorTestKit[RequestExam, ExamRequested, ExamDistributorState] =
+    EventSourcedBehaviorTestKit(system, Behaviors.setup[RequestExam] { context =>
       EventSourcedBehavior(
         persistenceId = PersistenceId.ofUniqueId("uniqueId"),
         emptyState = initialState,
-        commandHandler = onRequestExam2(context)(generator.ref, messageAdapter.ref) _,
+        commandHandler = onRequestExam(context)(generator.ref, messageAdapter.ref) _,
         eventHandler = onExamRequestedHandler
       )
     }, serializationSettings = disabled)
@@ -271,7 +199,7 @@ class ExamDistributorSpec
     val initialState = ExamDistributor.emptyState.copy(lastExamId = 10)
 
     val studentsRequest = StudentsRequest("student123", 2, "set2")
-    val command = RequestExam2(studentsRequest, studentInbox.ref)
+    val command = RequestExam(studentsRequest, studentInbox.ref)
     val testKit = requestExam2TestKit(generatorInbox, fakeMessageAdapter)(initialState)
     "receive RequestExam2 message" should {
       val expectedId = (initialState.lastExamId + 1).toString

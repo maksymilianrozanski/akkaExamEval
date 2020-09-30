@@ -7,8 +7,9 @@ import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
-import exams.ExamDistributor.ExamDistributor
 import exams.data.{ExamGenerator, ExamRepository}
+import exams.distributor.ExamDistributor
+import exams.distributor.ExamDistributor.ExamDistributor
 import exams.evaluator.ExamEvaluator
 import exams.http.{RoutesActorsPack, StudentActions, StudentRoutes2}
 
@@ -37,7 +38,7 @@ object Main {
     Behaviors.setup { context =>
       val examEvaluator = context.spawnAnonymous(ExamEvaluator())
       val repository = context.spawnAnonymous(ExamRepository())
-      val examGenerator = context.spawnAnonymous(ExamGenerator(repository)(ExamGenerator.emptyState))
+      val examGenerator = context.spawnAnonymous(ExamGenerator(repository))
       val distributorActors = ExamDistributor.ActorsPack(examEvaluator, examGenerator)
       implicit val distributor: ActorRef[ExamDistributor] = context.spawn(ExamDistributor(examEvaluator, distributorActors), "distributor")
 

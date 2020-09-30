@@ -1,29 +1,29 @@
-package exams
-
+package exams.distributor
 
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior, ReplyEffect}
-import exams.data.ExamGenerator.{ExamGenerator, ExamOutput, ReceivedExamRequest}
-import exams.data.{Answer, ExamGenerator, ExamRequest, StudentsRequest, TeachersExam}
+import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
+import exams.data._
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
 import exams.student.{GeneratingExamFailed, GiveExamToStudent, Student}
 
 object ExamDistributor {
 
   type Answers = List[List[Answer]]
+  type ExamId = String
+  type StudentId = String
 
   //commands
   sealed trait ExamDistributor
-  final case class RequestExam(studentId: String, student: ActorRef[Student]) extends ExamDistributor
   /**
    * incoming message - Requests generating new exam
    *
    * @param studentsRequest request exam with n questions from specific set
    * @param student         ActorRef to actor who requested the exam
    */
-  final case class RequestExam2(studentsRequest: StudentsRequest, student: ActorRef[Student]) extends ExamDistributor
+  final case class RequestExam(studentsRequest: StudentsRequest, student: ActorRef[Student]) extends ExamDistributor
   final case class RequestExamEvaluation(examId: String, answers: Answers) extends ExamDistributor
   private[exams] case class ReceivedGeneratedExam(exam: ExamOutput) extends ExamDistributor
 
@@ -34,8 +34,6 @@ object ExamDistributor {
   final case class ExamAdded(studentId: String, exam: TeachersExam) extends ExamDistributorEvents
   final case class ExamCompleted(examId: String, answers: Answers) extends ExamDistributorEvents
 
-  type ExamId = String
-  type StudentId = String
   case class PersistedExam(studentId: StudentId, exam: TeachersExam)
   case class PersistedAnswers(answers: Answers)
   case class ExamDistributorState(exams: Map[ExamId, PersistedExam], answers: Map[ExamId, PersistedAnswers],
@@ -45,6 +43,7 @@ object ExamDistributor {
   import exams.data.TeachersExam._
 
   case class ActorsPack(evaluator: ActorRef[ExamEvaluator], generator: ActorRef[ExamGenerator])
+
   def apply(evaluator: ActorRef[ExamEvaluator], actorsPack: ActorsPack): Behavior[ExamDistributor] = distributor(actorsPack)
 
   def distributor(actorsPack: ActorsPack): Behavior[ExamDistributor] = Behaviors.setup[ExamDistributor](context => {
@@ -63,27 +62,14 @@ object ExamDistributor {
   (context: ActorContext[ExamDistributor], actors: ActorsPack, messageAdapter: ActorRef[ExamOutput])
   (state: ExamDistributorState, command: ExamDistributor): Effect[ExamDistributorEvents, ExamDistributorState] =
     command match {
-      case request: RequestExam => onRequestExam(context)(ExamGenerator.sampleExam)(state, request)
-      case request: RequestExam2 => onRequestExam2(context)(actors.generator, messageAdapter)(state, request)
+      case request: RequestExam => onRequestExam(context)(actors.generator, messageAdapter)(state, request)
       case request: RequestExamEvaluation => onRequestExamEvaluation(context, actors.evaluator)(state, request)
       case message: ReceivedGeneratedExam => onReceivingGeneratedExam(context)(state, message)
     }
 
   def onRequestExam[T >: RequestExam]
-  (context: ActorContext[T])(generator: String => TeachersExam)
-  (state: ExamDistributorState, requestExam: RequestExam): EffectBuilder[ExamAdded, ExamDistributorState] = {
-    val examId = state.exams.size.toString
-    val exam = generator(examId)
-    Effect.persist(ExamAdded(requestExam.studentId, exam))
-      .thenRun((s: ExamDistributorState) => {
-        context.log.info("persisted examId {}", examId)
-        requestExam.student ! GiveExamToStudent(exam)
-      })
-  }
-
-  def onRequestExam2[T >: RequestExam2]
   (context: ActorContext[T])(generator: ActorRef[ExamGenerator], messageAdapter: ActorRef[ExamOutput])
-  (state: ExamDistributorState, command: RequestExam2): ReplyEffect[ExamRequested, ExamDistributorState] = {
+  (state: ExamDistributorState, command: RequestExam): ReplyEffect[ExamRequested, ExamDistributorState] = {
     val nextExamId = (state.lastExamId + 1).toString
     Effect.persist(ExamRequested(nextExamId, command.student))
       .thenReply(generator) {

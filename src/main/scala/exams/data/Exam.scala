@@ -1,6 +1,6 @@
 package exams.data
 
-import exams.ExamDistributor.{Answers, ExamId, StudentId}
+import exams.distributor.ExamDistributor.{Answers, ExamId, StudentId}
 import exams.data.ExamRepository.SetId
 
 //data

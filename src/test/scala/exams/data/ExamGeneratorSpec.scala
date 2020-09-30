@@ -2,7 +2,7 @@ package exams.data
 
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import akka.actor.typed.scaladsl.Behaviors
-import exams.data.ExamGenerator.{ExamOutput, ReceivedExamRequest, ReceivedSetFromRepo, State}
+import exams.data.ExamGenerator.{ExamOutput, ReceivedExamRequest, ReceivedSetFromRepo, State, generator}
 import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet}
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -20,7 +20,7 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
       val examRequest = ExamRequest("exam123", "student123", 2, "set2")
       val message = ReceivedExamRequest(examRequest, distributor.ref)
 
-      val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(State(Set.empty)))
+      val testKit = BehaviorTestKit(generator(repository.ref)(State(Set.empty)))
       testKit.run(message)
 
       "send message to repository, and message received by repository" should {
@@ -69,7 +69,7 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
           val repository = TestInbox[ExamRepository]()
           val distributor = TestInbox[ExamOutput]()
           val initialState = State(Set(examRequest1, examRequest2, examRequest3).map((_, distributor.ref)))
-          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(initialState))
+          val testKit = BehaviorTestKit(generator(repository.ref)(initialState))
           val message = ReceivedSetFromRepo(questionsSetFromRepo)
           testKit.run(message)
           "send generated TeachersExam to ExamDistributor" in {
@@ -97,7 +97,7 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
           val repository = TestInbox[ExamRepository]()
           val distributor = TestInbox[ExamOutput]()
           val initialState = State(Set(examRequest1, examRequest2, examRequest3).map((_, distributor.ref)))
-          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(initialState))
+          val testKit = BehaviorTestKit(generator(repository.ref)(initialState))
           val message = ReceivedSetFromRepo(("unknown-id", questionsSetFromRepo._2))
           "stop the actor" in {
             testKit.run(message)
@@ -110,7 +110,7 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
           val repository = TestInbox[ExamRepository]()
           val distributor = TestInbox[ExamOutput]()
           val initialState = State(Set(examRequest1, examRequest2, examRequest3).map((_, distributor.ref)))
-          val testKit = BehaviorTestKit(ExamGenerator(repository.ref)(initialState))
+          val testKit = BehaviorTestKit(generator(repository.ref)(initialState))
           val message = ReceivedSetFromRepo((examRequest1.examId, None))
           testKit.run(message)
           "send message to distributor" in {

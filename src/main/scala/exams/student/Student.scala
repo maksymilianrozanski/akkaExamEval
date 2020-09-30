@@ -2,7 +2,7 @@ package exams.student
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExam2}
+import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam}
 import exams.data.{StudentsExam, StudentsRequest}
 import exams.http.StudentActions
 import exams.http.StudentActions.{ExamGenerated, GeneratingFailed}
@@ -29,7 +29,7 @@ object Student {
           Behaviors.stopped
         case RequestExamCommand(code, distributor) =>
           context.log.info("received starting exam request")
-          distributor ! RequestExam2(code, context.self)
+          distributor ! RequestExam(code, context.self)
           Behaviors.stopped
         case GeneratingExamFailed =>
           context.log.info("student received GeneratingExamFailed message")

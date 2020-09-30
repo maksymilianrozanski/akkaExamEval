@@ -2,8 +2,8 @@ package exams.data
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import exams.ExamDistributor.ExamId
 import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet, TakeQuestionsSetReply}
+import exams.distributor.ExamDistributor.ExamId
 
 object ExamGenerator {
 
@@ -24,11 +24,9 @@ object ExamGenerator {
   final case class ReceivedSetFromRepo(set: TakeQuestionsSetReply) extends ExamGenerator
 
   case class State(requests: Set[ExamRequestWithRef])
-  //todo: remove state from apply
   val emptyState: State = State(Set())
 
-  def apply(repository: ActorRef[ExamRepository])(state: State): Behavior[ExamGenerator] =
-    generator(repository)(state)
+  def apply(repository: ActorRef[ExamRepository]): Behavior[ExamGenerator] = generator(repository)(emptyState)
 
   private sealed trait ExamGeneratorErrors
   private case class NotFoundResponse(examId: ExamId) extends ExamGeneratorErrors
