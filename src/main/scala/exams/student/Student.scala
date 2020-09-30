@@ -4,7 +4,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExam2}
 import exams.data.{StudentsExam, StudentsRequest}
-import exams.http.StudentActions.ExamToDisplay
+import exams.http.StudentActions.ExamGenerated
 
 sealed trait Student
 final case class RequestExamCommand(code: StudentsRequest, distributor: ActorRef[ExamDistributor]) extends Student
@@ -14,14 +14,14 @@ final case class GiveResultToStudent(result: Double) extends Student
 case object GeneratingExamFailed extends Student
 
 object Student {
-  def apply(displayReceiver: ActorRef[ExamToDisplay]): Behavior[Student] = stateless(displayReceiver)
+  def apply(displayReceiver: ActorRef[ExamGenerated]): Behavior[Student] = stateless(displayReceiver)
 
-  def stateless(displayReceiver: ActorRef[ExamToDisplay]): Behavior[Student] =
+  def stateless(displayReceiver: ActorRef[ExamGenerated]): Behavior[Student] =
     Behaviors.setup(context =>
       Behaviors.receiveMessage {
         case GiveExamToStudent(emptyExam) =>
           context.log.info(s"Student received exam ${GiveExamToStudent(emptyExam)}")
-          displayReceiver ! ExamToDisplay(emptyExam)
+          displayReceiver ! ExamGenerated(emptyExam)
           Behaviors.stopped
         case GiveResultToStudent(result) =>
           context.log.info("Received result: {} ", result)

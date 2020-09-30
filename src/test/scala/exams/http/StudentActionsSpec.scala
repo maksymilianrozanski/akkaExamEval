@@ -5,7 +5,7 @@ import akka.actor.testkit.typed.Effect.SpawnedAnonymous
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import exams.ExamDistributor.{ExamDistributor, RequestExam, RequestExam2, RequestExamEvaluation}
 import exams.data.{Answer, StudentsRequest}
-import exams.http.StudentActions.{ExamToDisplay, RequestExamCommand, RequestExamCommand2}
+import exams.http.StudentActions.{ExamGenerated, RequestExamCommand, RequestExamCommand2}
 import exams.student.Student
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -15,7 +15,7 @@ class StudentActionsSpec extends AnyWordSpecLike with should.Matchers {
   "StudentActions" when {
     "receive RequestExamCommand" should {
       val distributor = TestInbox[ExamDistributor]()
-      val displayInbox = TestInbox[ExamToDisplay]()
+      val displayInbox = TestInbox[ExamGenerated]()
       val message = RequestExamCommand("123", displayInbox.ref)
       val testKit = BehaviorTestKit(StudentActions()(distributor.ref))
       testKit.run(message)
@@ -27,7 +27,7 @@ class StudentActionsSpec extends AnyWordSpecLike with should.Matchers {
     }
     "receive RequestExamCommand2" should {
       val distributor = TestInbox[ExamDistributor]()
-      val displayInbox = TestInbox[ExamToDisplay]()
+      val displayInbox = TestInbox[ExamGenerated]()
       val studentsRequest = StudentsRequest("student12", 3, "set3")
       val message = RequestExamCommand2(studentsRequest, displayInbox.ref)
       val testKit = BehaviorTestKit(StudentActions()(distributor.ref))

@@ -11,7 +11,7 @@ import akka.util.Timeout
 import exams.ExamDistributor.{ExamDistributor, RequestExamEvaluation}
 import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, QuestionsSet}
 import exams.data._
-import exams.http.StudentActions.{ExamToDisplay, SendExamToEvaluation}
+import exams.http.StudentActions.{ExamGenerated, SendExamToEvaluation}
 import spray.json._
 
 import scala.concurrent.Future
@@ -29,8 +29,8 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
 
     import actors._
 
-    implicit def examRequestedFuture: StudentsRequest => Future[ExamToDisplay] =
-      (request: StudentsRequest) => actors.userActions.ask((replyTo: ActorRef[ExamToDisplay]) =>
+    implicit def examRequestedFuture: StudentsRequest => Future[ExamGenerated] =
+      (request: StudentsRequest) => actors.userActions.ask((replyTo: ActorRef[ExamGenerated]) =>
         StudentActions.RequestExamCommand2(request, replyTo))
 
     implicit def examCompletedFuture: CompletedExam => Unit =
@@ -43,7 +43,7 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
     StudentRoutes2.studentRoutes
   }
 
-  def studentRoutes(implicit studentsRequest: StudentsRequest => Future[ExamToDisplay],
+  def studentRoutes(implicit studentsRequest: StudentsRequest => Future[ExamGenerated],
                     completedExam: CompletedExam => Unit,
                     addingQuestionsSet: QuestionsSet => Unit): Route = {
     pathPrefix("student") {
@@ -64,7 +64,7 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
     }
   }
 
-  def examRequestedRoute(implicit future: StudentsRequest => Future[ExamToDisplay]): Route =
+  def examRequestedRoute(implicit future: StudentsRequest => Future[ExamGenerated]): Route =
     entity(as[StudentsRequest])(request => complete(future(request)))
 
   def examEvalRequested(implicit future: CompletedExam => Unit): Route = {
@@ -88,7 +88,7 @@ trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
   implicit val blankQuestionFormat: RootJsonFormat[BlankQuestion] = jsonFormat2(BlankQuestion)
   implicit val studentsExamFormat: RootJsonFormat[StudentsExam] = jsonFormat2(StudentsExam)
   implicit val completedExamFormat: RootJsonFormat[CompletedExam] = jsonFormat2(CompletedExam)
-  implicit val examToDisplayFormat: RootJsonFormat[ExamToDisplay] = jsonFormat1(ExamToDisplay)
+  implicit val examToDisplayFormat: RootJsonFormat[ExamGenerated] = jsonFormat1(ExamGenerated)
   implicit val studentsRequestFormat: RootJsonFormat[StudentsRequest] = jsonFormat3(StudentsRequest)
   implicit val questionFormat: RootJsonFormat[Question] = jsonFormat2(Question)
   implicit val questionsSetFormat: RootJsonFormat[QuestionsSet] = jsonFormat3(QuestionsSet)

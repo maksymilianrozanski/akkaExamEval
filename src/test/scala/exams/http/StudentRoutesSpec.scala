@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.ExamRepository.QuestionsSet
 import exams.data.{Answer, CompletedExam, StudentsExam, StudentsRequest}
-import exams.http.StudentActions.ExamToDisplay
+import exams.http.StudentActions.ExamGenerated
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -14,7 +14,7 @@ import scala.concurrent.Future
 class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with StudentsExamJsonProtocol with Matchers with SprayJsonSupport {
 
   private object ActorInteractionsStubs {
-    implicit def examRequestedStub: StudentsRequest => Future[ExamToDisplay] = (request: StudentsRequest) =>
+    implicit def examRequestedStub: StudentsRequest => Future[ExamGenerated] = (request: StudentsRequest) =>
       fail(s"examRequestedStub was not expected to be called, was called with $request")
 
     implicit def examCompletedStub: CompletedExam => Unit = (exam: CompletedExam) =>
@@ -26,11 +26,11 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
 
   "student/start2 endpoint" should {
     import exams.data.StubQuestions._
-    val examToDisplay = ExamToDisplay(StudentsExam("exam123", List(question2.blank, question3.blank)))
+    val examToDisplay = ExamGenerated(StudentsExam("exam123", List(question2.blank, question3.blank)))
 
     val studentsRequest = StudentsRequest("student123", 2, "set3")
 
-    implicit def examRequestedFuture: StudentsRequest => Future[ExamToDisplay] = (request: StudentsRequest) => {
+    implicit def examRequestedFuture: StudentsRequest => Future[ExamGenerated] = (request: StudentsRequest) => {
       require(request == studentsRequest, s"expected: $studentsRequest, received: $request")
       Future(examToDisplay)
     }
@@ -39,7 +39,7 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
     val route = StudentRoutes2.studentRoutes
 
     "return received exam" in
-      Post("/student/start2", studentsRequest) ~> route ~> check(responseAs[ExamToDisplay] shouldBe examToDisplay)
+      Post("/student/start2", studentsRequest) ~> route ~> check(responseAs[ExamGenerated] shouldBe examToDisplay)
 
     "have `application/json` content type" in
       Post("/student/start2", studentsRequest) ~> route ~> check(contentType shouldBe ContentTypes.`application/json`)
