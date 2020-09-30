@@ -13,7 +13,6 @@ object StudentActions {
   final case class RequestExamCommand2(studentsRequest: StudentsRequest, replyTo: ActorRef[ExamToDisplay]) extends Command
   final case class SendExamToEvaluation(exam: RequestExamEvaluation) extends Command
 
-  final case class ActionPerformed(description: String)
   final case class ExamToDisplay(exam: StudentsExam)
 
   def apply()(implicit distributor: ActorRef[ExamDistributor]): Behavior[Command] = registry(distributor)
