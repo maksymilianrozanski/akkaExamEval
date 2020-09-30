@@ -1,12 +1,11 @@
 package exams.http
 
-import akka.actor.typed.scaladsl.ActorContext
 import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
 import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
-import akka.http.scaladsl.server.{Route, StandardRoute}
+import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import exams.ExamDistributor.{ExamDistributor, RequestExamEvaluation}
 import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, QuestionsSet}
@@ -65,12 +64,17 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
   }
 
   def examRequestedRoute(implicit future: StudentsRequest => Future[DisplayedToStudent], ec: ExecutionContext): Route =
-    entity(as[StudentsRequest])(request => complete(future(request).map {
+    entity(as[StudentsRequest])(request => complete(future(request).map(displayedToStudentToResponse)))
+
+  private def displayedToStudentToResponse(displayed: DisplayedToStudent): HttpResponse =
+    displayed match {
       case exam: ExamGenerated =>
-        HttpResponse(status = StatusCodes.OK, entity = HttpEntity(contentType = ContentTypes.`application/json`, DisplayedToStudentFormat.write(exam).prettyPrint))
+        HttpResponse(status = StatusCodes.OK, entity = HttpEntity(contentType = ContentTypes.`application/json`,
+          DisplayedToStudentFormat.write(exam).prettyPrint))
       case reason: GeneratingFailed =>
-        HttpResponse(status = StatusCodes.NotFound, entity = HttpEntity(contentType = ContentTypes.`application/json`, DisplayedToStudentFormat.write(reason).prettyPrint))
-    }))
+        HttpResponse(status = StatusCodes.NotFound, entity = HttpEntity(contentType = ContentTypes.`application/json`,
+          DisplayedToStudentFormat.write(reason).prettyPrint))
+    }
 
   def examEvalRequested(implicit future: CompletedExam => Unit): Route = {
     entity(as[CompletedExam]) {
