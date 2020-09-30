@@ -4,7 +4,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.ExamRepository.QuestionsSet
-import exams.data.{CompletedExam, StudentsExam, StudentsRequest}
+import exams.data.{Answer, CompletedExam, StudentsExam, StudentsRequest}
 import exams.http.StudentActions.ExamToDisplay
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -46,5 +46,37 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
 
     "have StatusCode.OK" in
       Post("/student/start2", studentsRequest) ~> route ~> check(status shouldBe StatusCodes.OK)
+  }
+
+  "student/evaluate endpoint" should {
+    val completedExam = CompletedExam("exam123", List(List(Answer("1"), Answer("2")), List(Answer("yes"))))
+    val path = "/student/evaluate"
+
+    "call examCompleted action" in {
+      var calledTimes = 0
+      implicit def examCompletedAction: CompletedExam => Unit = (exam: CompletedExam) => {
+        require(completedExam == exam, s"expected $completedExam, received: $exam")
+        calledTimes = calledTimes + 1
+      }
+
+      import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub}
+      val route = StudentRoutes2.studentRoutes
+
+      Post(path, completedExam) ~> route ~> check(assertResult(1)(calledTimes))
+    }
+
+    "returned response" should {
+      import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub}
+      implicit def examCompletedAction: CompletedExam => Unit = (exam: CompletedExam) => {
+        require(completedExam == exam, s"expected $completedExam, received: $exam")
+      }
+      val route = StudentRoutes2.studentRoutes
+
+      "have `text/plain(UTF-8)` content type" in
+        Post(path, completedExam) ~> route ~> check(contentType shouldBe ContentTypes.`text/plain(UTF-8)`)
+
+      "have expected content" in
+        Post(path, completedExam) ~> route ~> check(status shouldBe StatusCodes.OK)
+    }
   }
 }
