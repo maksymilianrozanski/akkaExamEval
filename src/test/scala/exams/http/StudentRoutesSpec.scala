@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.ExamRepository.QuestionsSet
 import exams.data.{Answer, CompletedExam, StudentsExam, StudentsRequest}
-import exams.http.StudentActions.ExamGenerated
+import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, GeneratingFailed}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -24,28 +24,54 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
       fail(s"addingQuestionsSetStub was not expected to be called, was called with $set")
   }
 
-  "student/start2 endpoint" should {
-    import exams.data.StubQuestions._
-    val examToDisplay = ExamGenerated(StudentsExam("exam123", List(question2.blank, question3.blank)))
+  "student/start2 endpoint" when {
+    "receive exam" should {
+      import exams.data.StubQuestions._
+      val examToDisplay = ExamGenerated(StudentsExam("exam123", List(question2.blank, question3.blank)))
 
-    val studentsRequest = StudentsRequest("student123", 2, "set3")
+      val studentsRequest = StudentsRequest("student123", 2, "set3")
 
-    implicit def examRequestedFuture: StudentsRequest => Future[ExamGenerated] = (request: StudentsRequest) => {
-      require(request == studentsRequest, s"expected: $studentsRequest, received: $request")
-      Future(examToDisplay)
+      implicit def examRequestedFuture: StudentsRequest => Future[ExamGenerated] = (request: StudentsRequest) => {
+        require(request == studentsRequest, s"expected: $studentsRequest, received: $request")
+        Future(examToDisplay)
+      }
+
+      import ActorInteractionsStubs.{addingQuestionsSetStub, examCompletedStub}
+      val route = StudentRoutes2.studentRoutes
+
+      "return received exam" in
+        Post("/student/start2", studentsRequest) ~> route ~> check(responseAs[ExamGenerated] shouldBe examToDisplay)
+
+      "have `application/json` content type" in
+        Post("/student/start2", studentsRequest) ~> route ~> check(contentType shouldBe ContentTypes.`application/json`)
+
+      "have StatusCode.OK" in
+        Post("/student/start2", studentsRequest) ~> route ~> check(status shouldBe StatusCodes.OK)
     }
 
-    import ActorInteractionsStubs.{addingQuestionsSetStub, examCompletedStub}
-    val route = StudentRoutes2.studentRoutes
+    "receive GeneratingFailed" should {
+      val studentsRequest = StudentsRequest("student123", 2, "set3")
+      val result = GeneratingFailed("unknown")
 
-    "return received exam" in
-      Post("/student/start2", studentsRequest) ~> route ~> check(responseAs[ExamGenerated] shouldBe examToDisplay)
+      implicit def examRequestedFuture: StudentsRequest => Future[DisplayedToStudent] = (request: StudentsRequest) => {
+        require(request == studentsRequest, s"expected: $studentsRequest, received: $request")
+        Future(result)
+      }
 
-    "have `application/json` content type" in
-      Post("/student/start2", studentsRequest) ~> route ~> check(contentType shouldBe ContentTypes.`application/json`)
+      import ActorInteractionsStubs.{addingQuestionsSetStub, examCompletedStub}
+      val route = StudentRoutes2.studentRoutes
 
-    "have StatusCode.OK" in
-      Post("/student/start2", studentsRequest) ~> route ~> check(status shouldBe StatusCodes.OK)
+      "have expected message" in
+        Post("/student/start2", studentsRequest) ~> route ~> check(responseAs[GeneratingFailed] shouldBe result)
+
+      "return response with expected status code" in {
+        Post("/student/start2", studentsRequest) ~> route ~> check(status shouldBe StatusCodes.NotFound)
+      }
+
+      "have `text/plain(UTF-8)` content type" in
+        Post("/student/start2", studentsRequest) ~> route ~> check(contentType shouldBe ContentTypes.`application/json`)
+
+    }
   }
 
   "student/evaluate endpoint" should {
