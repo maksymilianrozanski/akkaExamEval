@@ -1,16 +1,36 @@
 package exams.evaluator
 
-import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox}
+import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox, TestProbe}
 import akka.actor.typed.scaladsl.Behaviors
+import akka.persistence.testkit.PersistenceTestKitPlugin
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.{disabled, enabled}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
+import com.typesafe.config.ConfigFactory
 import exams.data.{Answer, BlankQuestion, Question, TeachersExam}
 import exams.evaluator.ExamEvaluator.{ExamEvaluatorState, ExamResult}
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config) with AnyWordSpecLike {
+class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(
+  ConfigFactory.parseString(
+    """
+      akka {
+        actor {
+          allow-java-serialization = off
+           persistence {
+              testkit.events.serialize = on
+          }
+          serializers {
+            jackson-json = "akka.serialization.jackson.JacksonJsonSerializer"
+          }
+          serialization-bindings {
+            "exams.JsonSerializable" = jackson-json
+          }
+        }
+      }
+      """.stripMargin).withFallback(PersistenceTestKitPlugin.config)
+) with AnyWordSpecLike {
 
   "should return percent of correct answers in exam" in {
     val teachersExam = TeachersExam("exam123",
@@ -58,7 +78,7 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
           commandHandler = ExamEvaluator.commandHandler(context) _,
           eventHandler = ExamEvaluator.eventHandler
         )
-      }, serializationSettings = disabled)
+      }, serializationSettings = enabled)
     }
 
     "ExamEvaluator" when {
@@ -112,26 +132,26 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
 
     "onRequestResultsCommand" when {
       "two results are persisted" must {
-        val testInbox = TestInbox[List[ExamResult]]()
-        val command = ExamEvaluator.RequestResults(testInbox.ref)
+        val testProbe = TestProbe[List[ExamResult]]()
+        val command = ExamEvaluator.RequestResults(testProbe.ref)
         val persistedResults = List(ExamResult("exam123", "student123", 0.95), ExamResult("exam124", "student124", 0.78))
         val testKit = examEvaluatorTestKit(ExamEvaluatorState(persistedResults))
 
         testKit.runCommand(command)
         "reply with all persisted results" in {
-          testInbox.expectMessage(persistedResults)
+          testProbe.expectMessage(persistedResults)
         }
       }
 
       "no events are persisted" must {
-        val testInbox = TestInbox[List[ExamResult]]()
-        val command = ExamEvaluator.RequestResults(testInbox.ref)
+        val testProbe = TestProbe[List[ExamResult]]()
+        val command = ExamEvaluator.RequestResults(testProbe.ref)
         val persistedResults = List()
         val testKit = examEvaluatorTestKit(ExamEvaluatorState(persistedResults))
 
         testKit.runCommand(command)
         "reply with empty list" in {
-          testInbox.expectMessage(persistedResults)
+          testProbe.expectMessage(persistedResults)
         }
       }
     }
@@ -142,22 +162,22 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
         ExamResult("exam123", "student2", 0.8),
         ExamResult("exam124", "student3", 0.9))
       "persisted results contains requested examId" should {
-        val testInbox = TestInbox[Option[ExamResult]]()
-        val command = ExamEvaluator.RequestSingleResult("exam123", testInbox.ref)
+        val testProbe = TestProbe[Option[ExamResult]]()
+        val command = ExamEvaluator.RequestSingleResult("exam123", testProbe.ref)
         val testKit = examEvaluatorTestKit(ExamEvaluatorState(persistedResults))
         testKit.runCommand(command)
         "reply with ExamResult" in {
-          testInbox.expectMessage(Some(persistedResults(1)))
+          testProbe.expectMessage(Some(persistedResults(1)))
         }
       }
 
       "persisted results do not contain requested examId" should {
-        val testInbox = TestInbox[Option[ExamResult]]()
-        val command = ExamEvaluator.RequestSingleResult("exam12", testInbox.ref)
+        val testProbe = TestProbe[Option[ExamResult]]()
+        val command = ExamEvaluator.RequestSingleResult("exam12", testProbe.ref)
         val testKit = examEvaluatorTestKit(ExamEvaluatorState(persistedResults))
         testKit.runCommand(command)
         "reply with None" in {
-          testInbox.expectMessage(None)
+          testProbe.expectMessage(None)
         }
       }
     }

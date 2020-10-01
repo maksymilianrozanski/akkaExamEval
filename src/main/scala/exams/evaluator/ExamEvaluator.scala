@@ -4,21 +4,22 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
+import exams.JsonSerializable
 import exams.distributor.ExamDistributor.{Answers, ExamId}
 import exams.data.TeachersExam
 
 object ExamEvaluator {
 
-  sealed trait ExamEvaluator
+  sealed trait ExamEvaluator extends JsonSerializable
   final case class EvaluateAnswers(studentId: String, teachersExam: TeachersExam, answers: Answers) extends ExamEvaluator
   final case class RequestResults(replyTo: ActorRef[List[ExamResult]]) extends ExamEvaluator
   final case class RequestSingleResult(examId: ExamId, replyTo: ActorRef[Option[ExamResult]]) extends ExamEvaluator
 
-  sealed trait ExamEvaluatorEvents
+  sealed trait ExamEvaluatorEvents extends JsonSerializable
   final case class ExamEvaluated(examResult: ExamResult) extends ExamEvaluatorEvents
 
   val emptyState: ExamEvaluatorState = ExamEvaluatorState(List())
-  final case class ExamEvaluatorState(results: List[ExamResult])
+  final case class ExamEvaluatorState(results: List[ExamResult]) extends JsonSerializable
   case class ExamResult(examId: String, studentId: String, result: Double)
 
   def apply(): Behavior[ExamEvaluator] = evaluator()
