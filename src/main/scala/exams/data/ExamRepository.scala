@@ -4,6 +4,7 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
+import exams.JsonSerializable
 import exams.distributor.ExamDistributor.ExamId
 
 object ExamRepository {
@@ -13,15 +14,15 @@ object ExamRepository {
 
   def apply(): Behavior[ExamRepository] = examRepository()
 
-  sealed trait ExamRepository
+  sealed trait ExamRepository extends JsonSerializable
   final case class AddQuestionsSet(questionsSet: QuestionsSet) extends ExamRepository
   final case class TakeQuestionsSet(setId: SetId, examId: ExamId, replyTo: ActorRef[TakeQuestionsSetReply]) extends ExamRepository
 
-  sealed trait ExamRepositoryEvents
+  sealed trait ExamRepositoryEvents  extends JsonSerializable
   final case class QuestionsSetAdded(questions: QuestionsSet) extends ExamRepositoryEvents
 
   val emptyState: ExamRepositoryState = ExamRepositoryState(List())
-  case class ExamRepositoryState(questions: List[QuestionsSet])
+  case class ExamRepositoryState(questions: List[QuestionsSet])  extends JsonSerializable
 
   case class QuestionsSet(setId: SetId, description: String, questions: Set[Question])
 

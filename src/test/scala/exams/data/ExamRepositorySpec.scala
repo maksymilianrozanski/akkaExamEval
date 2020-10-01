@@ -1,15 +1,16 @@
 package exams.data
 
-import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox}
+import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestProbe}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
-import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.disabled
+import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.enabled
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
+import exams.EventSourcedTestConfig.EventSourcedBehaviorTestKitConfigJsonSerialization
 import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, ExamRepositoryEvents, ExamRepositoryState, QuestionsSet, QuestionsSetAdded, TakeQuestionsSet, TakeQuestionsSetReply}
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config) with AnyWordSpecLike {
+class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKitConfigJsonSerialization) with AnyWordSpecLike {
 
   def examRepositoryTestKit(initialState: ExamRepositoryState): EventSourcedBehaviorTestKit[
     ExamRepository, ExamRepositoryEvents, ExamRepositoryState] = {
@@ -20,7 +21,7 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
         commandHandler = ExamRepository.commandHandler(context) _,
         eventHandler = ExamRepository.eventHandler
       )
-    }, serializationSettings = disabled)
+    }, serializationSettings = enabled)
   }
 
   import StubQuestions._
@@ -78,24 +79,24 @@ class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorT
 
     "receive TakeQuestionsSet" should {
       "send questions set exists" in {
-        val testInbox = TestInbox[TakeQuestionsSetReply]()
-        val command = TakeQuestionsSet("2", "1234", testInbox.ref)
+        val testProbe = TestProbe[TakeQuestionsSetReply]()
+        val command = TakeQuestionsSet("2", "1234", testProbe.ref)
 
         val expected = Some(persistedSets(1))
         val testKit = examRepositoryTestKit(initialState)
 
         testKit.runCommand(command)
-        testInbox.expectMessage((command.examId, expected))
+        testProbe.expectMessage((command.examId, expected))
       }
 
       "send None if set does not exist" in {
-        val testInbox = TestInbox[TakeQuestionsSetReply]()
-        val command = TakeQuestionsSet("10", "12345", testInbox.ref)
+        val testProbe = TestProbe[TakeQuestionsSetReply]()
+        val command = TakeQuestionsSet("10", "12345", testProbe.ref)
         val expected = None
         val testKit = examRepositoryTestKit(initialState)
 
         testKit.runCommand(command)
-        testInbox.expectMessage((command.examId, expected))
+        testProbe.expectMessage((command.examId, expected))
       }
     }
   }
