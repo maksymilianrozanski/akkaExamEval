@@ -1,0 +1,3 @@
+package exams
+
+trait JsonSerializable

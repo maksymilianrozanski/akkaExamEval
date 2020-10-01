@@ -3,7 +3,7 @@ package exams.evaluator
 import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
-import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.disabled
+import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.{disabled, enabled}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.data.{Answer, BlankQuestion, Question, TeachersExam}
