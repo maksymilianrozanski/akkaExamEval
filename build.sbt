@@ -16,6 +16,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
   "com.typesafe.akka" %% "akka-persistence-typed" % akkaVersion,
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+  "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
   "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
   // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-slf4j-impl
@@ -26,7 +27,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % cassandraVersion % Test,
 
   // Google Protocol Buffers
-  "com.google.protobuf" % "protobuf-java" % protobufVersion,
+//  "com.google.protobuf" % "protobuf-java" % protobufVersion,
 
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
