@@ -4,11 +4,12 @@ version := "0.1"
 
 scalaVersion := "2.13.3"
 
-val akkaVersion = "2.6.8"
+val akkaVersion = "2.6.9"
 val akkaHttpVersion = "10.2.0"
 lazy val leveldbVersion = "0.7"
 lazy val leveldbjniVersion = "1.8"
 lazy val protobufVersion = "3.6.1"
+lazy val cassandraVersion =  "1.0.3"
 
 libraryDependencies ++= Seq(
 
@@ -21,9 +22,8 @@ libraryDependencies ++= Seq(
   "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.13.3",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
 
-  // local levelDB stores
-  "org.iq80.leveldb" % "leveldb" % leveldbVersion,
-  "org.fusesource.leveldbjni" % "leveldbjni-all" % leveldbjniVersion,
+  "com.typesafe.akka" %% "akka-persistence-cassandra" % cassandraVersion,
+  "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % cassandraVersion % Test,
 
   // Google Protocol Buffers
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
