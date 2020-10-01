@@ -1,36 +1,18 @@
 package exams.evaluator
 
-import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox, TestProbe}
+import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestProbe}
 import akka.actor.typed.scaladsl.Behaviors
-import akka.persistence.testkit.PersistenceTestKitPlugin
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
-import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.{disabled, enabled}
+import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.enabled
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
-import com.typesafe.config.ConfigFactory
+import exams.EventSourcedTestConfig.EventSourcedBehaviorTestKitConfigJsonSerialization
 import exams.data.{Answer, BlankQuestion, Question, TeachersExam}
 import exams.evaluator.ExamEvaluator.{ExamEvaluatorState, ExamResult}
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(
-  ConfigFactory.parseString(
-    """
-      akka {
-        actor {
-          allow-java-serialization = off
-           persistence {
-              testkit.events.serialize = on
-          }
-          serializers {
-            jackson-json = "akka.serialization.jackson.JacksonJsonSerializer"
-          }
-          serialization-bindings {
-            "exams.JsonSerializable" = jackson-json
-          }
-        }
-      }
-      """.stripMargin).withFallback(PersistenceTestKitPlugin.config)
-) with AnyWordSpecLike {
+class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKitConfigJsonSerialization)
+  with AnyWordSpecLike {
 
   "should return percent of correct answers in exam" in {
     val teachersExam = TeachersExam("exam123",
