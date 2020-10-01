@@ -1,11 +1,12 @@
 package exams.distributor
 
-import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox}
+import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox, TestProbe}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
-import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.disabled
+import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.enabled
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
+import exams.EventSourcedTestConfig.EventSourcedBehaviorTestKitConfigJsonSerialization
 import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
 import exams.data._
 import exams.distributor.ExamDistributor._
@@ -15,7 +16,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class ExamDistributorSpec
-  extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKit.config) with AnyWordSpecLike
+  extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKitConfigJsonSerialization) with AnyWordSpecLike
     with BeforeAndAfterEach {
 
   private val persistedExam1 = PersistedExam("student123", TeachersExam("ex123", List()))
@@ -51,8 +52,8 @@ class ExamDistributorSpec
       }
 
       "remove request from state, and add exam" in {
-        val student1 = TestInbox[Student]()
-        val student2 = TestInbox[Student]()
+        val student1 = TestProbe[Student]()
+        val student2 = TestProbe[Student]()
 
         val examAdded = ExamAdded("student123", TeachersExam("ex1200", List()))
         val initialState = threeExams.copy(requests = Map("ex1200" -> student1.ref, "ex1201" -> student2.ref))
@@ -81,12 +82,12 @@ class ExamDistributorSpec
     }
 
     "onExamRequestedHandler" must {
-      val student1 = TestInbox[Student]()
+      val student1 = TestProbe[Student]()
       val existingRequest = "123" -> student1.ref
       val initialState = ExamDistributor.emptyState.copy(requests = Map(existingRequest), lastExamId = 11)
 
       val id2: ExamId = "1234"
-      val student2 = TestInbox[Student]()
+      val student2 = TestProbe[Student]()
       val event = ExamRequested(id2, student2.ref)
 
       val result = onExamRequestedHandler(initialState, event)
@@ -102,8 +103,8 @@ class ExamDistributorSpec
     }
 
     "onExamRequestRemovedHandler" must {
-      val student1 = TestInbox[Student]()
-      val student2 = TestInbox[Student]()
+      val student1 = TestProbe[Student]()
+      val student2 = TestProbe[Student]()
       val persisted1 = "1" -> student1.ref
       val persisted2 = "2" -> student2.ref
       val initialState = ExamDistributor.emptyState.copy(requests = Map(persisted1, persisted2), lastExamId = 0)
@@ -118,7 +119,7 @@ class ExamDistributorSpec
     }
   }
 
-  def requestExamEvaluationTestKit(evaluator: TestInbox[ExamEvaluator])(initialState: ExamDistributorState): EventSourcedBehaviorTestKit[RequestExamEvaluation, ExamCompleted, ExamDistributorState] =
+  def requestExamEvaluationTestKit(evaluator: TestProbe[ExamEvaluator])(initialState: ExamDistributorState): EventSourcedBehaviorTestKit[RequestExamEvaluation, ExamCompleted, ExamDistributorState] =
     EventSourcedBehaviorTestKit(system, Behaviors.setup[RequestExamEvaluation] { context =>
       EventSourcedBehavior(
         persistenceId = PersistenceId.ofUniqueId("uniqueId"),
@@ -126,11 +127,11 @@ class ExamDistributorSpec
         commandHandler = ExamDistributor.onRequestExamEvaluation(context, evaluator.ref) _,
         eventHandler = ExamDistributor.examCompletedHandler
       )
-    }, serializationSettings = disabled)
+    }, serializationSettings = enabled)
 
   "ExamDistributor's onRequestExamEvaluation" when {
     "answers length is equal to persisted exam's questions length, and exam with given id is persisted" must {
-      val evaluator = TestInbox[ExamEvaluator]()
+      val evaluator = TestProbe[ExamEvaluator]()
       val testKit = requestExamEvaluationTestKit(evaluator)(threeExams)
       val answers = List(List(Answer("yes"), Answer("no")), List(Answer("None")))
       val command = RequestExamEvaluation(persistedExam3.exam.examId, answers)
@@ -147,7 +148,7 @@ class ExamDistributorSpec
     }
 
     "answers length is not equal to persisted exam's questions length" must {
-      val evaluator = TestInbox[ExamEvaluator]()
+      val evaluator = TestProbe[ExamEvaluator]()
       val testKit = requestExamEvaluationTestKit(evaluator)(threeExams)
       val answers = List(List(Answer("no")))
       val command = RequestExamEvaluation(persistedExam3.exam.examId, answers)
@@ -159,12 +160,12 @@ class ExamDistributorSpec
       }
 
       "not send message to evaluator" in {
-        assert(!evaluator.hasMessages)
+        evaluator.expectNoMessage()
       }
     }
 
     "answers id is not contained in persisted exams" must {
-      val evaluator = TestInbox[ExamEvaluator]()
+      val evaluator = TestProbe[ExamEvaluator]()
       val testKit = requestExamEvaluationTestKit(evaluator)(threeExams)
       val answers = List(List(Answer("yes"), Answer("no")), List(Answer("None")))
       val command = RequestExamEvaluation("invalidId", answers)
@@ -176,12 +177,12 @@ class ExamDistributorSpec
       }
 
       "not send message to evaluator" in {
-        assert(!evaluator.hasMessages)
+        evaluator.expectNoMessage()
       }
     }
   }
 
-  def requestExam2TestKit(generator: TestInbox[ExamGenerator], messageAdapter: TestInbox[ExamOutput])(initialState: ExamDistributorState)
+  def requestExam2TestKit(generator: TestProbe[ExamGenerator], messageAdapter: TestInbox[ExamOutput])(initialState: ExamDistributorState)
   : EventSourcedBehaviorTestKit[RequestExam, ExamRequested, ExamDistributorState] =
     EventSourcedBehaviorTestKit(system, Behaviors.setup[RequestExam] { context =>
       EventSourcedBehavior(
@@ -190,12 +191,12 @@ class ExamDistributorSpec
         commandHandler = onRequestExam(context)(generator.ref, messageAdapter.ref) _,
         eventHandler = onExamRequestedHandler
       )
-    }, serializationSettings = disabled)
+    }, serializationSettings = enabled)
 
   "ExamDistributor" when {
-    val generatorInbox = TestInbox[ExamGenerator]()
+    val generatorInbox = TestProbe[ExamGenerator]()
     val fakeMessageAdapter = TestInbox[ExamOutput]()
-    val studentInbox = TestInbox[Student]()
+    val studentInbox = TestProbe[Student]()
     val initialState = ExamDistributor.emptyState.copy(lastExamId = 10)
 
     val studentsRequest = StudentsRequest("student123", 2, "set2")
@@ -229,21 +230,21 @@ class ExamDistributorSpec
         commandHandler = onReceivingGeneratedExam(context) _,
         eventHandler = distributorEventHandler
       )
-    }, serializationSettings = disabled)
+    }, serializationSettings = enabled)
   }
 
   "ExamDistributor" when {
     "receive message from ExamGenerator" when {
       "state contains request with given ExamId" should {
-        val student1 = TestInbox[Student]()
-        val student2 = TestInbox[Student]()
+        val student1 = TestProbe[Student]()
+        val student2 = TestProbe[Student]()
         val initialState = ExamDistributor.emptyState.copy(lastExamId = 20,
           requests = Map("19" -> student1.ref, "20" -> student2.ref))
 
         import exams.data.StubQuestions._
         val examRequest = ExamRequest("19", "student123", 2, "set1")
         val exam = TeachersExam("19", List(question1, question2))
-        val command = ReceivedGeneratedExam(examRequest, Some(exam))
+        val command = ReceivedGeneratedExam(ExamOutput(examRequest, Some(exam)))
 
         val testKit = receivedGeneratedExamTestKit(initialState)
         val result = testKit.runCommand(command)
@@ -252,7 +253,7 @@ class ExamDistributorSpec
           student1.expectMessage(GiveExamToStudent(exam))
         }
         "send message only to correct student" in {
-          assertResult(false, "should send message only to student1")(student2.hasMessages)
+          student2.expectNoMessage()
         }
         "return ExamAdded event" in {
           assertResult(ExamAdded(examRequest.studentId, exam))(result.event)
@@ -260,13 +261,13 @@ class ExamDistributorSpec
       }
 
       "received message contains no exam" should {
-        val student1 = TestInbox[Student]()
-        val student2 = TestInbox[Student]()
+        val student1 = TestProbe[Student]()
+        val student2 = TestProbe[Student]()
         val initialState = ExamDistributor.emptyState.copy(lastExamId = 20,
           requests = Map("19" -> student1.ref, "20" -> student2.ref))
 
         val examRequest = ExamRequest("19", "student123", 2, "set1")
-        val command = ReceivedGeneratedExam(examRequest, None)
+        val command = ReceivedGeneratedExam(ExamOutput(examRequest, None))
         val testKit = receivedGeneratedExamTestKit(initialState)
         testKit.runCommand(command)
         "send GeneratingExamFailed to student" in {

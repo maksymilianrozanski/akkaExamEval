@@ -74,9 +74,9 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
           testKit.run(message)
           "send generated TeachersExam to ExamDistributor" in {
             val distributorMessage = distributor.receiveMessage()
-            assertResult(examRequest1)(distributorMessage._1)
+            assertResult(examRequest1)(distributorMessage.request)
 
-            distributorMessage._2 match {
+            distributorMessage.teachersExam match {
               case Some(TeachersExam(examId, questions)) =>
                 assertResult(examRequest1.examId)(examId)
                 assertResult(questionsSetFromRepo._2.get.questions,
@@ -114,7 +114,7 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
           val message = ReceivedSetFromRepo((examRequest1.examId, None))
           testKit.run(message)
           "send message to distributor" in {
-            assertResult((examRequest1, None))(distributor.receiveMessage())
+            assertResult(ExamOutput(examRequest1, None))(distributor.receiveMessage())
           }
 
           "remove request from the state" in {

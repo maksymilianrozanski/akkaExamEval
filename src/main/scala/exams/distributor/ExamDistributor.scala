@@ -4,6 +4,7 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior, ReplyEffect}
+import exams.JsonSerializable
 import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
 import exams.data._
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
@@ -16,7 +17,7 @@ object ExamDistributor {
   type StudentId = String
 
   //commands
-  sealed trait ExamDistributor
+  sealed trait ExamDistributor extends JsonSerializable
   /**
    * incoming message - Requests generating new exam
    *
@@ -28,7 +29,7 @@ object ExamDistributor {
   private[exams] case class ReceivedGeneratedExam(exam: ExamOutput) extends ExamDistributor
 
   //events
-  sealed trait ExamDistributorEvents
+  sealed trait ExamDistributorEvents extends JsonSerializable
   final case class ExamRequested(examId: ExamId, student: ActorRef[Student]) extends ExamDistributorEvents
   final case class ExamRequestRemoved(examId: ExamId) extends ExamDistributorEvents
   final case class ExamAdded(studentId: String, exam: TeachersExam) extends ExamDistributorEvents
@@ -37,7 +38,7 @@ object ExamDistributor {
   case class PersistedExam(studentId: StudentId, exam: TeachersExam)
   case class PersistedAnswers(answers: Answers)
   case class ExamDistributorState(exams: Map[ExamId, PersistedExam], answers: Map[ExamId, PersistedAnswers],
-                                  requests: Map[ExamId, ActorRef[Student]], lastExamId: Int)
+                                  requests: Map[ExamId, ActorRef[Student]], lastExamId: Int) extends JsonSerializable
   val emptyState: ExamDistributorState = ExamDistributorState(Map(), Map(), Map(), 0)
 
   import exams.data.TeachersExam._
@@ -86,7 +87,7 @@ object ExamDistributor {
   (context: ActorContext[T])(state: ExamDistributorState, message: ReceivedGeneratedExam)
   : Effect[ExamDistributorEvents, ExamDistributorState] = {
     message match {
-      case ReceivedGeneratedExam((ExamRequest(examId, studentId, _, _), maybeExam)) =>
+      case ReceivedGeneratedExam(ExamOutput(ExamRequest(examId, studentId, _, _), maybeExam)) =>
         val studentAndExam = (state.requests.get(examId), maybeExam)
         studentAndExam match {
           case (Some(studentRef), Some(exam)) =>

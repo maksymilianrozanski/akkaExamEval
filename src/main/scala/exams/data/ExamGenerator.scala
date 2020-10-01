@@ -7,7 +7,7 @@ import exams.distributor.ExamDistributor.ExamId
 
 object ExamGenerator {
 
-  type ExamOutput = (ExamRequest, Option[TeachersExam])
+  case class ExamOutput(request: ExamRequest, teachersExam: Option[TeachersExam])
   type ExamRequestWithRef = (ExamRequest, ActorRef[ExamOutput])
 
   def sampleExam(id: ExamId): TeachersExam = {
@@ -52,13 +52,13 @@ object ExamGenerator {
           eitherExam match {
             case Right((request, teachersExam)) =>
               val replyTo = request._2
-              replyTo ! (request._1, Some(teachersExam))
+              replyTo ! ExamOutput(request._1, Some(teachersExam))
               generator(repository)(stateWithDropped(state)(examId))
             case Left(value) =>
               value match {
                 case EmptyRepositoryResponse(request) =>
                   context.log.info("Repository returned no questions for examId:{} request", examId)
-                  request._2 ! (request._1, None)
+                  request._2 ! ExamOutput(request._1, None)
                   generator(repository)(stateWithDropped(state)(examId))
                 case NotFoundResponse(examId) =>
                   context.log.error("Not found request corresponding to examId: {}! stopping the actor", examId)
