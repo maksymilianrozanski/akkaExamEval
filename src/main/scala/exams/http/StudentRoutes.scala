@@ -56,7 +56,11 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
       } ~ (path("evaluate") & post & extractRequest) { _ =>
         examEvalRequested
       }
-    } ~ pathPrefix("repo") {
+    } ~ repoRoutes
+  }
+
+  def repoRoutes(implicit addingQuestionsSet: QuestionsSet => Unit): Route = {
+    pathPrefix("repo") {
       (path("add") & post & extractRequest) { _ =>
         addSetToRepo
       }
