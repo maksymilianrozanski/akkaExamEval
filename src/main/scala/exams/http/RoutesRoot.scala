@@ -44,53 +44,14 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   def allRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
                 completedExam: CompletedExam => Unit,
-                addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext): Route = {
-    studentRoutes ~ repoRoutes
-  }
-
-  def studentRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
-                    completedExam: CompletedExam => Unit, ec: ExecutionContext): Route = {
-    pathPrefix("student") {
-      (pathEndOrSingleSlash & get) {
-        complete(
-          HttpEntity(ContentTypes.`text/plain(UTF-8)`, "nothing here yet"))
-      } ~ post {
-        path("start2") {
-          examRequestedRoute
-        }
-      } ~ (path("evaluate") & post & extractRequest) { _ =>
-        examEvalRequested
-      }
-    }
-  }
+                addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext): Route =
+    StudentRoutes.studentRoutes ~ repoRoutes
 
   def repoRoutes(implicit addingQuestionsSet: QuestionsSet => Unit): Route = {
     pathPrefix("repo") {
       (path("add") & post & extractRequest) { _ =>
         addSetToRepo
       }
-    }
-  }
-
-  def examRequestedRoute(implicit future: StudentsRequest => Future[DisplayedToStudent], ec: ExecutionContext): Route =
-    entity(as[StudentsRequest])(request => complete(future(request).map(displayedToStudentToResponse)))
-
-  private def displayedToStudentToResponse(displayed: DisplayedToStudent): HttpResponse =
-    displayed match {
-      case exam: ExamGenerated =>
-        HttpResponse(status = StatusCodes.OK, entity = HttpEntity(contentType = ContentTypes.`application/json`,
-          DisplayedToStudentFormat.write(exam).prettyPrint))
-      case reason: GeneratingFailed =>
-        HttpResponse(status = StatusCodes.NotFound, entity = HttpEntity(contentType = ContentTypes.`application/json`,
-          DisplayedToStudentFormat.write(reason).prettyPrint))
-    }
-
-  def examEvalRequested(implicit future: CompletedExam => Unit): Route = {
-    entity(as[CompletedExam]) {
-      exam =>
-        println(s"exam eval endpoint, request: $exam")
-        future(exam)
-        complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
     }
   }
 
