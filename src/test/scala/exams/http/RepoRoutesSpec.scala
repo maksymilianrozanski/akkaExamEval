@@ -6,25 +6,10 @@ import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.ExamRepository.QuestionsSet
 import exams.data.StubQuestions.{question2, question3}
-import exams.data.{CompletedExam, StudentsRequest}
-import exams.http.StudentActions.ExamGenerated
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
-import scala.concurrent.Future
-
 class RepoRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with StudentsExamJsonProtocol with Matchers with SprayJsonSupport {
-
-  object ActorInteractionsStubs {
-    implicit def examRequestedStub: StudentsRequest => Future[ExamGenerated] = (request: StudentsRequest) =>
-      fail(s"examRequestedStub was not expected to be called, was called with $request")
-
-    implicit def examCompletedStub: CompletedExam => Unit = (exam: CompletedExam) =>
-      fail(s"examCompletedStub was not expected to be called, was called with $exam")
-
-    implicit def addingQuestionsSetStub: QuestionsSet => Unit = (set: QuestionsSet) =>
-      fail(s"addingQuestionsSetStub was not expected to be called, was called with $set")
-  }
 
   "/repo/add endpoint" when {
 
