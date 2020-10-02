@@ -45,21 +45,7 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport {
   def allRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
                 completedExam: CompletedExam => Unit,
                 addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext): Route =
-    StudentRoutes.studentRoutes ~ repoRoutes
-
-  def repoRoutes(implicit addingQuestionsSet: QuestionsSet => Unit): Route = {
-    pathPrefix("repo") {
-      (path("add") & post & extractRequest) { _ =>
-        addSetToRepo
-      }
-    }
-  }
-
-  def addSetToRepo(implicit addingQuestions: QuestionsSet => Unit): Route =
-    entity(as[QuestionsSet]) { set =>
-      addingQuestions(set)
-      complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested adding questions set"))
-    }
+    StudentRoutes.studentRoutes ~ RepoRoutes.repoRoutes
 }
 
 trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
