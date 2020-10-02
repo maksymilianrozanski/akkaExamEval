@@ -12,55 +12,45 @@ import org.scalatest.wordspec.AnyWordSpecLike
 class RepoRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with StudentsExamJsonProtocol with Matchers with SprayJsonSupport {
 
   "/repo/add endpoint" when {
-
     val questionsSet = QuestionsSet("set2", "example set description", Set(question2, question3))
-
     val path = "/repo/add"
     val validPassword = Auth.secretPass
-    implicit def addingQuestionsSet: QuestionsSet => Unit = (questionsSet: QuestionsSet) => ()
     "provided valid credentials" should {
-
-      val route = RepoRoutes.repoRoutes
+      val route = RepoRoutes.repoRoutes((_: QuestionsSet) => ())
+      val requestValidCredentials = Post(path, questionsSet) ~> addCredentials(BasicHttpCredentials("adm", validPassword))
 
       "call addingQuestions action" in {
         var calledTimes = 0
-        implicit def addingQuestionsAction: QuestionsSet => Unit = (set: QuestionsSet) => {
+        implicit def addingQuestionsActionWithCounter: QuestionsSet => Unit = (set: QuestionsSet) => {
           require(questionsSet == set, s"expected: $questionsSet, received $set")
           calledTimes = calledTimes + 1
         }
-        val routeWithCounter = RepoRoutes.repoRoutes(addingQuestionsAction)
+        val routeWithCounter = RepoRoutes.repoRoutes(addingQuestionsActionWithCounter)
 
-        Post(path, questionsSet) ~> addCredentials(BasicHttpCredentials("adm", validPassword)) ~> routeWithCounter ~> check(assertResult(1)(calledTimes))
+        requestValidCredentials ~> routeWithCounter ~> check(assertResult(1)(calledTimes))
       }
 
       "returned response" should {
-
         "have `text/plain(UTF-8)` content type" in
-          Post(path, questionsSet) ~> addCredentials(BasicHttpCredentials("adm", validPassword)) ~> route ~> check(contentType shouldBe ContentTypes.`text/plain(UTF-8)`)
+          requestValidCredentials ~> route ~> check(contentType shouldBe ContentTypes.`text/plain(UTF-8)`)
 
         "have expected content" in
-          Post(path, questionsSet) ~> addCredentials(BasicHttpCredentials("adm", validPassword)) ~> route ~> check(status shouldBe StatusCodes.OK)
+          requestValidCredentials ~> route ~> check(status shouldBe StatusCodes.OK)
       }
     }
 
     "provided invalid credentials" should {
-
       implicit def addingQuestionsSetStub: QuestionsSet => Unit = (set: QuestionsSet) =>
         fail(s"addingQuestionsSetStub was not expected to be called, was called with $set")
 
       val route = RepoRoutes.repoRoutes(addingQuestionsSetStub)
+      val requestInvalidCredentials = Post(path, questionsSet) ~> addCredentials(BasicHttpCredentials("adm", s"invalid+$validPassword"))
 
-      "return unauthorized access code" in {
-        Post(path, questionsSet) ~> addCredentials(BasicHttpCredentials("adm", s"invalid+$validPassword")) ~> route ~> check {
-          status shouldBe StatusCodes.Unauthorized
-        }
-      }
+      "return unauthorized access code" in
+        requestInvalidCredentials ~> route ~> check(status shouldBe StatusCodes.Unauthorized)
 
-      "not call inner functions" in {
-        Post(path, questionsSet) ~> addCredentials(BasicHttpCredentials("adm", s"invalid+$validPassword")) ~> route ~> check {
-
-        }
-      }
+      "not call inner functions" in
+        requestInvalidCredentials ~> route ~> check {}
     }
   }
 }
