@@ -21,7 +21,7 @@ case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
                             repository: ActorRef[ExamRepository],
                             implicit val timeout: Timeout)
 
-object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
+object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   def createStudentRoutes(implicit actors: RoutesActorsPack): Route = {
     implicit val actorSystem: ActorSystem[_] = actors.system
@@ -39,7 +39,7 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
     implicit def addingQuestionsSet: QuestionsSet => Unit =
       (set: QuestionsSet) => actors.repository ! AddQuestionsSet(set)
 
-    StudentRoutes2.allRoutes
+    RoutesRoot.allRoutes
   }
 
   def allRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],

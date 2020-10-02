@@ -11,7 +11,7 @@ import exams.data.{ExamGenerator, ExamRepository}
 import exams.distributor.ExamDistributor
 import exams.distributor.ExamDistributor.ExamDistributor
 import exams.evaluator.ExamEvaluator
-import exams.http.{RoutesActorsPack, StudentActions, StudentRoutes2}
+import exams.http.{RoutesActorsPack, StudentActions, RoutesRoot}
 
 import scala.util.{Failure, Success}
 
@@ -46,7 +46,7 @@ object Main {
       context.watch(studentActions)
       implicit val timeout: Timeout = Timeout.create(context.system.settings.config.getDuration("my-app.routes.ask-timeout"))
       implicit val actorPack: RoutesActorsPack = RoutesActorsPack(studentActions, context.system, distributor, repository, timeout)
-      val routes = StudentRoutes2.createStudentRoutes(actorPack)
+      val routes = RoutesRoot.createStudentRoutes(actorPack)
 
       startHttpServer(routes, context.system)
 

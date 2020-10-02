@@ -37,7 +37,7 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
       }
 
       import ActorInteractionsStubs.{addingQuestionsSetStub, examCompletedStub}
-      val route = StudentRoutes2.allRoutes
+      val route = RoutesRoot.allRoutes
 
       "return received exam" in
         Post("/student/start2", studentsRequest) ~> route ~> check(responseAs[ExamGenerated] shouldBe examToDisplay)
@@ -59,7 +59,7 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
       }
 
       import ActorInteractionsStubs.{addingQuestionsSetStub, examCompletedStub}
-      val route = StudentRoutes2.allRoutes
+      val route = RoutesRoot.allRoutes
 
       "have expected message" in
         Post("/student/start2", studentsRequest) ~> route ~> check(responseAs[GeneratingFailed] shouldBe result)
@@ -86,7 +86,7 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
       }
 
       import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub}
-      val route = StudentRoutes2.allRoutes
+      val route = RoutesRoot.allRoutes
 
       Post(path, completedExam) ~> route ~> check(assertResult(1)(calledTimes))
     }
@@ -96,7 +96,7 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
       implicit def examCompletedAction: CompletedExam => Unit = (exam: CompletedExam) => {
         require(completedExam == exam, s"expected $completedExam, received: $exam")
       }
-      val route = StudentRoutes2.allRoutes
+      val route = RoutesRoot.allRoutes
 
       "have `text/plain(UTF-8)` content type" in
         Post(path, completedExam) ~> route ~> check(contentType shouldBe ContentTypes.`text/plain(UTF-8)`)
@@ -117,7 +117,7 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
         calledTimes = calledTimes + 1
       }
       import ActorInteractionsStubs.{examRequestedStub, examCompletedStub}
-      val route = StudentRoutes2.allRoutes
+      val route = RoutesRoot.allRoutes
 
       Post(path, questionsSet) ~> route ~> check(assertResult(1)(calledTimes))
     }
@@ -126,7 +126,7 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
       implicit def addingQuestionsAction: QuestionsSet => Unit = (set: QuestionsSet) =>
         require(questionsSet == set, s"expected: $questionsSet, received $set")
       import ActorInteractionsStubs.{examRequestedStub, examCompletedStub}
-      val route = StudentRoutes2.allRoutes
+      val route = RoutesRoot.allRoutes
 
       "have `text/plain(UTF-8)` content type" in
         Post(path, questionsSet) ~> route ~> check(contentType shouldBe ContentTypes.`text/plain(UTF-8)`)
