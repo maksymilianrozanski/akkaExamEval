@@ -11,7 +11,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.concurrent.Future
 
-class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with StudentsExamJsonProtocol with Matchers with SprayJsonSupport {
+class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with StudentsExamJsonProtocol with Matchers with SprayJsonSupport {
 
   private object ActorInteractionsStubs {
     implicit def examRequestedStub: StudentsRequest => Future[ExamGenerated] = (request: StudentsRequest) =>
