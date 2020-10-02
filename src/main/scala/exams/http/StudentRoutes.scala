@@ -39,12 +39,17 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
     implicit def addingQuestionsSet: QuestionsSet => Unit =
       (set: QuestionsSet) => actors.repository ! AddQuestionsSet(set)
 
-    StudentRoutes2.studentRoutes
+    StudentRoutes2.allRoutes
+  }
+
+  def allRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
+                completedExam: CompletedExam => Unit,
+                addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext): Route = {
+    studentRoutes ~ repoRoutes
   }
 
   def studentRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
-                    completedExam: CompletedExam => Unit,
-                    addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext): Route = {
+                    completedExam: CompletedExam => Unit, ec: ExecutionContext): Route = {
     pathPrefix("student") {
       (pathEndOrSingleSlash & get) {
         complete(
@@ -56,7 +61,7 @@ object StudentRoutes2 extends StudentsExamJsonProtocol with SprayJsonSupport {
       } ~ (path("evaluate") & post & extractRequest) { _ =>
         examEvalRequested
       }
-    } ~ repoRoutes
+    }
   }
 
   def repoRoutes(implicit addingQuestionsSet: QuestionsSet => Unit): Route = {
