@@ -12,8 +12,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import scala.concurrent.Future
 
 class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with StudentsExamJsonProtocol with Matchers with SprayJsonSupport {
-
-  private object ActorInteractionsStubs {
+  object ActorInteractionsStubs {
     implicit def examRequestedStub: StudentsRequest => Future[ExamGenerated] = (request: StudentsRequest) =>
       fail(s"examRequestedStub was not expected to be called, was called with $request")
 
@@ -103,36 +102,6 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
 
       "have expected content" in
         Post(path, completedExam) ~> route ~> check(status shouldBe StatusCodes.OK)
-    }
-  }
-
-  "/repo/add endpoint" should {
-    import exams.data.StubQuestions._
-    val questionsSet = QuestionsSet("set2", "example set description", Set(question2, question3))
-    val path = "/repo/add"
-    "call addingQuestions action" in {
-      var calledTimes = 0
-      implicit def addingQuestionsAction: QuestionsSet => Unit = (set: QuestionsSet) => {
-        require(questionsSet == set, s"expected: $questionsSet, received $set")
-        calledTimes = calledTimes + 1
-      }
-      import ActorInteractionsStubs.{examRequestedStub, examCompletedStub}
-      val route = RoutesRoot.allRoutes
-
-      Post(path, questionsSet) ~> route ~> check(assertResult(1)(calledTimes))
-    }
-
-    "returned response" should {
-      implicit def addingQuestionsAction: QuestionsSet => Unit = (set: QuestionsSet) =>
-        require(questionsSet == set, s"expected: $questionsSet, received $set")
-      import ActorInteractionsStubs.{examRequestedStub, examCompletedStub}
-      val route = RoutesRoot.allRoutes
-
-      "have `text/plain(UTF-8)` content type" in
-        Post(path, questionsSet) ~> route ~> check(contentType shouldBe ContentTypes.`text/plain(UTF-8)`)
-
-      "have expected content" in
-        Post(path, questionsSet) ~> route ~> check(status shouldBe StatusCodes.OK)
     }
   }
 }

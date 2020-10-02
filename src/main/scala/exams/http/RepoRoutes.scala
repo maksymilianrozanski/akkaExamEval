@@ -10,11 +10,18 @@ object RepoRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   def repoRoutes(implicit addingQuestionsSet: QuestionsSet => Unit): Route = {
     pathPrefix("repo") {
-      (path("add") & post & extractRequest) { _ =>
-        addSetToRepo
+      Route.seal {
+        authenticateBasic(realm = "secure site", Auth.userPassAuthenticator) { user =>
+          innerRepoRoutes
+        }
       }
     }
   }
+
+  def innerRepoRoutes(implicit addingQuestionsSet: QuestionsSet => Unit): Route =
+    (path("add") & post & extractRequest) { _ =>
+      addSetToRepo
+    }
 
   private def addSetToRepo(implicit addingQuestions: QuestionsSet => Unit): Route =
     entity(as[QuestionsSet]) { set =>
