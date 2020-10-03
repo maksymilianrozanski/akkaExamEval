@@ -19,6 +19,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
   "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
+  "com.pauldijou" %% "jwt-spray-json" % "4.3.0",
   // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-slf4j-impl
   "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.13.3",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
