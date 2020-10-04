@@ -13,9 +13,13 @@ object StudentActions {
   final case class SendExamToEvaluation(exam: RequestExamEvaluation) extends Command
 
   sealed trait DisplayedToStudent
-  final case class ExamGenerated(exam: StudentsExam) extends DisplayedToStudent
   final case class ExamGeneratedWithToken(exam: StudentsExam, token: String) extends DisplayedToStudent
+  object ExamGeneratedWithToken {
+    implicit def toExamGenerated(examGeneratedWithToken: ExamGeneratedWithToken): ExamGenerated = ExamGenerated(examGeneratedWithToken.exam)
+  }
   case class GeneratingFailed(reason: String) extends DisplayedToStudent
+
+  case class ExamGenerated(exam: StudentsExam)
 
   def apply()(implicit distributor: ActorRef[ExamDistributor]): Behavior[Command] = registry(distributor)
 

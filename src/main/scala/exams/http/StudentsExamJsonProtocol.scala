@@ -2,7 +2,7 @@ package exams.http
 
 import exams.data.ExamRepository.QuestionsSet
 import exams.data._
-import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, GeneratingFailed}
+import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
 import spray.json.{DefaultJsonProtocol, JsValue, RootJsonFormat, RootJsonWriter}
 
 trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
@@ -20,7 +20,7 @@ trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
 
     override def write(obj: DisplayedToStudent): JsValue =
       obj match {
-        case success: ExamGenerated => examToDisplayFormat.write(success)
+        case success: ExamGeneratedWithToken => examToDisplayFormat.write(ExamGenerated(success.exam))
         case failed: GeneratingFailed => generatingExamFailedFormat.write(failed)
       }
   }

@@ -1,11 +1,12 @@
 package exams.http
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, path, pathEndOrSingleSlash, pathPrefix, post, _}
 import akka.http.scaladsl.server.Route
 import exams.data.{CompletedExam, StudentsRequest}
-import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, GeneratingFailed}
+import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,9 +32,9 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   private def displayedToStudentToResponse(displayed: DisplayedToStudent): HttpResponse =
     displayed match {
-      case exam: ExamGenerated =>
+      case exam: ExamGeneratedWithToken =>
         HttpResponse(status = StatusCodes.OK, entity = HttpEntity(contentType = ContentTypes.`application/json`,
-          DisplayedToStudentFormat.write(exam).prettyPrint))
+          DisplayedToStudentFormat.write(exam).prettyPrint), headers = Seq(RawHeader("Access-Token", exam.token)))
       case reason: GeneratingFailed =>
         HttpResponse(status = StatusCodes.NotFound, entity = HttpEntity(contentType = ContentTypes.`application/json`,
           DisplayedToStudentFormat.write(reason).prettyPrint))

@@ -1,11 +1,12 @@
 package exams.http
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.ExamRepository.QuestionsSet
 import exams.data.{Answer, CompletedExam, StudentsExam, StudentsRequest}
-import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, GeneratingFailed}
+import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -13,7 +14,7 @@ import scala.concurrent.Future
 
 class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with StudentsExamJsonProtocol with Matchers with SprayJsonSupport {
   object ActorInteractionsStubs {
-    implicit def examRequestedStub: StudentsRequest => Future[ExamGenerated] = (request: StudentsRequest) =>
+    implicit def examRequestedStub: StudentsRequest => Future[ExamGeneratedWithToken] = (request: StudentsRequest) =>
       fail(s"examRequestedStub was not expected to be called, was called with $request")
 
     implicit def examCompletedStub: CompletedExam => Unit = (exam: CompletedExam) =>
@@ -26,13 +27,16 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
   "student/start2 endpoint" when {
     "receive exam" should {
       import exams.data.StubQuestions._
-      val examToDisplay = ExamGenerated(StudentsExam("exam123", List(question2.blank, question3.blank)))
+
+      val token = "some-generated-token"
+      val examWithToken = ExamGeneratedWithToken(StudentsExam("exam123", List(question2.blank, question3.blank)), token)
+      val examToDisplay = ExamGenerated(examWithToken.exam)
 
       val studentsRequest = StudentsRequest("student123", 2, "set3")
 
-      implicit def examRequestedFuture: StudentsRequest => Future[ExamGenerated] = (request: StudentsRequest) => {
+      implicit def examRequestedFuture: StudentsRequest => Future[ExamGeneratedWithToken] = (request: StudentsRequest) => {
         require(request == studentsRequest, s"expected: $studentsRequest, received: $request")
-        Future(examToDisplay)
+        Future(examWithToken)
       }
 
       import ActorInteractionsStubs.{addingQuestionsSetStub, examCompletedStub}
@@ -46,6 +50,11 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
 
       "have StatusCode.OK" in
         Post("/student/start2", studentsRequest) ~> route ~> check(status shouldBe StatusCodes.OK)
+
+      "have Access-Token header with token" in {
+        Post("/student/start2", studentsRequest) ~> route ~> check(
+          header("Access-Token") shouldBe Some(RawHeader("Access-Token", token)))
+      }
     }
 
     "receive GeneratingFailed" should {

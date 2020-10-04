@@ -2,10 +2,10 @@ package exams.student
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import exams.distributor.ExamDistributor.{ExamDistributor, ExamId, RequestExam}
 import exams.data.{StudentsExam, StudentsRequest}
+import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam}
 import exams.http.StudentActions
-import exams.http.StudentActions.{ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
+import exams.http.StudentActions.{ExamGeneratedWithToken, GeneratingFailed}
 import exams.http.token.TokenGenerator
 
 sealed trait Student

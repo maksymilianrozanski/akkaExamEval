@@ -3,9 +3,9 @@ package exams.http
 
 import akka.actor.testkit.typed.Effect.SpawnedAnonymous
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
-import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
 import exams.data.{Answer, StudentsRequest}
-import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, RequestExamCommand2}
+import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
+import exams.http.StudentActions.{DisplayedToStudent, RequestExamCommand2}
 import exams.student.Student
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
