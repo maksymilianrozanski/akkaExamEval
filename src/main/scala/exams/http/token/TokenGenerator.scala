@@ -3,12 +3,12 @@ package exams.http.token
 import java.util.concurrent.TimeUnit
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import exams.distributor.ExamDistributor.ExamId
+import exams.distributor.ExamDistributor.{ExamId, emptyState, examAddedHandler}
 import pdi.jwt.algorithms.JwtHmacAlgorithm
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtSprayJson}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat, enrichAny}
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 object TokenGenerator extends DefaultJsonProtocol with SprayJsonSupport {
 
@@ -43,11 +43,15 @@ object TokenGenerator extends DefaultJsonProtocol with SprayJsonSupport {
     if (claims.expiration.getOrElse(0L) > (currentTime() / 1000)) Right(claims.content)
     else Left(TokenExpired)
 
-  private def hasExpectedId(expectedId: ExamId)(tokenContent: String) = {
+  private def hasExpectedId(expectedId: ExamId)(tokenContent: String): Either[TokenValidationResult, ValidToken] = {
     import spray.json._
-    val examId = tokenContent.parseJson.convertTo[TokenContent].examId
-    if (expectedId == examId) Right(ValidToken(expectedId))
-    else Left(InvalidTokenContent)
+    Try(tokenContent.parseJson.convertTo[TokenContent].examId) match {
+      case Success(examId) =>
+        if (expectedId == examId) Right(ValidToken(expectedId)) else Left(InvalidTokenContent)
+      case Failure(_: DeserializationException) =>
+        Left(ParsingError)
+      case Failure(e) => throw e
+    }
   }
 
   sealed trait TokenValidationResult

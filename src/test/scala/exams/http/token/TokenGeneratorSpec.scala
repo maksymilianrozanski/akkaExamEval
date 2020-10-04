@@ -1,12 +1,17 @@
 package exams.http.token
 
-import exams.http.token.TokenGenerator.{SecretKey, ValidToken, decodeToken}
+
+import java.util.concurrent.TimeUnit
+
+import exams.http.token.TokenGenerator.{InvalidToken, ParsingError, SecretKey, ValidToken, decodeToken}
 import org.scalatest.wordspec.AnyWordSpecLike
+import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtSprayJson}
 
 class TokenGeneratorSpec extends AnyWordSpecLike {
 
+  private val someDay = 1601807051252L
+  private val oneHourLater = someDay + 3600 * 1000
   "TokenGenerator" should {
-    val someDay = 1601807051252L
     implicit val secretKey: SecretKey = SecretKey("unit test secret key")
     val token = TokenGenerator.createToken("exam123", 7)(() => someDay, secretKey)
     "decode previously encoded token" in {
@@ -17,14 +22,30 @@ class TokenGeneratorSpec extends AnyWordSpecLike {
 
   "TokenGenerator" when {
     "was not able to decode token" should {
+      val tokenWithOtherKey = TokenGenerator.createToken("exam123", 7)(() => someDay, SecretKey("other-key"))
       "return Left(InvalidToken)" in {
-
+        assertResult(Left(InvalidToken))(
+          TokenGenerator.validateToken(tokenWithOtherKey, "exam123")(
+            () => oneHourLater, SecretKey("valid-key")))
       }
     }
 
     "was not able to parse token content" should {
-      "return Left(ParsingError)" in {
+      val otherClaim = JwtClaim(
+        expiration = Some(someDay / 1000 + TimeUnit.DAYS.toSeconds(7)),
+        issuedAt = Some(someDay / 1000),
+        issuer = Some("Hello"),
+        content =
+          """
+             {"someValue" : "someText"}
+             """.stripMargin
+      )
+      val someKey = "unit-test-key"
+      val invalidToken = JwtSprayJson.encode(otherClaim, someKey, TokenGenerator.algorithm)
 
+      "return Left(ParsingError)" in {
+        assertResult(Left(ParsingError))(TokenGenerator.validateToken(invalidToken,
+          "someText")(() => oneHourLater, SecretKey(someKey)))
       }
     }
 
