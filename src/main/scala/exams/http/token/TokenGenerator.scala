@@ -13,27 +13,28 @@ import scala.util.{Failure, Success}
 object TokenGenerator extends DefaultJsonProtocol with SprayJsonSupport {
 
   val algorithm: JwtHmacAlgorithm = JwtAlgorithm.HS256
-  val secretKey = "very-secret-akka-exams-key"
+  implicit val secretKey: SecretKey = SecretKey("very-secret-akka-exams-key")
+  case class SecretKey(key: String)
 
-  def createToken(examId: ExamId, expirationDays: Int)(implicit currentTime: () => Long): String = {
+  def createToken(examId: ExamId, expirationDays: Int)(implicit currentTime: () => Long, secretKey: SecretKey): String = {
     val claims = JwtClaim(
       expiration = Some(currentTime() / 1000 + TimeUnit.DAYS.toSeconds(expirationDays)),
       issuedAt = Some(currentTime() / 1000),
       issuer = Some("HelloJwt"),
       content = TokenContent(examId).toJson.compactPrint
     )
-    JwtSprayJson.encode(claims, secretKey, algorithm) // JWT string
+    JwtSprayJson.encode(claims, secretKey.key, algorithm) // JWT string
   }
 
   case class ExamIdToken(expectedId: ExamId, token: String)
 
-  def validateToken(encodedToken: String, expectedId: ExamId)(implicit currentTime: () => Long): Either[TokenValidationResult, ValidToken] =
-    decodeToken(encodedToken)
+  def validateToken(encodedToken: String, expectedId: ExamId)(implicit currentTime: () => Long, secretKey: SecretKey): Either[TokenValidationResult, ValidToken] =
+    decodeToken(encodedToken, secretKey)
       .flatMap(isNotExpired)
       .flatMap(hasExpectedId(expectedId)(_))
 
-  private def decodeToken(token: String) =
-    JwtSprayJson.decode(token, secretKey, Seq(algorithm)) match {
+  private def decodeToken(token: String, secretKey: SecretKey) =
+    JwtSprayJson.decode(token, secretKey.key, Seq(algorithm)) match {
       case Success(value) => Right(value)
       case Failure(_) => Left(InvalidToken)
     }

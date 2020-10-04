@@ -1,15 +1,16 @@
 package exams.http.token
 
-import exams.http.token.TokenGenerator.{ValidToken, decodeToken}
+import exams.http.token.TokenGenerator.{SecretKey, ValidToken, decodeToken}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class TokenGeneratorSpec extends AnyWordSpecLike {
 
   "TokenGenerator" should {
     val someDay = 1601807051252L
-    val token = TokenGenerator.createToken("exam123", 7)(() => someDay)
+    implicit val secretKey: SecretKey = SecretKey("unit test secret key")
+    val token = TokenGenerator.createToken("exam123", 7)(() => someDay, secretKey)
     "decode previously encoded token" in {
-      val result = TokenGenerator.validateToken(token, "exam123")(() => someDay + 39000)
+      val result = TokenGenerator.validateToken(token, "exam123")(() => someDay + 39000, secretKey)
       assertResult(Right(ValidToken("exam123")))(result)
     }
   }
