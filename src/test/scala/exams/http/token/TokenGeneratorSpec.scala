@@ -3,7 +3,7 @@ package exams.http.token
 
 import java.util.concurrent.TimeUnit
 
-import exams.http.token.TokenGenerator.{InvalidToken, ParsingError, SecretKey, ValidToken, decodeToken}
+import exams.http.token.TokenGenerator.{InvalidToken, InvalidTokenContent, ParsingError, SecretKey, ValidToken, decodeToken}
 import org.scalatest.wordspec.AnyWordSpecLike
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtSprayJson}
 
@@ -11,8 +11,8 @@ class TokenGeneratorSpec extends AnyWordSpecLike {
 
   private val someDay = 1601807051252L
   private val oneHourLater = someDay + 3600 * 1000
+  private implicit val secretKey: SecretKey = SecretKey("unit test secret key")
   "TokenGenerator" should {
-    implicit val secretKey: SecretKey = SecretKey("unit test secret key")
     val token = TokenGenerator.createToken("exam123", 7)(() => someDay, secretKey)
     "decode previously encoded token" in {
       val result = TokenGenerator.validateToken(token, "exam123")(() => someDay + 39000, secretKey)
@@ -50,8 +50,11 @@ class TokenGeneratorSpec extends AnyWordSpecLike {
     }
 
     "examId of token does not match to expected" should {
-      "return Left(InvalidTokenContent)" in {
+      val token = TokenGenerator.createToken("exam2", 7)(() => someDay, secretKey)
 
+      "return Left(InvalidTokenContent)" in {
+        assertResult(Left(InvalidTokenContent))(
+          TokenGenerator.validateToken(token, "exam12345")(() => oneHourLater, secretKey))
       }
     }
 
