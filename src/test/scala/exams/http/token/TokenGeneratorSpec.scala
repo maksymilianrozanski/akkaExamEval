@@ -3,19 +3,19 @@ package exams.http.token
 
 import java.util.concurrent.TimeUnit
 
-import exams.http.token.TokenGenerator.{InvalidToken, InvalidTokenContent, ParsingError, SecretKey, ValidToken, decodeToken}
+import exams.http.token.TokenGenerator.{InvalidToken, InvalidTokenContent, ParsingError, SecretKey, TokenExpired, ValidToken}
 import org.scalatest.wordspec.AnyWordSpecLike
-import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtSprayJson}
+import pdi.jwt.{JwtClaim, JwtSprayJson}
 
 class TokenGeneratorSpec extends AnyWordSpecLike {
 
   private val someDay = 1601807051252L
-  private val oneHourLater = someDay + 3600 * 1000
+  private val oneHourLater = someDay + TimeUnit.HOURS.toMillis(1)
   private implicit val secretKey: SecretKey = SecretKey("unit test secret key")
   "TokenGenerator" should {
     val token = TokenGenerator.createToken("exam123", 7)(() => someDay, secretKey)
     "decode previously encoded token" in {
-      val result = TokenGenerator.validateToken(token, "exam123")(() => someDay + 39000, secretKey)
+      val result = TokenGenerator.validateToken(token, "exam123")(() => oneHourLater, secretKey)
       assertResult(Right(ValidToken("exam123")))(result)
     }
   }
@@ -59,8 +59,11 @@ class TokenGeneratorSpec extends AnyWordSpecLike {
     }
 
     "token expiration date passed" should {
+      val token = TokenGenerator.createToken("exam123", 7)(() => someDay, secretKey)
+      val tenDaysLater = someDay + TimeUnit.DAYS.toMillis(10)
       "return Left(TokenExpired)" in {
-
+        assertResult(Left(TokenExpired))(
+          TokenGenerator.validateToken(token, "exam123")(() => tenDaysLater, secretKey))
       }
     }
   }
