@@ -12,11 +12,11 @@ class StudentSpec extends AnyWordSpecLike {
   "Student" when {
 
     val token = "stub-token"
-    implicit def tokenGen(studentsExam: StudentsExam): String = token
+    def tokenGen(studentsExam: StudentsExam): String = token
 
     "receive GiveExamToStudent" should {
       val displayReceiver = TestInbox[DisplayedToStudent]()
-      val testKit = BehaviorTestKit(Student(displayReceiver.ref))
+      val testKit = BehaviorTestKit(Student(displayReceiver.ref, tokenGen))
       val exam = ExamGenerator.sampleExam("1")
       val command = GiveExamToStudent(exam)
       testKit.run(command)
@@ -30,7 +30,7 @@ class StudentSpec extends AnyWordSpecLike {
 
     "receive GiveResultToStudent" should {
       val displayReceiver = TestInbox[DisplayedToStudent]()
-      val testKit = BehaviorTestKit(Student(displayReceiver.ref))
+      val testKit = BehaviorTestKit(Student(displayReceiver.ref, tokenGen))
       testKit.run(GiveResultToStudent(0.8))
       "have 'stopped' behavior" in
         assertResult(Behaviors.stopped)(testKit.returnedBehavior)
@@ -39,7 +39,7 @@ class StudentSpec extends AnyWordSpecLike {
     "receive RequestExamCommand" should {
       val distributor = TestInbox[ExamDistributor]()
       val displayReceiver = TestInbox[DisplayedToStudent]()
-      val testKit = BehaviorTestKit(Student(displayReceiver.ref))
+      val testKit = BehaviorTestKit(Student(displayReceiver.ref, tokenGen))
       val studentsRequest = StudentsRequest("student123", 3, "set2")
       val command = RequestExamCommand(studentsRequest, distributor.ref)
       testKit.run(command)
@@ -51,7 +51,7 @@ class StudentSpec extends AnyWordSpecLike {
 
     "receive GeneratingExamFailed" should {
       val displayReceiver = TestInbox[DisplayedToStudent]()
-      val testKit = BehaviorTestKit(Student(displayReceiver.ref))
+      val testKit = BehaviorTestKit(Student(displayReceiver.ref, tokenGen))
       testKit.run(GeneratingExamFailed)
       "have 'stopped' behavior" in
         assertResult(Behaviors.stopped)(testKit.returnedBehavior)

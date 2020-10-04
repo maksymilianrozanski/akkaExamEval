@@ -6,6 +6,7 @@ import exams.distributor.ExamDistributor.{ExamDistributor, ExamId, RequestExam}
 import exams.data.{StudentsExam, StudentsRequest}
 import exams.http.StudentActions
 import exams.http.StudentActions.{ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
+import exams.http.token.TokenGenerator
 
 sealed trait Student
 final case class RequestExamCommand(code: StudentsRequest, distributor: ActorRef[ExamDistributor]) extends Student
@@ -15,7 +16,8 @@ final case class GiveResultToStudent(result: Double) extends Student
 case object GeneratingExamFailed extends Student
 
 object Student {
-  def apply(displayReceiver: ActorRef[StudentActions.DisplayedToStudent])(implicit tokenGen: StudentsExam => String): Behavior[Student] =
+
+  def apply(displayReceiver: ActorRef[StudentActions.DisplayedToStudent], tokenGen: StudentsExam => String = tokenFromExam): Behavior[Student] =
     stateless(displayReceiver, tokenGen)
 
   def stateless(displayReceiver: ActorRef[StudentActions.DisplayedToStudent], tokenGen: StudentsExam => String): Behavior[Student] =
@@ -38,4 +40,7 @@ object Student {
           Behaviors.stopped
       }
     )
+
+  private def tokenFromExam(exam: StudentsExam): String =
+    TokenGenerator.createToken(exam.examId, 7)(System.currentTimeMillis, TokenGenerator.secretKey)
 }

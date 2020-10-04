@@ -4,7 +4,6 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
 import exams.data.{StudentsExam, StudentsRequest}
-import exams.http.token.TokenManager
 import exams.student.Student
 
 object StudentActions {
@@ -19,8 +18,6 @@ object StudentActions {
   case class GeneratingFailed(reason: String) extends DisplayedToStudent
 
   def apply()(implicit distributor: ActorRef[ExamDistributor]): Behavior[Command] = registry(distributor)
-
-  import TokenManager.tokenFromExam
 
   def registry(distributor: ActorRef[ExamDistributor]): Behavior[Command] = {
     Behaviors.setup(context =>
