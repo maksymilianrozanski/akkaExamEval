@@ -20,7 +20,6 @@ object TokenGenerator extends DefaultJsonProtocol with SprayJsonSupport {
     val claims = JwtClaim(
       expiration = Some(currentTime() / 1000 + TimeUnit.DAYS.toSeconds(expirationDays)),
       issuedAt = Some(currentTime() / 1000),
-      issuer = Some("HelloJwt"),
       content = TokenContent(examId).toJson.compactPrint
     )
     JwtSprayJson.encode(claims, secretKey.key, algorithm) // JWT string

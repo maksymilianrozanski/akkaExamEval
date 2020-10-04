@@ -35,7 +35,6 @@ class TokenGeneratorSpec extends AnyWordSpecLike {
       val otherClaim = JwtClaim(
         expiration = Some(someDay / 1000 + TimeUnit.DAYS.toSeconds(7)),
         issuedAt = Some(someDay / 1000),
-        issuer = Some("SomeIssuer"),
         content =
           """
              {"someValue" : "someText"}
