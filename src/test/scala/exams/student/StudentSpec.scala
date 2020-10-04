@@ -3,21 +3,27 @@ package exams.student
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import akka.actor.typed.scaladsl.Behaviors
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam}
-import exams.data.{ExamGenerator, StudentsRequest}
-import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, GeneratingFailed}
+import exams.data.{ExamGenerator, StudentsExam, StudentsRequest}
+import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class StudentSpec extends AnyWordSpecLike {
 
   "Student" when {
+
+    val token = "stub-token"
+    implicit def tokenGen(studentsExam: StudentsExam): String = token
+
     "receive GiveExamToStudent" should {
       val displayReceiver = TestInbox[DisplayedToStudent]()
       val testKit = BehaviorTestKit(Student(displayReceiver.ref))
       val exam = ExamGenerator.sampleExam("1")
       val command = GiveExamToStudent(exam)
       testKit.run(command)
-      "send ExamToDisplay to displayReceiver" in
-        displayReceiver.expectMessage(ExamGenerated(exam))
+
+      "send ExamToDisplay with generated token to displayReceiver" in
+        displayReceiver.expectMessage(ExamGeneratedWithToken(exam, token))
+
       "have 'stopped' behavior" in
         assertResult(Behaviors.stopped)(testKit.returnedBehavior)
     }
