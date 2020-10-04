@@ -25,8 +25,6 @@ object TokenGenerator extends DefaultJsonProtocol with SprayJsonSupport {
     JwtSprayJson.encode(claims, secretKey.key, algorithm) // JWT string
   }
 
-  case class ExamIdToken(expectedId: ExamId, token: String)
-
   def validateToken(encodedToken: String, expectedId: ExamId)(implicit currentTime: () => Long, secretKey: SecretKey): Either[TokenValidationResult, ValidToken] =
     decodeToken(encodedToken, secretKey)
       .flatMap(isNotExpired)
