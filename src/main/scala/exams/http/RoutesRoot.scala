@@ -8,8 +8,10 @@ import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, QuestionsSet}
 import exams.data._
-import exams.distributor.ExamDistributor.{ExamDistributor, RequestExamEvaluation}
+import exams.distributor.ExamDistributor.{ExamDistributor, ExamId, RequestExamEvaluation}
 import exams.http.StudentActions.{DisplayedToStudent, SendExamToEvaluation}
+import exams.http.token.TokenGenerator
+import exams.http.token.TokenGenerator.{TokenValidationResult, ValidToken}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,11 +39,15 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport {
     implicit def addingQuestionsSet: QuestionsSet => Unit =
       (set: QuestionsSet) => actors.repository ! AddQuestionsSet(set)
 
+    implicit def examTokenValidator: (String, ExamId) => Either[TokenValidationResult, ValidToken] =
+      TokenGenerator.validateToken(_, _)(System.currentTimeMillis, TokenGenerator.secretKey)
+
     RoutesRoot.allRoutes
   }
 
   def allRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
                 completedExam: CompletedExam => Unit,
-                addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext): Route =
+                addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext,
+                examTokenValidator: (String, ExamId) => Either[TokenValidationResult, ValidToken]): Route =
     StudentRoutes.studentRoutes ~ RepoRoutes.repoRoutes
 }

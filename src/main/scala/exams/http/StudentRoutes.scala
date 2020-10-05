@@ -1,19 +1,23 @@
 package exams.http
 
+import akka.http.scaladsl.client.RequestBuilding.WithTransformation
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, path, pathEndOrSingleSlash, pathPrefix, post, _}
 import akka.http.scaladsl.server.Route
 import exams.data.{CompletedExam, StudentsRequest}
+import exams.distributor.ExamDistributor.ExamId
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
+import exams.http.token.TokenGenerator.{TokenValidationResult, ValidToken}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   def studentRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
-                    completedExam: CompletedExam => Unit, ec: ExecutionContext): Route =
+                    completedExam: CompletedExam => Unit, ec: ExecutionContext,
+                    examTokenValidator: (String, ExamId) => Either[TokenValidationResult, ValidToken]): Route =
     pathPrefix("student") {
       (pathEndOrSingleSlash & get) {
         complete(
@@ -22,8 +26,17 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
         path("start2") {
           examRequestedRoute
         }
-      } ~ (path("evaluate") & post & extractRequest) { _ =>
-        examEvalRequested
+      } ~ (path("evaluate") & post & extractRequest) {
+        e: HttpRequest =>
+          entity(as[CompletedExam]) { exam: CompletedExam =>
+            optionalHeaderValueByName("Authorization") {
+              case Some(token) => examTokenValidator(token, exam.examId) match {
+                case Right(ValidToken(examId)) => examEvalRequested
+                case Left(value) => complete(HttpResponse(StatusCodes.Unauthorized))
+              }
+              case None => complete(HttpResponse(StatusCodes.Unauthorized))
+            }
+          }
       }
     }
 

@@ -6,7 +6,10 @@ import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.ExamRepository.QuestionsSet
 import exams.data.{Answer, CompletedExam, StudentsExam, StudentsRequest}
+import exams.distributor.ExamDistributor.ExamId
 import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
+import exams.http.token.TokenGenerator
+import exams.http.token.TokenGenerator.{InvalidToken, TokenValidationResult, ValidToken}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -25,6 +28,9 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
   }
 
   "student/start2 endpoint" when {
+    implicit def examTokenValidator(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidToken] =
+      fail("examTokenValidator should not be called")
+
     "receive exam" should {
       import exams.data.StubQuestions._
 
@@ -86,9 +92,13 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
     val completedExam = CompletedExam("exam123", List(List(Answer("1"), Answer("2")), List(Answer("yes"))))
     val path = "/student/evaluate"
 
-    //todo: implement token related logic
-    fail("todo: implement token related logic")
     "request contains Authorization header" when {
+
+      val validToken = "some-valid-token"
+      val request = Post(path, completedExam).addHeader(RawHeader("Authorization", validToken))
+
+      implicit def tokenValidator(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidToken]
+      = Right(ValidToken(expectedId))
 
       "examId in token matches request's examId" should {
         "call examCompleted action" in {
@@ -101,7 +111,7 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
           import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub}
           val route = RoutesRoot.allRoutes
 
-          Post(path, completedExam) ~> route ~> check(assertResult(1)(calledTimes))
+          request ~> route ~> check(assertResult(1)(calledTimes))
         }
 
         "returned response" should {
@@ -112,24 +122,32 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
           val route = RoutesRoot.allRoutes
 
           "have `text/plain(UTF-8)` content type" in
-            Post(path, completedExam) ~> route ~> check(contentType shouldBe ContentTypes.`text/plain(UTF-8)`)
+            request ~> route ~> check(contentType shouldBe ContentTypes.`text/plain(UTF-8)`)
 
           "have expected content" in
-            Post(path, completedExam) ~> route ~> check(status shouldBe StatusCodes.OK)
+            request ~> route ~> check(status shouldBe StatusCodes.OK)
         }
       }
 
       "examId in token does not match request's examId" should {
-        "respond with unauthorized status code" in {
+        implicit def tokenValidator(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidToken]
+        = Left(InvalidToken)
 
-        }
+        val request = Post(path, completedExam).addHeader(RawHeader("Authorization", "invalid-token"))
+        import ActorInteractionsStubs._
+        val route = RoutesRoot.allRoutes
+        "respond with unauthorized status code" in
+          request ~> route ~> check(status shouldBe StatusCodes.Unauthorized)
       }
     }
 
     "request does not contain Authorization header" should {
-      "respond with unauthorized status code" in {
-
-      }
+      implicit def tokenValidator(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidToken] = fail("tokenValidator should not be called")
+      val request = Post(path, completedExam)
+      import ActorInteractionsStubs._
+      val route = RoutesRoot.allRoutes
+      "respond with unauthorized status code" in
+        request ~> route ~> check(status shouldBe StatusCodes.Unauthorized)
     }
   }
 }
