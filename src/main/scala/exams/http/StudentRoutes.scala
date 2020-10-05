@@ -27,16 +27,7 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
           examRequestedRoute
         }
       } ~ (path("evaluate") & post & extractRequest) {
-        e: HttpRequest =>
-          entity(as[CompletedExam]) { exam: CompletedExam =>
-            optionalHeaderValueByName("Authorization") {
-              case Some(token) => examTokenValidator(token, exam.examId) match {
-                case Right(ValidToken(examId)) => examEvalRequested
-                case Left(value) => complete(HttpResponse(StatusCodes.Unauthorized))
-              }
-              case None => complete(HttpResponse(StatusCodes.Unauthorized))
-            }
-          }
+        _ => examEvalRequested
       }
     }
 
@@ -53,12 +44,19 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
           DisplayedToStudentFormat.write(reason).prettyPrint))
     }
 
-  private def examEvalRequested(implicit future: CompletedExam => Unit): Route = {
-    entity(as[CompletedExam]) {
-      exam =>
-        println(s"exam eval endpoint, request: $exam")
-        future(exam)
-        complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
+  private def examEvalRequested(implicit future: CompletedExam => Unit,
+                                examTokenValidator: (String, ExamId) => Either[TokenValidationResult, ValidToken]): Route = {
+    entity(as[CompletedExam]) { exam: CompletedExam =>
+      optionalHeaderValueByName("Authorization") {
+        case Some(token) => examTokenValidator(token, exam.examId) match {
+          case Right(ValidToken(_)) =>
+            println(s"exam eval endpoint, request: $exam")
+            future(exam)
+            complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
+          case Left(value) => complete(HttpResponse(StatusCodes.Unauthorized))
+        }
+        case None => complete(HttpResponse(StatusCodes.Unauthorized))
+      }
     }
   }
 }
