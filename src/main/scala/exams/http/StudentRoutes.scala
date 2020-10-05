@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Route
 import exams.data.{CompletedExam, StudentsRequest}
 import exams.http.RoutesRoot.ExamTokenValidator
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
-import exams.http.token.TokenGenerator.ValidToken
+import exams.http.token.TokenGenerator.ValidMatchedToken
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -47,7 +47,7 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
     entity(as[CompletedExam]) { exam: CompletedExam =>
       optionalHeaderValueByName("Authorization") {
         case Some(token) => examTokenValidator(token, exam.examId) match {
-          case Right(ValidToken(_)) =>
+          case Right(ValidMatchedToken(_)) =>
             println(s"exam eval endpoint, request: $exam")
             future(exam)
             complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))

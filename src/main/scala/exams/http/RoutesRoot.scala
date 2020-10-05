@@ -11,7 +11,7 @@ import exams.data._
 import exams.distributor.ExamDistributor.{ExamDistributor, ExamId, RequestExamEvaluation}
 import exams.http.StudentActions.{DisplayedToStudent, SendExamToEvaluation}
 import exams.http.token.TokenGenerator
-import exams.http.token.TokenGenerator.{TokenValidationResult, ValidToken}
+import exams.http.token.TokenGenerator.{TokenValidationResult, ValidMatchedToken}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -23,7 +23,7 @@ case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
 
 object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport {
 
-  type ExamTokenValidator = (String, ExamId) => Either[TokenValidationResult, ValidToken]
+  type ExamTokenValidator = (String, ExamId) => Either[TokenValidationResult, ValidMatchedToken]
 
   def createStudentRoutes(implicit actors: RoutesActorsPack): Route = {
     implicit val actorSystem: ActorSystem[_] = actors.system

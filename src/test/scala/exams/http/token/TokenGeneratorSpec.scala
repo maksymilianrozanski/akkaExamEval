@@ -2,7 +2,7 @@ package exams.http.token
 
 import java.util.concurrent.TimeUnit
 
-import exams.http.token.TokenGenerator.{InvalidToken, InvalidTokenContent, ParsingError, SecretKey, TokenExpired, ValidToken}
+import exams.http.token.TokenGenerator.{InvalidToken, InvalidTokenContent, ParsingError, SecretKey, TokenExpired, ValidMatchedToken}
 import org.scalatest.wordspec.AnyWordSpecLike
 import pdi.jwt.{JwtClaim, JwtSprayJson}
 
@@ -17,7 +17,7 @@ class TokenGeneratorSpec extends AnyWordSpecLike {
     val token = TokenGenerator.createToken("exam123", 7)
     "decode previously encoded token" in {
       val result = TokenGenerator.validateToken(token, "exam123")(oneHourLaterTime, secretKey)
-      assertResult(Right(ValidToken("exam123")))(result)
+      assertResult(Right(ValidMatchedToken("exam123")))(result)
     }
   }
 

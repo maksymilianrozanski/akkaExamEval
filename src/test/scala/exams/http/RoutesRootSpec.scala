@@ -8,7 +8,7 @@ import exams.data.ExamRepository.QuestionsSet
 import exams.data.{Answer, CompletedExam, StudentsExam, StudentsRequest}
 import exams.distributor.ExamDistributor.ExamId
 import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
-import exams.http.token.TokenGenerator.{InvalidToken, TokenValidationResult, ValidToken}
+import exams.http.token.TokenGenerator.{InvalidToken, TokenValidationResult, ValidMatchedToken}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -25,7 +25,7 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
     implicit def addingQuestionsSetStub: QuestionsSet => Unit = (set: QuestionsSet) =>
       fail(s"addingQuestionsSetStub was not expected to be called, was called with $set")
 
-    implicit def examTokenValidatorStub(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidToken] =
+    implicit def examTokenValidatorStub(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidMatchedToken] =
       fail("examTokenValidator not expected to be called")
   }
 
@@ -97,8 +97,8 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
       val validToken = "some-valid-token"
       val request = Post(path, completedExam).addHeader(RawHeader("Authorization", validToken))
 
-      implicit def tokenValidator(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidToken]
-      = Right(ValidToken(expectedId))
+      implicit def tokenValidator(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidMatchedToken]
+      = Right(ValidMatchedToken(expectedId))
 
       "examId in token matches request's examId" should {
         "call examCompleted action" in {
@@ -130,7 +130,7 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
       }
 
       "examId in token does not match request's examId" should {
-        implicit def tokenValidator(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidToken]
+        implicit def tokenValidator(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidMatchedToken]
         = Left(InvalidToken)
 
         val request = Post(path, completedExam).addHeader(RawHeader("Authorization", "invalid-token"))

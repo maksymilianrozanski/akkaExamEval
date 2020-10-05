@@ -25,7 +25,7 @@ object TokenGenerator extends DefaultJsonProtocol with SprayJsonSupport {
     JwtSprayJson.encode(claims, secretKey.key, algorithm) // JWT string
   }
 
-  def validateToken(encodedToken: String, expectedId: ExamId)(implicit currentTime: () => Long, secretKey: SecretKey): Either[TokenValidationResult, ValidToken] =
+  def validateToken(encodedToken: String, expectedId: ExamId)(implicit currentTime: () => Long, secretKey: SecretKey): Either[TokenValidationResult, ValidMatchedToken] =
     decodeToken(encodedToken, secretKey)
       .flatMap(isNotExpired)
       .flatMap(hasExpectedId(expectedId)(_))
@@ -40,11 +40,11 @@ object TokenGenerator extends DefaultJsonProtocol with SprayJsonSupport {
     if (claims.expiration.getOrElse(0L) > (currentTime() / 1000)) Right(claims.content)
     else Left(TokenExpired)
 
-  private def hasExpectedId(expectedId: ExamId)(tokenContent: String): Either[TokenValidationResult, ValidToken] = {
+  private def hasExpectedId(expectedId: ExamId)(tokenContent: String): Either[TokenValidationResult, ValidMatchedToken] = {
     import spray.json._
     Try(tokenContent.parseJson.convertTo[TokenContent].examId) match {
       case Success(examId) =>
-        if (expectedId == examId) Right(ValidToken(expectedId)) else Left(InvalidTokenContent)
+        if (expectedId == examId) Right(ValidMatchedToken(expectedId)) else Left(InvalidTokenContent)
       case Failure(_: DeserializationException) =>
         Left(ParsingError)
       case Failure(e) => throw e
@@ -52,9 +52,18 @@ object TokenGenerator extends DefaultJsonProtocol with SprayJsonSupport {
   }
 
   sealed trait TokenValidationResult
-  final case class ValidToken(examId: ExamId) extends TokenValidationResult
+  final case class ValidMatchedToken(examId: ExamId) extends TokenValidationResult
+  /**
+   * was not able to decode the token
+   */
   case object InvalidToken extends TokenValidationResult
+  /**
+   * error during deserialization - expected content matching TokenContent case class as JSON
+   */
   case object ParsingError extends TokenValidationResult
+  /**
+   * token not matching ExamId from request
+   */
   case object InvalidTokenContent extends TokenValidationResult
   case object TokenExpired extends TokenValidationResult
 
