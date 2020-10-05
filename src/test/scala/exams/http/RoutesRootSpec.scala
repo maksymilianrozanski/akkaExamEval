@@ -8,7 +8,6 @@ import exams.data.ExamRepository.QuestionsSet
 import exams.data.{Answer, CompletedExam, StudentsExam, StudentsRequest}
 import exams.distributor.ExamDistributor.ExamId
 import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
-import exams.http.token.TokenGenerator
 import exams.http.token.TokenGenerator.{InvalidToken, TokenValidationResult, ValidToken}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -25,11 +24,12 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
 
     implicit def addingQuestionsSetStub: QuestionsSet => Unit = (set: QuestionsSet) =>
       fail(s"addingQuestionsSetStub was not expected to be called, was called with $set")
+
+    implicit def examTokenValidatorStub(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidToken] =
+      fail("examTokenValidator not expected to be called")
   }
 
   "student/start2 endpoint" when {
-    implicit def examTokenValidator(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidToken] =
-      fail("examTokenValidator should not be called")
 
     "receive exam" should {
       import exams.data.StubQuestions._
@@ -45,7 +45,7 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
         Future(examWithToken)
       }
 
-      import ActorInteractionsStubs.{addingQuestionsSetStub, examCompletedStub}
+      import ActorInteractionsStubs.{addingQuestionsSetStub, examCompletedStub, examTokenValidatorStub}
       val route = RoutesRoot.allRoutes
 
       "return received exam" in
@@ -72,7 +72,7 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
         Future(result)
       }
 
-      import ActorInteractionsStubs.{addingQuestionsSetStub, examCompletedStub}
+      import ActorInteractionsStubs.{addingQuestionsSetStub, examCompletedStub, examTokenValidatorStub}
       val route = RoutesRoot.allRoutes
 
       "have expected message" in
@@ -134,7 +134,7 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
         = Left(InvalidToken)
 
         val request = Post(path, completedExam).addHeader(RawHeader("Authorization", "invalid-token"))
-        import ActorInteractionsStubs._
+        import ActorInteractionsStubs.{addingQuestionsSetStub, examCompletedStub, examRequestedStub}
         val route = RoutesRoot.allRoutes
         "respond with unauthorized status code" in
           request ~> route ~> check(status shouldBe StatusCodes.Unauthorized)
@@ -142,7 +142,6 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
     }
 
     "request does not contain Authorization header" should {
-      implicit def tokenValidator(encodedToken: String, expectedId: ExamId): Either[TokenValidationResult, ValidToken] = fail("tokenValidator should not be called")
       val request = Post(path, completedExam)
       import ActorInteractionsStubs._
       val route = RoutesRoot.allRoutes

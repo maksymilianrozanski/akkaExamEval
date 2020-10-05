@@ -23,6 +23,8 @@ case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
 
 object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport {
 
+  type ExamTokenValidator = (String, ExamId) => Either[TokenValidationResult, ValidToken]
+
   def createStudentRoutes(implicit actors: RoutesActorsPack): Route = {
     implicit val actorSystem: ActorSystem[_] = actors.system
     import actorSystem.executionContext
@@ -39,7 +41,7 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport {
     implicit def addingQuestionsSet: QuestionsSet => Unit =
       (set: QuestionsSet) => actors.repository ! AddQuestionsSet(set)
 
-    implicit def examTokenValidator: (String, ExamId) => Either[TokenValidationResult, ValidToken] =
+    implicit def examTokenValidator: ExamTokenValidator =
       TokenGenerator.validateToken(_, _)(System.currentTimeMillis, TokenGenerator.secretKey)
 
     RoutesRoot.allRoutes
@@ -48,6 +50,6 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport {
   def allRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
                 completedExam: CompletedExam => Unit,
                 addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext,
-                examTokenValidator: (String, ExamId) => Either[TokenValidationResult, ValidToken]): Route =
+                examTokenValidator: ExamTokenValidator): Route =
     StudentRoutes.studentRoutes ~ RepoRoutes.repoRoutes
 }
