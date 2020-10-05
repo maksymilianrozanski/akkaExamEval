@@ -6,17 +6,28 @@ import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.ExamRepository.QuestionsSet
 import exams.data.StubQuestions.{question2, question3}
+import exams.evaluator.ExamEvaluator
+import exams.evaluator.ExamEvaluator.ExamResult
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import spray.json.DefaultJsonProtocol
 
-class RepoRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with StudentsExamJsonProtocol with Matchers with SprayJsonSupport {
+import scala.concurrent.Future
+
+class RepoRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with StudentsExamJsonProtocol with DefaultJsonProtocol with Matchers with SprayJsonSupport {
+  implicit def addingQuestionsSetStub: QuestionsSet => Unit = (set: QuestionsSet) =>
+    fail(s"addingQuestionsSetStub was not expected to be called, was called with $set")
 
   "/repo/add endpoint" when {
+
+    implicit def examResultsStub(): Future[List[ExamEvaluator.ExamResult]] =
+      fail("examResults was not expected to be called")
+
     val questionsSet = QuestionsSet("set2", "example set description", Set(question2, question3))
     val path = "/repo/add"
     val validPassword = Auth.secretPass
     "provided valid credentials" should {
-      val route = RepoRoutes.repoRoutes((_: QuestionsSet) => ())
+      val route = RepoRoutes.repoRoutes((_: QuestionsSet) => (), examResultsStub)
       val requestValidCredentials = Post(path, questionsSet) ~> addCredentials(BasicHttpCredentials("adm", validPassword))
 
       "call addingQuestions action" in {
@@ -25,7 +36,7 @@ class RepoRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
           require(questionsSet == set, s"expected: $questionsSet, received $set")
           calledTimes = calledTimes + 1
         }
-        val routeWithCounter = RepoRoutes.repoRoutes(addingQuestionsActionWithCounter)
+        val routeWithCounter = RepoRoutes.repoRoutes(addingQuestionsActionWithCounter, examResultsStub)
 
         requestValidCredentials ~> routeWithCounter ~> check(assertResult(1)(calledTimes))
       }
@@ -40,10 +51,8 @@ class RepoRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
     }
 
     "provided invalid credentials" should {
-      implicit def addingQuestionsSetStub: QuestionsSet => Unit = (set: QuestionsSet) =>
-        fail(s"addingQuestionsSetStub was not expected to be called, was called with $set")
 
-      val route = RepoRoutes.repoRoutes(addingQuestionsSetStub)
+      val route = RepoRoutes.repoRoutes(addingQuestionsSetStub, examResultsStub)
       val requestInvalidCredentials = Post(path, questionsSet) ~> addCredentials(BasicHttpCredentials("adm", s"invalid+$validPassword"))
 
       "return unauthorized access code" in
@@ -52,5 +61,20 @@ class RepoRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
       "not call inner functions" in
         requestInvalidCredentials ~> route ~> check {}
     }
+  }
+
+  "inner repo route /results endpoint" should {
+    val path = "/results"
+    val password = "somePassword"
+    val request = Get(path) ~> addCredentials(BasicHttpCredentials("adm", password))
+    val results = List(ExamResult("exam123", "student123", 0.9), ExamResult("exam124", "student124", 0.92))
+    implicit def allExamResults(): Future[List[ExamEvaluator.ExamResult]] = Future(results)
+    val route = RepoRoutes.innerRepoRoutes(addingQuestionsSetStub, allExamResults)
+    "respond with all stored exam results" in
+      request ~> route ~> check {
+        status shouldBe StatusCodes.OK
+        responseAs[List[ExamResult]] shouldBe results
+        contentType shouldBe ContentTypes.`application/json`
+      }
   }
 }

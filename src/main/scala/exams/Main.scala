@@ -33,7 +33,6 @@ object Main {
     }
   }
 
-
   def apply(): Behavior[NotUsed] =
     Behaviors.setup { context =>
       val examEvaluator = context.spawnAnonymous(ExamEvaluator())
@@ -45,7 +44,7 @@ object Main {
       implicit val studentActions: ActorRef[StudentActions.Command] = context.spawn(StudentActions(), "studentActions")
       context.watch(studentActions)
       implicit val timeout: Timeout = Timeout.create(context.system.settings.config.getDuration("my-app.routes.ask-timeout"))
-      implicit val actorPack: RoutesActorsPack = RoutesActorsPack(studentActions, context.system, distributor, repository, timeout)
+      implicit val actorPack: RoutesActorsPack = RoutesActorsPack(studentActions, context.system, distributor, repository, examEvaluator, timeout)
       val routes = RoutesRoot.createStudentRoutes(actorPack)
 
       startHttpServer(routes, context.system)

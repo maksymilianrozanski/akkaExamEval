@@ -2,6 +2,7 @@ package exams.http
 
 import exams.data.ExamRepository.QuestionsSet
 import exams.data._
+import exams.evaluator.ExamEvaluator.ExamResult
 import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
 import spray.json.{DefaultJsonProtocol, JsValue, RootJsonFormat, RootJsonWriter}
 
@@ -15,6 +16,7 @@ trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
   implicit val studentsRequestFormat: RootJsonFormat[StudentsRequest] = jsonFormat3(StudentsRequest)
   implicit val questionFormat: RootJsonFormat[Question] = jsonFormat2(Question)
   implicit val questionsSetFormat: RootJsonFormat[QuestionsSet] = jsonFormat3(QuestionsSet)
+  implicit val examResult: RootJsonFormat[ExamResult] = jsonFormat3(ExamResult)
 
   implicit object DisplayedToStudentFormat extends RootJsonWriter[DisplayedToStudent] {
 
