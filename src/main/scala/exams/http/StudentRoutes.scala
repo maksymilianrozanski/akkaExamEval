@@ -8,6 +8,7 @@ import akka.http.scaladsl.server.Route
 import exams.data.{CompletedExam, StudentsRequest}
 import exams.http.RoutesRoot.ExamTokenValidator
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
+import exams.http.token.TokenGenerator
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,19 +45,6 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   import exams.http.token.TokenGenerator._
 
-  val invalidTokenResponse = HttpResponse(status = StatusCodes.Unauthorized, entity =
-    HttpEntity(ContentTypes.`text/plain(UTF-8)`,
-      "server was not able to process the token"))
-
-  val parsingTokenErrorResponse = HttpResponse(status = StatusCodes.BadRequest, entity =
-    HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Error during token deserialization"))
-
-  val invalidTokenContentResponse: HttpResponse = HttpResponse(status = StatusCodes.Unauthorized,
-    entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Token was not matched to requested exam"))
-
-  val tokenExpiredResponse = HttpResponse(status = StatusCodes.OK,
-    entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Exam expired"))
-
   private[http] def examEvalRequested(implicit future: CompletedExam => Unit, examTokenValidator: ExamTokenValidator): Route = {
     entity(as[CompletedExam]) { exam: CompletedExam =>
       optionalHeaderValueByName("Authorization") {
@@ -65,17 +53,27 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
             println(s"exam eval endpoint, request: $exam")
             future(exam)
             complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
-          case Left(InvalidToken) =>
-            complete(invalidTokenResponse)
-          case Left(ParsingError) =>
-            complete(parsingTokenErrorResponse)
-          case Left(InvalidTokenContent) =>
-            complete(invalidTokenContentResponse)
-          case Left(TokenExpired) => complete(tokenExpiredResponse)
-          case _ => complete(HttpResponse(StatusCodes.InternalServerError))
+          case Left(validationResult) => complete(tokenErrorResponse(validationResult))
         }
         case None => complete(HttpResponse(StatusCodes.Unauthorized))
       }
     }
   }
+
+  private def tokenErrorResponse(tokenError: TokenValidationResult) =
+    tokenError match {
+      case TokenGenerator.InvalidToken =>
+        HttpResponse(status = StatusCodes.Unauthorized,
+          entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "server was not able to process the token"))
+      case TokenGenerator.ParsingError =>
+        HttpResponse(status = StatusCodes.BadRequest,
+          entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Error during token deserialization"))
+      case TokenGenerator.InvalidTokenContent =>
+        HttpResponse(status = StatusCodes.Unauthorized,
+          entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Token was not matched to requested exam"))
+      case TokenGenerator.TokenExpired =>
+        HttpResponse(status = StatusCodes.OK,
+          entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Exam expired"))
+      case _ => HttpResponse(StatusCodes.InternalServerError)
+    }
 }
