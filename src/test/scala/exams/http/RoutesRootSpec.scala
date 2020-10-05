@@ -5,6 +5,7 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.ExamRepository.QuestionsSet
+import exams.data.StubQuestions.completedExam
 import exams.data.{Answer, CompletedExam, StudentsExam, StudentsRequest}
 import exams.distributor.ExamDistributor.ExamId
 import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
@@ -89,7 +90,6 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
   }
 
   "student/evaluate endpoint" when {
-    val completedExam = CompletedExam("exam123", List(List(Answer("1"), Answer("2")), List(Answer("yes"))))
     val path = "/student/evaluate"
 
     "request contains Authorization header" when {
