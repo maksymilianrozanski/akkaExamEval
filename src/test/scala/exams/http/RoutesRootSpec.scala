@@ -82,35 +82,54 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
     }
   }
 
-  "student/evaluate endpoint" should {
+  "student/evaluate endpoint" when {
     val completedExam = CompletedExam("exam123", List(List(Answer("1"), Answer("2")), List(Answer("yes"))))
     val path = "/student/evaluate"
 
-    "call examCompleted action" in {
-      var calledTimes = 0
-      implicit def examCompletedAction: CompletedExam => Unit = (exam: CompletedExam) => {
-        require(completedExam == exam, s"expected $completedExam, received: $exam")
-        calledTimes = calledTimes + 1
+    //todo: implement token related logic
+    fail("todo: implement token related logic")
+    "request contains Authorization header" when {
+
+      "examId in token matches request's examId" should {
+        "call examCompleted action" in {
+          var calledTimes = 0
+          implicit def examCompletedAction: CompletedExam => Unit = (exam: CompletedExam) => {
+            require(completedExam == exam, s"expected $completedExam, received: $exam")
+            calledTimes = calledTimes + 1
+          }
+
+          import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub}
+          val route = RoutesRoot.allRoutes
+
+          Post(path, completedExam) ~> route ~> check(assertResult(1)(calledTimes))
+        }
+
+        "returned response" should {
+          import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub}
+          implicit def examCompletedAction: CompletedExam => Unit = (exam: CompletedExam) => {
+            require(completedExam == exam, s"expected $completedExam, received: $exam")
+          }
+          val route = RoutesRoot.allRoutes
+
+          "have `text/plain(UTF-8)` content type" in
+            Post(path, completedExam) ~> route ~> check(contentType shouldBe ContentTypes.`text/plain(UTF-8)`)
+
+          "have expected content" in
+            Post(path, completedExam) ~> route ~> check(status shouldBe StatusCodes.OK)
+        }
       }
 
-      import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub}
-      val route = RoutesRoot.allRoutes
+      "examId in token does not match request's examId" should {
+        "respond with unauthorized status code" in {
 
-      Post(path, completedExam) ~> route ~> check(assertResult(1)(calledTimes))
+        }
+      }
     }
 
-    "returned response" should {
-      import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub}
-      implicit def examCompletedAction: CompletedExam => Unit = (exam: CompletedExam) => {
-        require(completedExam == exam, s"expected $completedExam, received: $exam")
+    "request does not contain Authorization header" should {
+      "respond with unauthorized status code" in {
+
       }
-      val route = RoutesRoot.allRoutes
-
-      "have `text/plain(UTF-8)` content type" in
-        Post(path, completedExam) ~> route ~> check(contentType shouldBe ContentTypes.`text/plain(UTF-8)`)
-
-      "have expected content" in
-        Post(path, completedExam) ~> route ~> check(status shouldBe StatusCodes.OK)
     }
   }
 }
