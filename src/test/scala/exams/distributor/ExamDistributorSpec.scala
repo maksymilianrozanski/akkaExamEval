@@ -67,17 +67,49 @@ class ExamDistributorSpec
       }
     }
 
-    "examCompletedHandler" must {
-      "add answers to persisted exam" in {
-        val examCompleted = ExamCompleted("ex567", List(List(Answer("yes"))))
+    "examCompletedHandler" when {
+      val examCompleted = ExamCompleted("ex567", List(List(Answer("yes"))))
 
-        val expected = ExamDistributorState(exams = Map(
+      val studentInbox = TestInbox[Student]()
+      val exam3Answers = persistedExam3.exam.examId -> PersistedAnswers(List(List(Answer("yes")), List(Answer("no"))))
+
+      val twoExamsWithRequests = ExamDistributorState(
+        exams = Map(
           "ex123" -> persistedExam1,
-          "ex567" -> PersistedExam("student123456", TeachersExam("ex567",
-            List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))), answers = Map(examCompleted.examId -> PersistedAnswers(examCompleted.answers)), Map(), 0)
+          "ex567" -> persistedExam2,
+          "ex568" -> persistedExam3),
+        answers = Map(exam3Answers),
+        requests = Map("ex123" -> studentInbox.ref), lastExamId = 4)
 
-        val result = ExamDistributor.examCompletedHandler(twoExams, examCompleted)
-        assert(result == expected)
+      val expected = ExamDistributorState(
+        exams = Map(
+          "ex123" -> persistedExam1,
+          "ex567" -> persistedExam2,
+          "ex568" -> persistedExam3),
+        answers = Map(
+          examCompleted.examId -> PersistedAnswers(examCompleted.answers),
+          exam3Answers),
+        requests = Map("ex123" -> studentInbox.ref), lastExamId = 4)
+
+      "processing ExamCompleted event" should {
+
+        val result = ExamDistributor.examCompletedHandler(twoExamsWithRequests, examCompleted)
+
+        "add answers to persisted exam" in
+          assertResult(expected.answers)(result.answers)
+
+        "not delete any exam" in
+          assertResult(expected.exams)(result.exams)
+
+        "not remove any requests" in
+          assertResult(expected.requests)(result.requests)
+
+        "not change lastExamId" in
+          assertResult(expected.lastExamId)(result.lastExamId)
+
+        "not change anything else" in {
+          assert(result == expected)
+        }
       }
     }
 

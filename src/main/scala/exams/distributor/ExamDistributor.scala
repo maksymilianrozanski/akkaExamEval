@@ -160,5 +160,5 @@ object ExamDistributor {
       requests = state.requests.filterNot(_._1 == event.exam.examId))
 
   def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState =
-    state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)), requests = Map())
+    state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)))
 }
