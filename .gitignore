@@ -4,3 +4,5 @@
 /.idea/libraries/
 /.idea/modules/
 /journal/
+/src/main/resources/datastax.conf
+/src/main/resources/cassandra_truststore.jks

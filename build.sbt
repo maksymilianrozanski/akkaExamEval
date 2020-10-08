@@ -9,7 +9,7 @@ val akkaHttpVersion = "10.2.0"
 lazy val leveldbVersion = "0.7"
 lazy val leveldbjniVersion = "1.8"
 lazy val protobufVersion = "3.6.1"
-lazy val cassandraVersion =  "1.0.3"
+lazy val cassandraVersion = "1.0.3"
 
 libraryDependencies ++= Seq(
 
@@ -27,8 +27,10 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence-cassandra" % cassandraVersion,
   "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % cassandraVersion % Test,
 
+  "software.aws.mcs" % "aws-sigv4-auth-cassandra-java-driver-plugin" % "4.0.2",
+
   // Google Protocol Buffers
-//  "com.google.protobuf" % "protobuf-java" % protobufVersion,
+  //  "com.google.protobuf" % "protobuf-java" % protobufVersion,
 
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
