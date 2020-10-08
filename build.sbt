@@ -49,3 +49,6 @@ scalacOptions ++= Seq(
   "-language:existentials",
   "-language:postfixOps"
 )
+
+mainClass in Compile := Some("exams.Main")
+enablePlugins(JavaAppPackaging)
