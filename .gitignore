@@ -6,3 +6,4 @@
 /journal/
 /src/main/resources/datastax.conf
 /src/main/resources/cassandra_truststore.jks
+/src/main/resources/repoAuth.txt

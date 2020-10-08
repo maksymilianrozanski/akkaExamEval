@@ -11,7 +11,7 @@ import exams.data.{ExamGenerator, ExamRepository}
 import exams.distributor.ExamDistributor
 import exams.distributor.ExamDistributor.ExamDistributor
 import exams.evaluator.ExamEvaluator
-import exams.http.{RoutesActorsPack, StudentActions, RoutesRoot}
+import exams.http.{RoutesActorsPack, RoutesRoot, StudentActions}
 
 import scala.util.{Failure, Success}
 
