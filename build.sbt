@@ -10,6 +10,7 @@ lazy val leveldbVersion = "0.7"
 lazy val leveldbjniVersion = "1.8"
 lazy val protobufVersion = "3.6.1"
 lazy val cassandraVersion =  "1.0.3"
+lazy val postgresVersion = "42.2.16"
 
 libraryDependencies ++= Seq(
 
@@ -24,8 +25,8 @@ libraryDependencies ++= Seq(
   "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.13.3",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
 
-  "com.typesafe.akka" %% "akka-persistence-cassandra" % cassandraVersion,
-  "com.typesafe.akka" %% "akka-persistence-cassandra-launcher" % cassandraVersion % Test,
+  "org.postgresql" % "postgresql" % postgresVersion,
+  "com.github.dnvriend" %% "akka-persistence-jdbc" % "3.5.2",
 
   // Google Protocol Buffers
 //  "com.google.protobuf" % "protobuf-java" % protobufVersion,
