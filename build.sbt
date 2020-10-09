@@ -48,3 +48,7 @@ scalacOptions ++= Seq(
   "-language:existentials",
   "-language:postfixOps"
 )
+
+herokuAppName in Compile := "akkaexams"
+mainClass in Compile := Some("exams.Main")
+enablePlugins(JavaAppPackaging)

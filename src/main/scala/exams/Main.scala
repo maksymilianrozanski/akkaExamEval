@@ -22,7 +22,8 @@ object Main {
     implicit val classicSystem: akka.actor.ActorSystem = system.toClassic
     import system.executionContext
 
-    val futureBinding = Http().newServerAt("localhost", 8080).bind(routes)
+    val port: Int = sys.env.getOrElse("PORT", "8080").toInt
+    val futureBinding = Http().newServerAt("0.0.0.0", port).bind(routes)
     futureBinding.onComplete {
       case Success(binding) =>
         val address = binding.localAddress
