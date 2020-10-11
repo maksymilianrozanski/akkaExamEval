@@ -9,7 +9,7 @@ val akkaHttpVersion = "10.2.0"
 lazy val leveldbVersion = "0.7"
 lazy val leveldbjniVersion = "1.8"
 lazy val protobufVersion = "3.6.1"
-lazy val cassandraVersion =  "1.0.3"
+lazy val cassandraVersion = "1.0.3"
 lazy val postgresVersion = "42.2.16"
 
 libraryDependencies ++= Seq(
@@ -52,3 +52,4 @@ scalacOptions ++= Seq(
 herokuAppName in Compile := "akkaexams"
 mainClass in Compile := Some("exams.Main")
 enablePlugins(JavaAppPackaging)
+enablePlugins(DockerPlugin)

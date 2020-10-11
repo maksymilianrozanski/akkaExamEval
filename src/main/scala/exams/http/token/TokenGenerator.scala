@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import exams.distributor.ExamDistributor.{ExamId, emptyState, examAddedHandler}
 import pdi.jwt.algorithms.JwtHmacAlgorithm
-import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtSprayJson}
+import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtOptions, JwtSprayJson}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat, enrichAny}
 
 import scala.util.{Failure, Success, Try}
@@ -18,7 +18,7 @@ object TokenGenerator extends DefaultJsonProtocol with SprayJsonSupport {
 
   def createToken(examId: ExamId, expirationDays: Int)(implicit currentTime: () => Long, secretKey: SecretKey): String = {
     val claims = JwtClaim(
-      expiration = Some(currentTime() / 1000 + TimeUnit.DAYS.toSeconds(expirationDays)),
+      expiration = Some((currentTime() / 1000) + TimeUnit.DAYS.toSeconds(expirationDays)),
       issuedAt = Some(currentTime() / 1000),
       content = TokenContent(examId).toJson.compactPrint
     )
@@ -31,7 +31,7 @@ object TokenGenerator extends DefaultJsonProtocol with SprayJsonSupport {
       .flatMap(hasExpectedId(expectedId)(_))
 
   private def decodeToken(token: String, secretKey: SecretKey) =
-    JwtSprayJson.decode(token, secretKey.key, Seq(algorithm)) match {
+    JwtSprayJson.decode(token, secretKey.key, Seq(algorithm), JwtOptions.DEFAULT.copy(expiration = false)) match {
       case Success(value) => Right(value)
       case Failure(_) => Left(InvalidToken)
     }
