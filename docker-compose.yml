@@ -1,4 +1,4 @@
-version: '2'
+version: '3.8'
 
 services:
   postgres:
@@ -12,3 +12,13 @@ services:
       - "5432:5432"
     volumes:
       - "./sql:/docker-entrypoint-initdb.d"
+
+  webserver:
+    build: .
+    image: akkaexams:0.1
+    environment:
+      "JDBC_DATABASE_URL": "jdbc:postgresql://postgres:5432/exams?user=docker&password=docker"
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
