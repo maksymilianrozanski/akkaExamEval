@@ -214,7 +214,7 @@ class ExamDistributorSpec
     }
   }
 
-  def requestExam2TestKit(generator: TestProbe[ExamGenerator], messageAdapter: TestInbox[ExamOutput])(initialState: ExamDistributorState)
+  def requestExamTestKit(generator: TestProbe[ExamGenerator], messageAdapter: TestInbox[ExamOutput])(initialState: ExamDistributorState)
   : EventSourcedBehaviorTestKit[RequestExam, ExamRequested, ExamDistributorState] =
     EventSourcedBehaviorTestKit(system, Behaviors.setup[RequestExam] { context =>
       EventSourcedBehavior(
@@ -233,8 +233,8 @@ class ExamDistributorSpec
 
     val studentsRequest = StudentsRequest("student123", 2, "set2")
     val command = RequestExam(studentsRequest, studentInbox.ref)
-    val testKit = requestExam2TestKit(generatorInbox, fakeMessageAdapter)(initialState)
-    "receive RequestExam2 message" should {
+    val testKit = requestExamTestKit(generatorInbox, fakeMessageAdapter)(initialState)
+    "receive RequestExam message" should {
       val expectedId = (initialState.lastExamId + 1).toString
       val event = testKit.runCommand(command).event
       "generate ExamId and return ExamRequested event" in {

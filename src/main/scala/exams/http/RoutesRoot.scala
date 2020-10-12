@@ -11,7 +11,7 @@ import exams.data._
 import exams.distributor.ExamDistributor.{ExamDistributor, ExamId, RequestExamEvaluation}
 import exams.evaluator.ExamEvaluator
 import exams.evaluator.ExamEvaluator.RequestResults
-import exams.http.StudentActions.{DisplayedToStudent, SendExamToEvaluation}
+import exams.http.StudentActions.{DisplayedToStudent, SendExamToEvaluationCommand}
 import exams.http.token.TokenGenerator
 import exams.http.token.TokenGenerator.{TokenValidationResult, ValidMatchedToken}
 
@@ -36,11 +36,11 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport {
 
     implicit def examRequestedFuture: StudentsRequest => Future[DisplayedToStudent] =
       (request: StudentsRequest) => actors.userActions.ask((replyTo: ActorRef[DisplayedToStudent]) =>
-        StudentActions.RequestExamCommand2(request, replyTo))
+        StudentActions.RequestExamCommand(request, replyTo))
 
     implicit def examCompletedFuture: CompletedExam => Unit =
       (exam: CompletedExam) =>
-        actors.userActions ! SendExamToEvaluation(RequestExamEvaluation(exam.examId, exam.selectedAnswers))
+        actors.userActions ! SendExamToEvaluationCommand(RequestExamEvaluation(exam.examId, exam.selectedAnswers))
 
     implicit def addingQuestionsSet: QuestionsSet => Unit =
       (set: QuestionsSet) => actors.repository ! AddQuestionsSet(set)
