@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="sbt 1" modules="akkaExams">
+    <option name="incrementalityType" value="SBT" />
+    <profile name="sbt 1" modules="server,sharedJVM">
       <option name="postfixOps" value="true" />
       <option name="implicitConversions" value="true" />
       <option name="higherKinds" value="true" />
@@ -14,6 +15,43 @@
         <parameter value="-Xfatal-warnings" />
         <parameter value="-Xcheckinit" />
       </parameters>
+    </profile>
+    <profile name="sbt 2" modules="akkaExams,akkaexams" />
+    <profile name="sbt 3" modules="sharedJS">
+      <option name="postfixOps" value="true" />
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="existentials" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xfatal-warnings" />
+        <parameter value="-Xcheckinit" />
+        <parameter value="-P:scalajs:mapSourceURI:file:/I:/scala/akkaExams/shared/src/main/scala/-&gt;e0b78ed1c1276aa74e9c/" />
+      </parameters>
+      <plugins>
+        <plugin path="C:\Users\Max\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\org\scala-js\scalajs-compiler_2.13.3\1.2.0\scalajs-compiler_2.13.3-1.2.0.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 4" modules="client">
+      <option name="postfixOps" value="true" />
+      <option name="implicitConversions" value="true" />
+      <option name="higherKinds" value="true" />
+      <option name="existentials" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xfatal-warnings" />
+        <parameter value="-Xcheckinit" />
+        <parameter value="-P:scalajs:mapSourceURI:file:/I:/scala/akkaExams/client/src/main/scala/-&gt;4bbdf708cc3cc3ba3b1d/" />
+      </parameters>
+      <plugins>
+        <plugin path="C:\Users\Max\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\org\scala-js\scalajs-compiler_2.13.3\1.2.0\scalajs-compiler_2.13.3-1.2.0.jar" />
+      </plugins>
     </profile>
   </component>
 </project>

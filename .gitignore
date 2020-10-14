@@ -4,3 +4,7 @@
 /.idea/libraries/
 /.idea/modules/
 /journal/
+/server/target
+/client/target
+/shared/.js/target
+/shared/.jvm/target
