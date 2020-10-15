@@ -7,7 +7,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/akkaexams-build.iml" filepath="$PROJECT_DIR$/.idea/modules/akkaexams-build.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/client.iml" filepath="$PROJECT_DIR$/.idea/modules/client.iml" group="akkaExams" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/server.iml" filepath="$PROJECT_DIR$/.idea/modules/server.iml" group="akkaExams" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/serverUpgraded.iml" filepath="$PROJECT_DIR$/.idea/modules/serverUpgraded.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/sharedJS.iml" filepath="$PROJECT_DIR$/.idea/modules/sharedJS.iml" group="akkaExams" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/sharedJVM.iml" filepath="$PROJECT_DIR$/.idea/modules/sharedJVM.iml" group="akkaExams" />
     </modules>

@@ -1,6 +1,7 @@
 //import sbt.Keys.mainClass
 //import sbt.enablePlugins
 //import com.typesafe.sbt.web.Import.WebKeys._
+
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 val akkaVersion = "2.6.9"
@@ -58,11 +59,13 @@ lazy val server = project
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
     (managedClasspath in Runtime) += (packageBin in Compile in Assets).value,
-    //    WebKeys.exportedMappings in Assets ++= (for ((file, path) <- (mappings in Assets).value)
-    //      yield file -> ((WebKeys.packagePrefix in Assets).value + path)),
+    WebKeys.exportedMappings in Assets ++= (for ((file, path) <- (mappings in Assets).value)
+      yield file -> ((WebKeys.packagePrefix in Assets).value + path)),
 
-    //    sourceDirectories in(Compile, TwirlKeys.compileTemplates) +=
-    //      baseDirectory.value.getParentFile / "src/main/twirl/exams/http",
+//    sourceDirectories in(Compile, TwirlKeys.compileTemplates) := (unmanagedSourceDirectories in Compile).value,
+//    sourceDirectories in(Compile, TwirlKeys.compileTemplates) +=
+//      baseDirectory.value.getParentFile / "twirl/exams/http",
+
 
     herokuAppName in Compile := "akkaexams",
     mainClass in Compile := Some("exams.Main")
