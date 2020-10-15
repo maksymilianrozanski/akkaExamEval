@@ -16,7 +16,7 @@
         <parameter value="-Xcheckinit" />
       </parameters>
     </profile>
-    <profile name="sbt 2" modules="akkaExams,akkaexams" />
+    <profile name="sbt 2" modules="akkaExams,akkaexams,serverUpgraded" />
     <profile name="sbt 3" modules="sharedJS">
       <option name="postfixOps" value="true" />
       <option name="implicitConversions" value="true" />

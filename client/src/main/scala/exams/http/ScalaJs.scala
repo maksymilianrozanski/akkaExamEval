@@ -1,6 +1,6 @@
-package exams
+package exams.http
 
-import exams.SharedMessages
+import exams.shared.SharedMessages
 import org.scalajs.dom
 
 object ScalaJs {

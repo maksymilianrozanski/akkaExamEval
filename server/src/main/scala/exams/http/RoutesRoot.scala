@@ -4,7 +4,7 @@ import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
 import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{Directives, Route}
 import akka.util.Timeout
 import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, QuestionsSet}
 import exams.data._
@@ -16,6 +16,8 @@ import exams.http.token.TokenGenerator
 import exams.http.token.TokenGenerator.{TokenValidationResult, ValidMatchedToken}
 
 import scala.concurrent.{ExecutionContext, Future}
+import exams.http.twirl.Implicits._
+import exams.shared.SharedMessages
 
 case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
                             system: ActorSystem[_],
@@ -24,7 +26,7 @@ case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
                             evaluator: ActorRef[ExamEvaluator.ExamEvaluator],
                             implicit val timeout: Timeout)
 
-object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport {
+object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport with Directives {
 
   type ExamTokenValidator = (String, ExamId) => Either[TokenValidationResult, ValidMatchedToken]
   type AllExamResults = () => Future[List[ExamEvaluator.ExamResult]]
@@ -54,10 +56,27 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport {
     RoutesRoot.allRoutes
   }
 
+  val testJs: Route = {
+    pathSingleSlash {
+      get {
+        complete {
+          exams.http.html.index.render(SharedMessages.itWorks)
+        }
+      }
+    } ~ pathPrefix("assets" / Remaining) { file =>
+//      optionally compresses the response
+//      with Gzip or Deflate
+//      if the client accepts compressed responses
+      encodeResponse {
+        getFromResource("public/" + file)
+      }
+    }
+  }
+
   def allRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
                 completedExam: CompletedExam => Unit,
                 addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext,
                 examTokenValidator: ExamTokenValidator,
                 examResults: AllExamResults): Route =
-    StudentRoutes.studentRoutes ~ RepoRoutes.repoRoutes
+    testJs ~ StudentRoutes.studentRoutes ~ RepoRoutes.repoRoutes
 }

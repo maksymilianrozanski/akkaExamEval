@@ -1,6 +1,7 @@
-import sbt.Keys.mainClass
-import sbt.enablePlugins
-import com.typesafe.sbt.web.Import.WebKeys._
+//import sbt.Keys.mainClass
+//import sbt.enablePlugins
+//import com.typesafe.sbt.web.Import.WebKeys._
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 val akkaVersion = "2.6.9"
 val akkaHttpVersion = "10.2.0"
@@ -9,6 +10,7 @@ lazy val postgresVersion = "42.2.16"
 lazy val commonSettings = Seq(
   version := "0.1",
   name := "akkaExams",
+  organization := "exams",
   scalaVersion := "2.13.3",
   scalacOptions ++= Seq(
     "-encoding", "utf8", // Option and arguments on same line
@@ -46,6 +48,8 @@ lazy val server = project
       "org.postgresql" % "postgresql" % postgresVersion,
       "com.github.dnvriend" %% "akka-persistence-jdbc" % "3.5.2",
 
+      "com.vmunier" %% "scalajs-scripts" % "1.1.4",
+
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-persistence-testkit" % akkaVersion % Test,
@@ -53,6 +57,12 @@ lazy val server = project
     ),
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
+    (managedClasspath in Runtime) += (packageBin in Compile in Assets).value,
+    //    WebKeys.exportedMappings in Assets ++= (for ((file, path) <- (mappings in Assets).value)
+    //      yield file -> ((WebKeys.packagePrefix in Assets).value + path)),
+
+    //    sourceDirectories in(Compile, TwirlKeys.compileTemplates) +=
+    //      baseDirectory.value.getParentFile / "src/main/twirl/exams/http",
 
     herokuAppName in Compile := "akkaexams",
     mainClass in Compile := Some("exams.Main")
@@ -75,6 +85,7 @@ lazy val shared = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("shared"))
   .settings(commonSettings)
+  .jvmConfigure(_.enablePlugins(JavaAppPackaging, DockerPlugin))
   .jsConfigure(_.enablePlugins(ScalaJSWeb))
 
 lazy val sharedJvm = shared.jvm
