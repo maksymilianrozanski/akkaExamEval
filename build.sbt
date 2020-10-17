@@ -68,6 +68,7 @@ lazy val client = project
   .settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
+    name := "client",
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "1.1.0"
     )
