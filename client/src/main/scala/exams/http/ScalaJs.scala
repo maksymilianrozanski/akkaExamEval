@@ -1,54 +1,51 @@
 package exams.http
 
-import exams.shared.SharedMessages
 import org.scalajs.dom
-import org.scalajs.dom.raw.{MouseEvent, Node}
-import org.scalajs.dom.{Document, Event, XMLHttpRequest, html}
-import dom.ext._
-
-import scala.scalajs.concurrent.JSExecutionContext.Implicits
-import exams.shared.data.HttpRequests.StudentsRequest
-
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.scalajs.js
-import scala.scalajs.js.JSON
-
-import spray.json._
+import org.scalajs.dom.html.Div
+import japgolly.scalajs.react.vdom.html_<^._
 
 object ScalaJs {
 
+  val apiEndpoint = "localhost:8080"
+
   def main(args: Array[String]): Unit = {
-    implicit val doc: html.Document = dom.document
     val root = dom.document.getElementById("scalajsShoutOut")
 
-    dom.document.getElementById("scalajsShoutOut").textContent = SharedMessages.itWorks + "!!!"
-
-    def addText(): Unit = {
-      val divElement = dom.document.createElement("div")
-      divElement.innerHTML = "Hi.!"
-      dom.document.getElementById("scalajsShoutOut").appendChild(divElement)
-    }
-
     val examForm = requestExamForm()
-    root.appendChild(examForm)
-
-    val examClickedButton = doc.getElementById("examClicked")
-    examClickedButton.addEventListener("click", (event: MouseEvent) => addText())
+    examForm.renderIntoDOM(root)
   }
 
-  def requestExamForm()(implicit document: Document): Node = {
-    val element = document.createElement("div")
-    element.innerHTML =
-      s"""
-    <label for='studentId'>Student id</label>
-    <input type='text' name='studentId' id='studentId'>
-    <label for='maxQuestions'>max. questions</label>
-    <input type='number' name='maxQuestions' id='maxQuestions'>
-    <label for='setId'>set id</label>
-    <input type='text' name='setId' id='setId'>
-    <button id='examClicked'>Request</button>
-    """.stripMargin
-    element
+  def requestExamForm(): VdomTagOf[Div] = {
+    <.div(
+      <.label(
+        ^.`for` := "studentId",
+        "Student Id"),
+      <.input(
+        ^.`type` := "text",
+        ^.name := "studentId",
+        ^.id := "studentId"
+      ),
+      <.label(
+        ^.`for` := "maxQuestions",
+        "max. questions"
+      ),
+      <.input(
+        ^.`type` := "number",
+        ^.name := "maxQuestions",
+        ^.id := "maxQuestions"
+      ),
+      <.label(
+        ^.`for` := "setId",
+        "set id"
+      ),
+      <.input(
+        ^.`type` := "text",
+        ^.name := "setId",
+        ^.id := "setId"
+      ),
+      <.button(
+        ^.id := "examClicked",
+        "Request"
+      ))
   }
-
 }
