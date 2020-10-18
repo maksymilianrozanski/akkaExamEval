@@ -37,12 +37,5 @@ case class BlankQuestion(text: String, answers: List[Answer])
  * @param text text of answer
  */
 case class Answer(text: String)
-/**
- * Request of generating an exam
- *
- * @param studentId    student identifier
- * @param maxQuestions maximal number of questions in generated exam
- * @param setId        id of questions set from which questions are requested
- */
-case class StudentsRequest(studentId: StudentId, maxQuestions: Int, setId: SetId)
+
 case class ExamRequest(examId: ExamId, studentId: StudentId, maxQuestions: Int, setId: SetId)

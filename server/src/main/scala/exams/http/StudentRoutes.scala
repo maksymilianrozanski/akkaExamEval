@@ -5,10 +5,11 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{complete, path, pathEndOrSingleSlash, pathPrefix, post, _}
 import akka.http.scaladsl.server.Route
-import exams.data.{CompletedExam, StudentsRequest}
+import exams.data.CompletedExam
 import exams.http.RoutesRoot.ExamTokenValidator
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
 import exams.http.token.TokenGenerator
+import exams.shared.data.HttpRequests._
 
 import scala.concurrent.{ExecutionContext, Future}
 

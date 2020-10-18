@@ -3,7 +3,6 @@ package exams.http
 import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
 import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.util.Timeout
 import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, QuestionsSet}
@@ -14,10 +13,11 @@ import exams.evaluator.ExamEvaluator.RequestResults
 import exams.http.StudentActions.{DisplayedToStudent, SendExamToEvaluationCommand}
 import exams.http.token.TokenGenerator
 import exams.http.token.TokenGenerator.{TokenValidationResult, ValidMatchedToken}
-
-import scala.concurrent.{ExecutionContext, Future}
 import exams.http.twirl.Implicits._
 import exams.shared.SharedMessages
+import exams.shared.data.HttpRequests.StudentsRequest
+
+import scala.concurrent.{ExecutionContext, Future}
 
 case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
                             system: ActorSystem[_],
@@ -64,9 +64,9 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport with Di
         }
       }
     } ~ pathPrefix("assets" / Remaining) { file =>
-//      optionally compresses the response
-//      with Gzip or Deflate
-//      if the client accepts compressed responses
+      //      optionally compresses the response
+      //      with Gzip or Deflate
+      //      if the client accepts compressed responses
       encodeResponse {
         getFromResource("public/" + file)
       }

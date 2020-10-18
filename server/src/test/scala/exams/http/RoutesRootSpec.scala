@@ -6,12 +6,14 @@ import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.ExamRepository.QuestionsSet
 import exams.data.StubQuestions.completedExam
-import exams.data.{Answer, CompletedExam, StudentsExam, StudentsRequest}
+import exams.data.{Answer, CompletedExam, StudentsExam}
 import exams.distributor.ExamDistributor.ExamId
 import exams.evaluator.ExamEvaluator
 import exams.http.RoutesRoot.AllExamResults
 import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
 import exams.http.token.TokenGenerator.{InvalidToken, TokenValidationResult, ValidMatchedToken}
+import exams.shared.data
+import exams.shared.data.HttpRequests._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 

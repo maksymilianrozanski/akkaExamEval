@@ -3,7 +3,17 @@ package exams.http
 import exams.shared.SharedMessages
 import org.scalajs.dom
 import org.scalajs.dom.raw.{MouseEvent, Node}
-import org.scalajs.dom.{Document, html}
+import org.scalajs.dom.{Document, Event, XMLHttpRequest, html}
+import dom.ext._
+
+import scala.scalajs.concurrent.JSExecutionContext.Implicits
+import exams.shared.data.HttpRequests.StudentsRequest
+
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.scalajs.js
+import scala.scalajs.js.JSON
+
+import spray.json._
 
 object ScalaJs {
 

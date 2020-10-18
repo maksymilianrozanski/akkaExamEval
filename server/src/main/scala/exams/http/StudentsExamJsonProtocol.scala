@@ -4,6 +4,7 @@ import exams.data.ExamRepository.QuestionsSet
 import exams.data._
 import exams.evaluator.ExamEvaluator.ExamResult
 import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
+import exams.shared.data.HttpRequests.StudentsRequest
 import spray.json.{DefaultJsonProtocol, JsValue, RootJsonFormat, RootJsonWriter}
 
 trait StudentsExamJsonProtocol extends DefaultJsonProtocol {

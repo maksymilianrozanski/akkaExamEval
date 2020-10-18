@@ -2,11 +2,12 @@ package exams.student
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import exams.data.{StudentsExam, StudentsRequest}
+import exams.data.StudentsExam
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam}
 import exams.http.StudentActions
 import exams.http.StudentActions.{ExamGeneratedWithToken, GeneratingFailed}
 import exams.http.token.TokenGenerator
+import exams.shared.data.HttpRequests.StudentsRequest
 
 sealed trait Student
 final case class RequestExamCommand(code: StudentsRequest, distributor: ActorRef[ExamDistributor]) extends Student

@@ -32,7 +32,7 @@
         <parameter value="-P:scalajs:mapSourceURI:file:/I:/scala/akkaExams/shared/src/main/scala/-&gt;e0b78ed1c1276aa74e9c/" />
       </parameters>
       <plugins>
-        <plugin path="C:\Users\Max\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\org\scala-js\scalajs-compiler_2.13.3\1.2.0\scalajs-compiler_2.13.3-1.2.0.jar" />
+        <plugin path="C:\Users\Max\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\org\scala-js\scalajs-compiler_2.13.3\1.3.0\scalajs-compiler_2.13.3-1.3.0.jar" />
       </plugins>
     </profile>
     <profile name="sbt 4" modules="client">
@@ -50,7 +50,7 @@
         <parameter value="-P:scalajs:mapSourceURI:file:/I:/scala/akkaExams/client/src/main/scala/-&gt;4bbdf708cc3cc3ba3b1d/" />
       </parameters>
       <plugins>
-        <plugin path="C:\Users\Max\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\org\scala-js\scalajs-compiler_2.13.3\1.2.0\scalajs-compiler_2.13.3-1.2.0.jar" />
+        <plugin path="C:\Users\Max\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\org\scala-js\scalajs-compiler_2.13.3\1.3.0\scalajs-compiler_2.13.3-1.3.0.jar" />
       </plugins>
     </profile>
   </component>

@@ -64,13 +64,17 @@ lazy val server = project
   .enablePlugins(SbtWeb, SbtTwirl, JavaAppPackaging, DockerPlugin)
   .dependsOn(sharedJvm)
 
+
+val sprayVersion = "1.3.5-7"
+
 lazy val client = project
   .settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
     name := "client",
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "1.1.0"
+      "org.scala-js" %%% "scalajs-dom" % "1.1.0",
+      "io.crashbox" % "spray-json_2.13" % sprayVersion,
     )
   )
   .enablePlugins(ScalaJSPlugin, ScalaJSWeb)

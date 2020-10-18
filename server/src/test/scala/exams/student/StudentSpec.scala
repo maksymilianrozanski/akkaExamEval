@@ -2,9 +2,10 @@ package exams.student
 
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import akka.actor.typed.scaladsl.Behaviors
-import exams.data.{ExamGenerator, StudentsExam, StudentsRequest}
+import exams.data.{ExamGenerator, StudentsExam}
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam}
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
+import exams.shared.data.HttpRequests.StudentsRequest
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class StudentSpec extends AnyWordSpecLike {

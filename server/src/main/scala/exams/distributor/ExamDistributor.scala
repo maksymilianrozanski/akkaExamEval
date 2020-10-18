@@ -8,6 +8,7 @@ import exams.JsonSerializable
 import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
 import exams.data._
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
+import exams.shared.data.HttpRequests.StudentsRequest
 import exams.student.{GeneratingExamFailed, GiveExamToStudent, Student}
 
 object ExamDistributor {
