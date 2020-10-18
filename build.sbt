@@ -66,6 +66,9 @@ lazy val server = project
 
 
 val sprayVersion = "1.3.5-7"
+val scalaJSReact = "1.7.5"
+val scalaCss = "0.6.1"
+val reactJS = "16.13.1"
 
 lazy val client = project
   .settings(commonSettings)
@@ -75,9 +78,51 @@ lazy val client = project
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "1.1.0",
       "io.crashbox" % "spray-json_2.13" % sprayVersion,
-    )
+      "com.github.japgolly.scalajs-react" %%% "core" % scalaJSReact,
+      "com.github.japgolly.scalajs-react" %%% "extra" % scalaJSReact,
+      "com.github.japgolly.scalacss" %%% "core" % scalaCss,
+      "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss
+    ),
+
+    // creates single js resource file for easy integration in html page
+    skip in packageJSDependencies := false,
+
+    // copy  javascript files to js folder,that are generated using fastOptJS/fullOptJS
+    crossTarget in(Compile, fullOptJS) := file("js"),
+    crossTarget in(Compile, fastOptJS) := file("js"),
+    crossTarget in(Compile, packageJSDependencies) := file("js"),
+    crossTarget in(Compile, packageMinifiedJSDependencies) := file("js"),
+    artifactPath in(Compile, fastOptJS) := ((crossTarget in(Compile, fastOptJS)).value /
+      ((moduleName in fastOptJS).value + "-opt.js")),
+    scalacOptions += "-feature",
+
+    jsDependencies ++= Seq(
+      "org.webjars.npm" % "react" % reactJS
+        / "umd/react.development.js"
+        minified "umd/react.production.min.js"
+        commonJSName "React",
+      "org.webjars.npm" % "react-dom" % reactJS
+        / "umd/react-dom.development.js"
+        minified "umd/react-dom.production.min.js"
+        dependsOn "umd/react.development.js"
+        commonJSName "ReactDOM",
+      "org.webjars.npm" % "react-dom" % reactJS
+        / "umd/react-dom-server.browser.development.js"
+        minified "umd/react-dom-server.browser.production.min.js"
+        dependsOn "umd/react-dom.development.js"
+        commonJSName "ReactDOMServer"
+    ),
+
+    //enablePlugins(ScalaJSBundlerPlugin)
+    //npmDependencies in Compile ++= Seq(
+    //)
+    // fixes unresolved deps issue: https://github.com/webjars/webjars/issues/1789
+    //    dependencyOverrides ++= Seq(
+    //      "org.webjars.npm" % "js-tokens" % "4.0.0",
+    //      "org.webjars.npm" % "scheduler" % "0.14.0"
+    //    )
   )
-  .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
+  .enablePlugins(ScalaJSPlugin, ScalaJSWeb, JSDependenciesPlugin)
   .dependsOn(sharedJs)
 
 lazy val shared = crossProject(JSPlatform, JVMPlatform)
