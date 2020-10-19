@@ -8,17 +8,18 @@ import org.scalajs.dom.html.Div
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs._
 import japgolly.scalajs.react.ScalazReact.{ReactS, reactCallbackScalazInstance}
-import japgolly.scalajs.react.extra.StateSnapshot
+import japgolly.scalajs.react.extra.{Ajax, StateSnapshot}
 import scalaz.Scalaz.ToBindOps
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.component.Scala.Component
+import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.vdom.html_<^._
 import scalaz.StateT.stateMonad
 import scalaz.effect.MonadIO.stateTMonadIO
 
 object ScalaJs {
 
-  val apiEndpoint = "localhost:8080"
+  val apiEndpoint = "http://localhost:8080"
 
   def main(args: Array[String]): Unit = {
     val root = dom.document.getElementById("scalajsShoutOut")
@@ -51,11 +52,38 @@ object ScalaJs {
         )
     }
 
+    def submitRequest(step3: Builder.Step3[Unit, StudentsRequest, Unit]#$) = {
+      val ajax = Ajax("POST", apiEndpoint + "/student/start2")
+        .setRequestContentTypeJson
+        .send(
+          """{
+  "studentId": "student123",
+  "maxQuestions": 2,
+  "setId": "set1"
+}""").onComplete {
+        xhr =>
+          xhr.status match {
+            case 200 =>
+              println("Sent request and received 200 response code")
+              println(s"Response: ${xhr.responseText}")
+              step3.setState(StudentsRequest("Success", 10, ""))
+            case x =>
+              println(s"Sent request and received $x response code")
+              step3.setState(StudentsRequest("Failure", 10, ""))
+          }
+      }
+      step3.modState(i => i, ajax.asCallback)
+    }
+    import japgolly.scalajs.react.extra.Ajax
+
     ScalaComponent.builder[Unit]
       .initialState(StudentsRequest("", 0, ""))
-      .renderS(($, s) =>
+      .renderS(($, s) => {
         <.form(
-          ^.onSubmit ==> $.runStateFn(handleSubmit),
+          ^.onSubmit ==> {
+            submitRequest($)
+            $.runStateFn(handleSubmit)
+          },
           <.div(
             <.label(
               ^.`for` := "studentId",
@@ -87,8 +115,9 @@ object ScalaJs {
               ^.value := s.setId,
               ^.onChange ==> $.runStateFn(setIdStateHandler)
             )),
-          <.button("Submit")
+          <.button("Submit", ^.onClick --> submitRequest($))
         )
+      }
       ).build
   }
 }
