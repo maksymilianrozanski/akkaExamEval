@@ -30,7 +30,13 @@ object ScalaJs {
   def requestExamForm() = {
     val ST = ReactS.Fix[StudentsRequest]
 
-    def setIdState(s: ReactEventFromInput) =
+    def studentIdStateHandler(s: ReactEventFromInput) =
+      ST.mod(_.copy(studentId = s.target.value))
+
+    def maxQuestionsStateHandler(s: ReactEventFromInput) =
+      ST.mod(_.copy(maxQuestions = Integer.parseInt(s.target.value)))
+
+    def setIdStateHandler(s: ReactEventFromInput) =
       ST.mod(_.copy(setId = s.target.value))
 
     def handleSubmit(e: ReactEventFromInput) = {
@@ -45,44 +51,44 @@ object ScalaJs {
         )
     }
 
-    val built =
-      ScalaComponent.builder[Unit]
-        .initialState(StudentsRequest("", 0, ""))
-        .renderS(($, s) =>
-          <.form(
-            ^.onSubmit ==> $.runStateFn(handleSubmit),
-            <.div(
-              <.label(
-                ^.`for` := "studentId",
-                "Student Id"),
-              <.input(
-                ^.`type` := "text",
-                ^.name := "studentId",
-                ^.id := "studentId"
-              ),
-              <.label(
-                ^.`for` := "maxQuestions",
-                "max. questions"
-              ),
-              <.input(
-                ^.`type` := "number",
-                ^.name := "maxQuestions",
-                ^.id := "maxQuestions"
-              ),
-              <.label(
-                ^.`for` := "setId",
-                "set id"
-              ),
-              <.input(
-                ^.`type` := "text",
-                ^.name := "setId",
-                ^.id := "setId",
-                ^.value := s.setId,
-                ^.onChange ==> $.runStateFn(setIdState)
-              )),
-            <.button("Submit")
-          )
-        ).build
-    built
+    ScalaComponent.builder[Unit]
+      .initialState(StudentsRequest("", 0, ""))
+      .renderS(($, s) =>
+        <.form(
+          ^.onSubmit ==> $.runStateFn(handleSubmit),
+          <.div(
+            <.label(
+              ^.`for` := "studentId",
+              "Student Id"),
+            <.input(
+              ^.`type` := "text",
+              ^.name := "studentId",
+              ^.id := "studentId",
+              ^.onChange ==> $.runStateFn(studentIdStateHandler)
+            ),
+            <.label(
+              ^.`for` := "maxQuestions",
+              "max. questions"
+            ),
+            <.input(
+              ^.`type` := "number",
+              ^.name := "maxQuestions",
+              ^.id := "maxQuestions",
+              ^.onChange ==> $.runStateFn(maxQuestionsStateHandler)
+            ),
+            <.label(
+              ^.`for` := "setId",
+              "set id"
+            ),
+            <.input(
+              ^.`type` := "text",
+              ^.name := "setId",
+              ^.id := "setId",
+              ^.value := s.setId,
+              ^.onChange ==> $.runStateFn(setIdStateHandler)
+            )),
+          <.button("Submit")
+        )
+      ).build
   }
 }
