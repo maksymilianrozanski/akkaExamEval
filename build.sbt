@@ -81,7 +81,8 @@ lazy val client = project
       "com.github.japgolly.scalajs-react" %%% "core" % scalaJSReact,
       "com.github.japgolly.scalajs-react" %%% "extra" % scalaJSReact,
       "com.github.japgolly.scalacss" %%% "core" % scalaCss,
-      "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss
+      "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss,
+      "com.github.japgolly.scalajs-react" %%% "ext-scalaz72" % "1.7.5"
     ),
 
     // creates single js resource file for easy integration in html page
