@@ -84,7 +84,9 @@ lazy val client = project
       "com.github.japgolly.scalajs-react" %%% "ext-scalaz72" % "1.7.5",
       "io.circe" %%% "circe-core" % circeVersion,
       "io.circe" %%% "circe-generic" % circeVersion,
-      "io.circe" %%% "circe-parser" % circeVersion
+      "io.circe" %%% "circe-parser" % circeVersion,
+      "com.github.julien-truffaut" %%% "monocle-core" % "2.0.3",
+      "com.github.julien-truffaut" %%% "monocle-macro" % "2.0.3"
     ),
 
     // creates single js resource file for easy integration in html page

@@ -21,6 +21,8 @@ import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
 import org.scalajs.dom.raw.Element
+import monocle.Lens
+import monocle.macros.GenLens
 
 object ScalaJs {
 
@@ -39,50 +41,56 @@ object ScalaJs {
     }).renderIntoDOM(root)
 
   def requestExamForm(page: ExamRequestPage) = {
-    val ST = ReactS.Fix[StudentsRequest]
+    val state = ReactS.Fix[ExamRequestPage]
+
+    val studentIdLens = GenLens[ExamRequestPage](_.studentsRequest.studentId)
+    val maxQuestionsLens = GenLens[ExamRequestPage](_.studentsRequest.maxQuestions)
+    val setIdLens = GenLens[ExamRequestPage](_.studentsRequest.setId)
 
     def studentIdStateHandler(s: ReactEventFromInput) =
-      ST.mod(_.copy(studentId = s.target.value))
+      state.mod(studentIdLens.modify(_ => s.target.value))
 
+    //todo: add int parse error handling
     def maxQuestionsStateHandler(s: ReactEventFromInput) =
-      ST.mod(_.copy(maxQuestions = Integer.parseInt(s.target.value)))
+      state.mod(maxQuestionsLens.modify(_ => Integer.parseInt(s.target.value)))
 
     def setIdStateHandler(s: ReactEventFromInput) =
-      ST.mod(_.copy(setId = s.target.value))
+      state.mod(setIdLens.modify(_ => s.target.value))
 
     def handleSubmit(e: ReactEventFromInput) = {
       (
-        ST.retM(e.preventDefaultCB) // Lift a Callback effect into a shape that allows composition
+        state.retM(e.preventDefaultCB) // Lift a Callback effect into a shape that allows composition
           //   with state modification.
           >> // Use >> to compose. It's flatMap (>>=) that ignores input.
-          ST.mod(s => {
+          state.mod(s => {
             println("state: ", s)
             s
           }).liftCB // Here we lift a pure state modification into a shape that
         )
     }
 
-    def submitRequest(step3: Builder.Step3[Unit, StudentsRequest, Unit]#$) = {
+    def submitRequest(step3: Builder.Step3[Unit, ExamRequestPage, Unit]#$) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/start2")
         .setRequestContentTypeJson
-        .send(step3.state.asJson.noSpaces).onComplete {
+        .send(step3.state.studentsRequest.asJson.noSpaces).onComplete {
         xhr =>
           xhr.status match {
             case 200 =>
               println("Sent request and received 200 response code")
               println(s"Response: ${xhr.responseText}")
-              step3.setState(StudentsRequest("Success", 10, ""))
+              step3.setState(step3.state.copy(status = Success))
             case x =>
               println(s"Sent request and received $x response code")
-              step3.setState(StudentsRequest("Failure", 10, ""))
+              step3.setState(step3.state.copy(status = Failure))
           }
       }
       step3.modState(i => i, ajax.asCallback)
     }
+
     import japgolly.scalajs.react.extra.Ajax
 
     ScalaComponent.builder[Unit]
-      .initialState(StudentsRequest("", 0, ""))
+      .initialState(page)
       .renderS(($, s) => {
         <.form(
           ^.onSubmit ==> {
@@ -117,7 +125,7 @@ object ScalaJs {
               ^.`type` := "text",
               ^.name := "setId",
               ^.id := "setId",
-              ^.value := s.setId,
+              ^.value := s.studentsRequest.setId,
               ^.onChange ==> $.runStateFn(setIdStateHandler)
             )),
           <.button("Submit", ^.onClick --> submitRequest($))
