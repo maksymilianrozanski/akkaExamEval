@@ -4,6 +4,8 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet, TakeQuestionsSetReply}
 import exams.distributor.ExamDistributor.ExamId
+import exams.shared.data
+import exams.shared.data.{Answer, BlankQuestion, ExamRequest, Question, TeachersExam}
 
 object ExamGenerator {
 
@@ -38,7 +40,7 @@ object ExamGenerator {
         context.messageAdapter(response => ReceivedSetFromRepo(response))
 
       Behaviors.receiveMessage {
-        case ReceivedExamRequest(examRequest@exams.data.ExamRequest(examId, _, _, setId), replyTo) =>
+        case ReceivedExamRequest(examRequest@ExamRequest(examId, _, _, setId), replyTo) =>
           val newState = state.copy(requests = state.requests + ((examRequest, replyTo)))
           repository ! TakeQuestionsSet(setId, examId, responseMapper)
           generator(repository)(newState)
@@ -85,6 +87,6 @@ object ExamGenerator {
 
   private[data] def createExam(questionsSet: QuestionsSet)(examRequest: ExamRequest) = {
     //todo: add taking random questions
-    TeachersExam(examRequest.examId, questionsSet.questions.take(examRequest.maxQuestions).toList)
+    data.TeachersExam(examRequest.examId, questionsSet.questions.take(examRequest.maxQuestions).toList)
   }
 }

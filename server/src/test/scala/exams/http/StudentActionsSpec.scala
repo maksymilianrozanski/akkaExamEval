@@ -3,9 +3,9 @@ package exams.http
 
 import akka.actor.testkit.typed.Effect.SpawnedAnonymous
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
-import exams.data.Answer
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
 import exams.http.StudentActions.{DisplayedToStudent, RequestExamCommand}
+import exams.shared.data.Answer
 import exams.shared.data.HttpRequests.StudentsRequest
 import exams.student.Student
 import org.scalatest.matchers.should

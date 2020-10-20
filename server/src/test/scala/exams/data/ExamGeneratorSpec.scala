@@ -4,20 +4,22 @@ import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import akka.actor.typed.scaladsl.Behaviors
 import exams.data.ExamGenerator.{ExamOutput, ReceivedExamRequest, ReceivedSetFromRepo, State, generator}
 import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet}
+import exams.shared.data
+import exams.shared.data.{ExamRequest, TeachersExam}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class ExamGeneratorSpec extends AnyWordSpecLike {
 
   private val examRequest1 = ExamRequest("exam12", "student12", 2, "set1")
-  private val examRequest2 = ExamRequest("exam13", "student13", 3, "set2")
-  private val examRequest3 = ExamRequest("exam14", "student14", 3, "set2")
+  private val examRequest2 = data.ExamRequest("exam13", "student13", 3, "set2")
+  private val examRequest3 = data.ExamRequest("exam14", "student14", 3, "set2")
 
   "ExamGenerator" when {
     val repository = TestInbox[ExamRepository]()
     val distributor = TestInbox[ExamOutput]()
 
     "receive ExamRequest" should {
-      val examRequest = ExamRequest("exam123", "student123", 2, "set2")
+      val examRequest = data.ExamRequest("exam123", "student123", 2, "set2")
       val message = ReceivedExamRequest(examRequest, distributor.ref)
 
       val testKit = BehaviorTestKit(generator(repository.ref)(State(Set.empty)))
@@ -133,7 +135,7 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
     val examFromQuestionsSet = ExamGenerator.createExam(set) _
 
     "maxQuestions is lower than size of set" must {
-      val request = ExamRequest("exam123", "student123", 3, "set3")
+      val request = data.ExamRequest("exam123", "student123", 3, "set3")
       val result = examFromQuestionsSet(request)
 
       "create exam containing request.maxQuestions questions" in {
@@ -144,7 +146,7 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
     }
 
     "maxQuestions is equal size of set" should {
-      val request = ExamRequest("exam124", "student124", 4, "set3")
+      val request = data.ExamRequest("exam124", "student124", 4, "set3")
       val result = examFromQuestionsSet(request)
       "create exam containing all set's questions" in {
         assertResult(4)(result.questions.length)
@@ -154,7 +156,7 @@ class ExamGeneratorSpec extends AnyWordSpecLike {
     }
 
     "maxQuestions is higher than size of set" should {
-      val request = ExamRequest("exam124", "student124", 5, "set3")
+      val request = data.ExamRequest("exam124", "student124", 5, "set3")
       val result = examFromQuestionsSet(request)
       "create exam all questions from the set" in {
         assertResult(4)(result.questions.length)

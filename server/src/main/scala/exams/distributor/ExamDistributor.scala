@@ -8,7 +8,9 @@ import exams.JsonSerializable
 import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
 import exams.data._
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
+import exams.shared.data
 import exams.shared.data.HttpRequests.StudentsRequest
+import exams.shared.data.{Answer, ExamRequest, TeachersExam}
 import exams.student.{GeneratingExamFailed, GiveExamToStudent, Student}
 
 object ExamDistributor {
@@ -42,7 +44,7 @@ object ExamDistributor {
                                   requests: Map[ExamId, ActorRef[Student]], lastExamId: Int) extends JsonSerializable
   val emptyState: ExamDistributorState = ExamDistributorState(Map(), Map(), Map(), 0)
 
-  import exams.data.TeachersExam._
+  import exams.shared.data.TeachersExam._
 
   case class ActorsPack(evaluator: ActorRef[ExamEvaluator], generator: ActorRef[ExamGenerator])
 
@@ -77,7 +79,7 @@ object ExamDistributor {
       .thenReply(generator) {
         state: ExamDistributorState =>
           context.log.info("persisted ExamRequested, id: {}", state.lastExamId)
-          val examRequest = ExamRequest(nextExamId, command.studentsRequest.studentId,
+          val examRequest = data.ExamRequest(nextExamId, command.studentsRequest.studentId,
             command.studentsRequest.maxQuestions, command.studentsRequest.setId)
           val messageToGenerator = ExamGenerator.ReceivedExamRequest(examRequest, messageAdapter)
           messageToGenerator

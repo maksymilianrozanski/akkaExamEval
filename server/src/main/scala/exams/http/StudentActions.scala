@@ -2,9 +2,9 @@ package exams.http
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import exams.data.StudentsExam
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
 import exams.shared.data.HttpRequests.StudentsRequest
+import exams.shared.data.StudentsExam
 import exams.student.Student
 
 object StudentActions {

@@ -7,8 +7,9 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.Serializati
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.EventSourcedTestConfig.EventSourcedBehaviorTestKitConfigJsonSerialization
-import exams.data.{Answer, BlankQuestion, Question, TeachersExam}
 import exams.evaluator.ExamEvaluator.{ExamEvaluatorState, ExamResult}
+import exams.shared.data
+import exams.shared.data.{Answer, BlankQuestion, Question, TeachersExam}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKitConfigJsonSerialization)
@@ -64,7 +65,7 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
     }
 
     "ExamEvaluator" when {
-      val command = ExamEvaluator.EvaluateAnswers("student234", TeachersExam("exam123",
+      val command = ExamEvaluator.EvaluateAnswers("student234", data.TeachersExam("exam123",
         questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))),
         List(List(Answer("yes"))))
 

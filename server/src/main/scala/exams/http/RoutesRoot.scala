@@ -15,6 +15,7 @@ import exams.http.token.TokenGenerator
 import exams.http.token.TokenGenerator.{TokenValidationResult, ValidMatchedToken}
 import exams.http.twirl.Implicits._
 import exams.shared.SharedMessages
+import exams.shared.data.CompletedExam
 import exams.shared.data.HttpRequests.StudentsRequest
 
 import scala.concurrent.{ExecutionContext, Future}

@@ -1,7 +1,6 @@
-package exams.data
+package exams.shared.data
 
-import exams.distributor.ExamDistributor.{Answers, ExamId, StudentId}
-import exams.data.ExamRepository.SetId
+import exams.shared.data.HttpRequests.{ExamId, SetId, StudentId}
 
 //data
 sealed trait Exam
@@ -13,7 +12,7 @@ final case class EmptyExam(questions: TeachersExam) extends Exam
  * @param examId          generated unique exam identifier
  * @param selectedAnswers answers selected by a student, list indexes corresponding to question number
  */
-final case class CompletedExam(examId: String, selectedAnswers: Answers) extends Exam
+final case class CompletedExam(examId: String, selectedAnswers: List[List[Answer]]) extends Exam
 
 case class TeachersExam(examId: ExamId, questions: List[Question])
 object TeachersExam {

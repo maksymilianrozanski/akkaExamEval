@@ -11,7 +11,9 @@ import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
 import exams.data._
 import exams.distributor.ExamDistributor._
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
+import exams.shared.data
 import exams.shared.data.HttpRequests.StudentsRequest
+import exams.shared.data.{Answer, BlankQuestion, ExamRequest, Question, TeachersExam}
 import exams.student.{GeneratingExamFailed, GiveExamToStudent, Student}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -20,10 +22,10 @@ class ExamDistributorSpec
   extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKitConfigJsonSerialization) with AnyWordSpecLike
     with BeforeAndAfterEach {
 
-  private val persistedExam1 = PersistedExam("student123", TeachersExam("ex123", List()))
-  private val persistedExam2 = PersistedExam("student123456", TeachersExam("ex567",
+  private val persistedExam1 = PersistedExam("student123", data.TeachersExam("ex123", List()))
+  private val persistedExam2 = PersistedExam("student123456", data.TeachersExam("ex567",
     List(Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))))))
-  private val persistedExam3 = PersistedExam("student123456", TeachersExam("ex568",
+  private val persistedExam3 = PersistedExam("student123456", data.TeachersExam("ex568",
     List(
       Question(BlankQuestion(text = "some text", answers = List(Answer("yes"), Answer("no"))), correctAnswers = List(Answer("yes"))),
       Question(BlankQuestion(text = "some text2", answers = List(Answer("yes"), Answer("no"), Answer("None"))), correctAnswers = List(Answer("no")))))
@@ -37,7 +39,7 @@ class ExamDistributorSpec
   "ExamDistributor" must {
     "examAddedHandler" must {
       "add exam to empty ExamDistributorState" in {
-        val examAdded = ExamAdded("student123", TeachersExam("ex123", List()))
+        val examAdded = ExamAdded("student123", data.TeachersExam("ex123", List()))
 
         val result = ExamDistributor.examAddedHandler(emptyExams, examAdded)
         assert(oneExam == result)
@@ -56,7 +58,7 @@ class ExamDistributorSpec
         val student1 = TestProbe[Student]()
         val student2 = TestProbe[Student]()
 
-        val examAdded = ExamAdded("student123", TeachersExam("ex1200", List()))
+        val examAdded = ExamAdded("student123", data.TeachersExam("ex1200", List()))
         val initialState = threeExams.copy(requests = Map("ex1200" -> student1.ref, "ex1201" -> student2.ref))
 
         assertResult(
@@ -275,8 +277,8 @@ class ExamDistributorSpec
           requests = Map("19" -> student1.ref, "20" -> student2.ref))
 
         import exams.data.StubQuestions._
-        val examRequest = ExamRequest("19", "student123", 2, "set1")
-        val exam = TeachersExam("19", List(question1, question2))
+        val examRequest = data.ExamRequest("19", "student123", 2, "set1")
+        val exam = data.TeachersExam("19", List(question1, question2))
         val command = ReceivedGeneratedExam(ExamOutput(examRequest, Some(exam)))
 
         val testKit = receivedGeneratedExamTestKit(initialState)
@@ -299,7 +301,7 @@ class ExamDistributorSpec
         val initialState = ExamDistributor.emptyState.copy(lastExamId = 20,
           requests = Map("19" -> student1.ref, "20" -> student2.ref))
 
-        val examRequest = ExamRequest("19", "student123", 2, "set1")
+        val examRequest = data.ExamRequest("19", "student123", 2, "set1")
         val command = ReceivedGeneratedExam(ExamOutput(examRequest, None))
         val testKit = receivedGeneratedExamTestKit(initialState)
         testKit.runCommand(command)

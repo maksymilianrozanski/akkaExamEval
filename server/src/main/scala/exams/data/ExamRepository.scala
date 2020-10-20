@@ -6,6 +6,7 @@ import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
 import exams.JsonSerializable
 import exams.distributor.ExamDistributor.ExamId
+import exams.shared.data.Question
 
 object ExamRepository {
 
