@@ -16,7 +16,11 @@ import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.vdom.html_<^._
 import scalaz.StateT.stateMonad
 import scalaz.effect.MonadIO.stateTMonadIO
-import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.parser._
+import io.circe.syntax._
+import org.scalajs.dom.raw.Element
 
 object ScalaJs {
 
@@ -25,11 +29,16 @@ object ScalaJs {
   def main(args: Array[String]): Unit = {
     val root = dom.document.getElementById("scalajsShoutOut")
 
-    val examForm = requestExamForm()()
-    examForm.renderIntoDOM(root)
+    renderApp(root)(ExamRequestPage(Success, StudentsRequest("", 0, "")))
   }
 
-  def requestExamForm() = {
+  def renderApp(root: Element)(page: DisplayedPage) =
+    (page match {
+      case examRequestPage@ExamRequestPage(status, studentsRequest) => requestExamForm(examRequestPage)()
+      case ExamPage(status) => ???
+    }).renderIntoDOM(root)
+
+  def requestExamForm(page: ExamRequestPage) = {
     val ST = ReactS.Fix[StudentsRequest]
 
     def studentIdStateHandler(s: ReactEventFromInput) =
