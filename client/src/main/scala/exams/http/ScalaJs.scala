@@ -56,10 +56,10 @@ object ScalaJs {
       val ajax = Ajax("POST", apiEndpoint + "/student/start2")
         .setRequestContentTypeJson
         .send(
-          """{
-  "studentId": "student123",
-  "maxQuestions": 2,
-  "setId": "set1"
+          s"""{
+  "studentId": "${step3.state.studentId}",
+  "maxQuestions": ${step3.state.maxQuestions},
+  "setId": "${step3.state.setId}"
 }""").onComplete {
         xhr =>
           xhr.status match {
