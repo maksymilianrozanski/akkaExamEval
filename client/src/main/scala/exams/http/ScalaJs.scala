@@ -16,6 +16,7 @@ import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.vdom.html_<^._
 import scalaz.StateT.stateMonad
 import scalaz.effect.MonadIO.stateTMonadIO
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
 object ScalaJs {
 
@@ -55,12 +56,7 @@ object ScalaJs {
     def submitRequest(step3: Builder.Step3[Unit, StudentsRequest, Unit]#$) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/start2")
         .setRequestContentTypeJson
-        .send(
-          s"""{
-  "studentId": "${step3.state.studentId}",
-  "maxQuestions": ${step3.state.maxQuestions},
-  "setId": "${step3.state.setId}"
-}""").onComplete {
+        .send(step3.state.asJson.noSpaces).onComplete {
         xhr =>
           xhr.status match {
             case 200 =>

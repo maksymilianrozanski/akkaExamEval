@@ -69,7 +69,7 @@ val sprayVersion = "1.3.5-7"
 val scalaJSReact = "1.7.5"
 val scalaCss = "0.6.1"
 val reactJS = "16.13.1"
-
+val circeVersion = "0.14.0-M1"
 lazy val client = project
   .settings(commonSettings)
   .settings(
@@ -77,12 +77,14 @@ lazy val client = project
     name := "client",
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "1.1.0",
-      "io.crashbox" % "spray-json_2.13" % sprayVersion,
       "com.github.japgolly.scalajs-react" %%% "core" % scalaJSReact,
       "com.github.japgolly.scalajs-react" %%% "extra" % scalaJSReact,
       "com.github.japgolly.scalacss" %%% "core" % scalaCss,
       "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss,
-      "com.github.japgolly.scalajs-react" %%% "ext-scalaz72" % "1.7.5"
+      "com.github.japgolly.scalajs-react" %%% "ext-scalaz72" % "1.7.5",
+      "io.circe" %%% "circe-core" % circeVersion,
+      "io.circe" %%% "circe-generic" % circeVersion,
+      "io.circe" %%% "circe-parser" % circeVersion
     ),
 
     // creates single js resource file for easy integration in html page
