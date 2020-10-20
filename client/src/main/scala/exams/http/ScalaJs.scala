@@ -97,6 +97,7 @@ object ScalaJs {
             submitRequest($)
             $.runStateFn(handleSubmit)
           },
+          <.p(s.status.toString),
           <.div(
             <.label(
               ^.`for` := "studentId",
