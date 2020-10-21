@@ -1,5 +1,6 @@
 package exams.http
 
+import exams.http.ScalaJs.apiEndpoint
 import japgolly.scalajs.react.ScalazReact.ReactS
 import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.vdom.html_<^.<
@@ -30,23 +31,46 @@ import monocle.macros.GenLens
 
 object ExamPageForm {
   def renderExamForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$, s: DisplayedState) = {
+
+    def handleSubmit(e: ReactEventFromInput) = {
+      (
+        state.retM(e.preventDefaultCB) // Lift a Callback effect into a shape that allows composition
+          //   with state modification.
+          >> // Use >> to compose. It's flatMap (>>=) that ignores input.
+          state.mod(s => {
+            println("state: ", s)
+            s
+          }).liftCB // Here we lift a pure state modification into a shape that allows composition with Callback effects.
+        )
+    }
+
+    def submitRequest(step3: Builder.Step3[Unit, DisplayedState, Unit]#$) = {
+
+    }
+
     <.div(
       <.div(s"status: ${
         s.status.toString
       }"),
-      <.div(s"Current exam: ${
-        s.examPage.get.toString
-      }")(s.examPage.get.exam.questions.map(blankQuestionForm): _*))
+      <.form(
+        ^.onSubmit ==> {
+          submitRequest($)
+          $.runStateFn(handleSubmit)
+        },
+        <.div(s"Current exam: ${
+          s.examPage.get.toString
+        }")(s.examPage.get.exam.questions.map(blankQuestionForm): _*))
+    )
   }
 
   private def blankQuestionForm(blankQuestion: BlankQuestion) =
     <.div(
       <.p("question:"),
       <.p(blankQuestion.text)
-      (blankQuestion.answers.map(answerForm): _*)
+      (blankQuestion.answers.zipWithIndex.map(answerForm): _*)
     )
 
-  private def answerForm(answer: Answer) =
-    <.label(s"answer: ${answer.text}",
+  private def answerForm(answerWithKey: (Answer, Int)) =
+    <.label(s"answer: ${answerWithKey._1.text}",
       <.input.checkbox())
 }
