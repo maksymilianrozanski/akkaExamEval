@@ -58,15 +58,7 @@ object ScalaJs {
   }
 
   def requestExamForm(state: ReactS.Fix[DisplayedState], s: DisplayedState) = {
-    val studentIdLens = GenLens[ExamRequestPage](_.studentsRequest.studentId)
-    val maxQuestionsLens = GenLens[ExamRequestPage](_.studentsRequest.maxQuestions)
-    val setIdLens = GenLens[ExamRequestPage](_.studentsRequest.setId)
-
-    val pageOptional = Optional[DisplayedState, ExamRequestPage](_.examRequestPage)(n => m => m.copy(examRequestPage = Some(n)))
-
-    val studentIdLens2 = pageOptional.composeLens(studentIdLens)
-    val maxQuestionsLens2 = pageOptional.composeLens(maxQuestionsLens)
-    val setIdLens2 = pageOptional.composeLens(setIdLens)
+    import DisplayedState._
 
     def studentIdStateHandler(s: ReactEventFromInput) =
       state.mod(studentIdLens2.modify(_ => s.target.value))
