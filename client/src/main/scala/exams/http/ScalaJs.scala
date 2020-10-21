@@ -1,6 +1,7 @@
 package exams.http
 
 import exams.shared.data.HttpRequests.{StudentId, StudentsRequest}
+import exams.shared.data.StudentsExam
 import japgolly.scalajs.react.raw.ReactDOMServer
 import japgolly.scalajs.react.{Callback, CtorType, React, ReactEventFromInput, ScalaComponent, ScalaFnComponent, StateAccess, StateAccessPure, _}
 import org.scalajs.dom
@@ -21,7 +22,7 @@ import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
 import org.scalajs.dom.raw.Element
-import monocle.Lens
+import monocle.{Lens, Optional, POptional, Prism}
 import monocle.macros.GenLens
 
 object ScalaJs {
@@ -31,31 +32,53 @@ object ScalaJs {
   def main(args: Array[String]): Unit = {
     val root = dom.document.getElementById("scalajsShoutOut")
 
-    renderApp(root)(ExamRequestPage(Success, StudentsRequest("", 0, "")))
+    renderApp(root)(DisplayedState(Success, Some(ExamRequestPage(StudentsRequest("", 0, "")))))
   }
 
-  def renderApp(root: Element)(page: DisplayedPage) =
+  def renderApp(root: Element)(page: DisplayedState) = {
+    val state = ReactS.Fix[DisplayedState]
     (page match {
-      case examRequestPage@ExamRequestPage(status, studentsRequest) => requestExamForm(examRequestPage)()
-      case ExamPage(status) => ???
+      case s@DisplayedState(_, Some(examRequestPage), _) => requestExamForm(state, s)()
+      case s@DisplayedState(_, _, Some(examPage)) => displayExamPage(state, s)()
+      case _ => ???
     }).renderIntoDOM(root)
+  }
 
-  def requestExamForm(page: ExamRequestPage) = {
-    val state = ReactS.Fix[ExamRequestPage]
 
+  def displayExamPage(state: ReactS.Fix[DisplayedState], examPage: DisplayedState) =
+    ScalaComponent.builder[Unit]
+      .initialState(examPage)
+      .renderS(($, s) => {
+        <.div(
+          <.div(s"status: ${
+            s.status.toString
+          }"),
+          <.div(s"Current exam: ${
+            s.examPage.get.toString
+          }"))
+      }).build
+
+
+  def requestExamForm(state: ReactS.Fix[DisplayedState], s: DisplayedState) = {
     val studentIdLens = GenLens[ExamRequestPage](_.studentsRequest.studentId)
     val maxQuestionsLens = GenLens[ExamRequestPage](_.studentsRequest.maxQuestions)
     val setIdLens = GenLens[ExamRequestPage](_.studentsRequest.setId)
 
+    val pageOptional = Optional[DisplayedState, ExamRequestPage](_.examRequestPage)(n => m => m.copy(examRequestPage = Some(n)))
+
+    val studentIdLens2 = pageOptional.composeLens(studentIdLens)
+    val maxQuestionsLens2 = pageOptional.composeLens(maxQuestionsLens)
+    val setIdLens2 = pageOptional.composeLens(setIdLens)
+
     def studentIdStateHandler(s: ReactEventFromInput) =
-      state.mod(studentIdLens.modify(_ => s.target.value))
+      state.mod(studentIdLens2.modify(_ => s.target.value))
 
     //todo: add int parse error handling
     def maxQuestionsStateHandler(s: ReactEventFromInput) =
-      state.mod(maxQuestionsLens.modify(_ => Integer.parseInt(s.target.value)))
+      state.mod(maxQuestionsLens2.modify(_ => Integer.parseInt(s.target.value)))
 
     def setIdStateHandler(s: ReactEventFromInput) =
-      state.mod(setIdLens.modify(_ => s.target.value))
+      state.mod(setIdLens2.modify(_ => s.target.value))
 
     def handleSubmit(e: ReactEventFromInput) = {
       (
@@ -69,10 +92,10 @@ object ScalaJs {
         )
     }
 
-    def submitRequest(step3: Builder.Step3[Unit, ExamRequestPage, Unit]#$) = {
+    def submitRequest(step3: Builder.Step3[Unit, DisplayedState, Unit]#$) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/start2")
         .setRequestContentTypeJson
-        .send(step3.state.studentsRequest.asJson.noSpaces).onComplete {
+        .send(step3.state.examRequestPage.get.studentsRequest.asJson.noSpaces).onComplete {
         xhr =>
           xhr.status match {
             case 200 =>
@@ -87,10 +110,8 @@ object ScalaJs {
       step3.modState(i => i, ajax.asCallback)
     }
 
-    import japgolly.scalajs.react.extra.Ajax
-
     ScalaComponent.builder[Unit]
-      .initialState(page)
+      .initialState(s)
       .renderS(($, s) => {
         <.form(
           ^.onSubmit ==> {
@@ -126,7 +147,6 @@ object ScalaJs {
               ^.`type` := "text",
               ^.name := "setId",
               ^.id := "setId",
-              ^.value := s.studentsRequest.setId,
               ^.onChange ==> $.runStateFn(setIdStateHandler)
             )),
           <.button("Submit", ^.onClick --> submitRequest($))
