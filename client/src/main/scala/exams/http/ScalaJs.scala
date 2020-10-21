@@ -37,27 +37,25 @@ object ScalaJs {
 
   def renderApp(root: Element)(page: DisplayedState) = {
     val state = ReactS.Fix[DisplayedState]
-    (page match {
-      case s@DisplayedState(_, Some(examRequestPage), _) => requestExamForm(state, s)()
-      case s@DisplayedState(_, _, Some(examPage)) => displayExamPage(state, s)()
-      case _ => ???
-    }).renderIntoDOM(root)
+    requestExamForm(state, page)().renderIntoDOM(root)
   }
-
 
   def displayExamPage(state: ReactS.Fix[DisplayedState], examPage: DisplayedState) =
     ScalaComponent.builder[Unit]
       .initialState(examPage)
       .renderS(($, s) => {
-        <.div(
-          <.div(s"status: ${
-            s.status.toString
-          }"),
-          <.div(s"Current exam: ${
-            s.examPage.get.toString
-          }"))
+        renderExam($, s)
       }).build
 
+  private def renderExam($: Builder.Step3[Unit, DisplayedState, Unit]#$, s: DisplayedState) = {
+    <.div(
+      <.div(s"status: ${
+        s.status.toString
+      }"),
+      <.div(s"Current exam: ${
+        s.examPage.get.toString
+      }"))
+  }
 
   def requestExamForm(state: ReactS.Fix[DisplayedState], s: DisplayedState) = {
     val studentIdLens = GenLens[ExamRequestPage](_.studentsRequest.studentId)
@@ -88,7 +86,7 @@ object ScalaJs {
           state.mod(s => {
             println("state: ", s)
             s
-          }).liftCB // Here we lift a pure state modification into a shape that
+          }).liftCB // Here we lift a pure state modification into a shape that allows composition with Callback effects.
         )
     }
 
@@ -101,7 +99,7 @@ object ScalaJs {
             case 200 =>
               println("Sent request and received 200 response code")
               println(s"Response: ${xhr.responseText}")
-              step3.setState(step3.state.copy(status = Success))
+              step3.setState(step3.state.copy(status = Success, examPage = decode[ExamPage](xhr.responseText).toOption))
             case x =>
               println(s"Sent request and received $x response code")
               step3.setState(step3.state.copy(status = Failure))
@@ -110,47 +108,57 @@ object ScalaJs {
       step3.modState(i => i, ajax.asCallback)
     }
 
+    def renderExamRequestForm($: Builder.Step3[Unit, DisplayedState, Unit]#$, s: DisplayedState) = {
+      <.form(
+        ^.onSubmit ==> {
+          submitRequest($)
+          $.runStateFn(handleSubmit)
+        },
+        <.p(s.status.toString),
+        <.div(
+          <.label(
+            ^.`for` := "studentId",
+            "Student Id"),
+          <.input(
+            ^.`type` := "text",
+            ^.name := "studentId",
+            ^.id := "studentId",
+            ^.onChange ==> $.runStateFn(studentIdStateHandler)
+          ),
+          <.label(
+            ^.`for` := "maxQuestions",
+            "max. questions"
+          ),
+          <.input(
+            ^.`type` := "number",
+            ^.name := "maxQuestions",
+            ^.id := "maxQuestions",
+            ^.onChange ==> $.runStateFn(maxQuestionsStateHandler)
+          ),
+          <.label(
+            ^.`for` := "setId",
+            "set id"
+          ),
+          <.input(
+            ^.`type` := "text",
+            ^.name := "setId",
+            ^.id := "setId",
+            ^.onChange ==> $.runStateFn(setIdStateHandler)
+          )),
+        <.button("Submit", ^.onClick --> submitRequest($))
+      )
+    }
+
     ScalaComponent.builder[Unit]
       .initialState(s)
       .renderS(($, s) => {
-        <.form(
-          ^.onSubmit ==> {
-            submitRequest($)
-            $.runStateFn(handleSubmit)
-          },
-          <.p(s.status.toString),
-          <.div(
-            <.label(
-              ^.`for` := "studentId",
-              "Student Id"),
-            <.input(
-              ^.`type` := "text",
-              ^.name := "studentId",
-              ^.id := "studentId",
-              ^.onChange ==> $.runStateFn(studentIdStateHandler)
-            ),
-            <.label(
-              ^.`for` := "maxQuestions",
-              "max. questions"
-            ),
-            <.input(
-              ^.`type` := "number",
-              ^.name := "maxQuestions",
-              ^.id := "maxQuestions",
-              ^.onChange ==> $.runStateFn(maxQuestionsStateHandler)
-            ),
-            <.label(
-              ^.`for` := "setId",
-              "set id"
-            ),
-            <.input(
-              ^.`type` := "text",
-              ^.name := "setId",
-              ^.id := "setId",
-              ^.onChange ==> $.runStateFn(setIdStateHandler)
-            )),
-          <.button("Submit", ^.onClick --> submitRequest($))
-        )
+        s match {
+          case DisplayedState(status, Some(examRequestPage), None) =>
+            renderExamRequestForm($, s)
+          case DisplayedState(status, _, Some(examPage)) =>
+            renderExam($, s)
+          case _ => ???
+        }
       }
       ).build
   }
