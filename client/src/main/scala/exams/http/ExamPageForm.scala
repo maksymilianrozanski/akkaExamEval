@@ -3,9 +3,8 @@ package exams.http
 import japgolly.scalajs.react.ScalazReact.ReactS
 import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.vdom.html_<^.<
-
 import exams.shared.data.HttpRequests.{StudentId, StudentsRequest}
-import exams.shared.data.StudentsExam
+import exams.shared.data.{Answer, BlankQuestion, StudentsExam}
 import japgolly.scalajs.react.raw.ReactDOMServer
 import japgolly.scalajs.react.{Callback, CtorType, React, ReactEventFromInput, ScalaComponent, ScalaFnComponent, StateAccess, StateAccessPure, _}
 import org.scalajs.dom
@@ -37,6 +36,17 @@ object ExamPageForm {
       }"),
       <.div(s"Current exam: ${
         s.examPage.get.toString
-      }"))
+      }")(s.examPage.get.exam.questions.map(blankQuestionForm): _*))
   }
+
+  private def blankQuestionForm(blankQuestion: BlankQuestion) =
+    <.div(
+      <.p("question:"),
+      <.p(blankQuestion.text)
+      (blankQuestion.answers.map(answerForm): _*)
+    )
+
+  private def answerForm(answer: Answer) =
+    <.label(s"answer: ${answer.text}",
+      <.input.checkbox())
 }
