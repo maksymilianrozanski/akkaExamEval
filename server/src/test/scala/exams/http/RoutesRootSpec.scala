@@ -8,7 +8,7 @@ import exams.data.ExamRepository.QuestionsSet
 import exams.data.StubQuestions.completedExam
 import exams.distributor.ExamDistributor.ExamId
 import exams.http.RoutesRoot.AllExamResults
-import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
+import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
 import exams.http.token.TokenGenerator.{InvalidToken, TokenValidationResult, ValidMatchedToken}
 import exams.shared.data.HttpRequests._
 import exams.shared.data.{CompletedExam, StudentsExam}

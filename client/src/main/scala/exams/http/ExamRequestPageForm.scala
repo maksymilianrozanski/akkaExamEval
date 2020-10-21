@@ -2,6 +2,7 @@ package exams.http
 
 import exams.http.DisplayedState.{maxQuestionsLens2, setIdLens2, studentIdLens2}
 import exams.http.ScalaJs.apiEndpoint
+import exams.shared.data.HttpRequests.ExamGenerated
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
@@ -46,7 +47,10 @@ object ExamRequestPageForm {
             case 200 =>
               println("Sent request and received 200 response code")
               println(s"Response: ${xhr.responseText}")
-              step3.setState(step3.state.copy(status = Success, examPage = decode[ExamPage](xhr.responseText).toOption))
+              import ExamSelectable.fromStudentsExam
+              step3.setState(step3.state.copy(status = Success,
+                examPage = decode[ExamGenerated](xhr.responseText).toOption
+                  .map(it => ExamPage(it.exam))))
             case x =>
               println(s"Sent request and received $x response code")
               step3.setState(step3.state.copy(status = Failure))

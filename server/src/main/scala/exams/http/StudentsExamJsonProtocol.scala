@@ -1,11 +1,10 @@
 package exams.http
 
 import exams.data.ExamRepository.QuestionsSet
-import exams.data._
 import exams.evaluator.ExamEvaluator.ExamResult
-import exams.http.StudentActions.{DisplayedToStudent, ExamGenerated, ExamGeneratedWithToken, GeneratingFailed}
-import exams.shared.data.{Answer, BlankQuestion, CompletedExam, Question, StudentsExam}
-import exams.shared.data.HttpRequests.StudentsRequest
+import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
+import exams.shared.data.HttpRequests.{ExamGenerated, StudentsRequest}
+import exams.shared.data._
 import spray.json.{DefaultJsonProtocol, JsValue, RootJsonFormat, RootJsonWriter}
 
 trait StudentsExamJsonProtocol extends DefaultJsonProtocol {

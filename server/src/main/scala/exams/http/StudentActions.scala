@@ -3,7 +3,7 @@ package exams.http
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
-import exams.shared.data.HttpRequests.StudentsRequest
+import exams.shared.data.HttpRequests.{ExamGenerated, StudentsRequest}
 import exams.shared.data.StudentsExam
 import exams.student.Student
 
@@ -19,8 +19,6 @@ object StudentActions {
     implicit def toExamGenerated(examGeneratedWithToken: ExamGeneratedWithToken): ExamGenerated = ExamGenerated(examGeneratedWithToken.exam)
   }
   case class GeneratingFailed(reason: String) extends DisplayedToStudent
-
-  case class ExamGenerated(exam: StudentsExam)
 
   def apply()(implicit distributor: ActorRef[ExamDistributor]): Behavior[Command] = registry(distributor)
 

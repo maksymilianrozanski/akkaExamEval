@@ -15,4 +15,6 @@ object HttpRequests {
    */
   case class StudentsRequest(studentId: StudentId, maxQuestions: Int, setId: SetId)
 
+  case class ExamGenerated(exam: StudentsExam)
+
 }

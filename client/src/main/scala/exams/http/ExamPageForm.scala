@@ -63,14 +63,14 @@ object ExamPageForm {
     )
   }
 
-  private def blankQuestionForm(blankQuestion: BlankQuestion) =
+  private def blankQuestionForm(blankQuestion: BlankQuestionsSelectable) =
     <.div(
       <.p("question:"),
       <.p(blankQuestion.text)
       (blankQuestion.answers.zipWithIndex.map(answerForm): _*)
     )
 
-  private def answerForm(answerWithKey: (Answer, Int)) =
+  private def answerForm(answerWithKey: (AnswerSelectable, Int)) =
     <.label(s"answer: ${answerWithKey._1.text}",
       <.input.checkbox())
 }
