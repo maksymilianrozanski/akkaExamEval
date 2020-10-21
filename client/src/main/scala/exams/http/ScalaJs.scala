@@ -37,7 +37,7 @@ object ScalaJs {
 
   def renderApp(root: Element)(page: DisplayedState) = {
     val state = ReactS.Fix[DisplayedState]
-    requestExamForm(state, page)().renderIntoDOM(root)
+    rootComponent(state, page)().renderIntoDOM(root)
   }
 
   def displayExamPage(state: ReactS.Fix[DisplayedState], examPage: DisplayedState) =
@@ -57,9 +57,9 @@ object ScalaJs {
       }"))
   }
 
-  def requestExamForm(state: ReactS.Fix[DisplayedState], s: DisplayedState) = {
-    import DisplayedState._
+  import DisplayedState._
 
+  def renderExamRequestFormWithHandlers(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$, s: DisplayedState) = {
     def studentIdStateHandler(s: ReactEventFromInput) =
       state.mod(studentIdLens2.modify(_ => s.target.value))
 
@@ -140,13 +140,16 @@ object ScalaJs {
         <.button("Submit", ^.onClick --> submitRequest($))
       )
     }
+    renderExamRequestForm($, s)
+  }
 
+  def rootComponent(state: ReactS.Fix[DisplayedState], s: DisplayedState) = {
     ScalaComponent.builder[Unit]
       .initialState(s)
       .renderS(($, s) => {
         s match {
           case DisplayedState(status, Some(examRequestPage), None) =>
-            renderExamRequestForm($, s)
+            renderExamRequestFormWithHandlers(state, $, s)
           case DisplayedState(status, _, Some(examPage)) =>
             renderExam($, s)
           case _ => ???
