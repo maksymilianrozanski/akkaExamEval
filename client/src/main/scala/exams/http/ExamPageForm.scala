@@ -1,5 +1,9 @@
 package exams.http
 
+import japgolly.scalajs.react.ScalazReact.ReactS
+import japgolly.scalajs.react.component.builder.Builder
+import japgolly.scalajs.react.vdom.html_<^.<
+
 import exams.shared.data.HttpRequests.{StudentId, StudentsRequest}
 import exams.shared.data.StudentsExam
 import japgolly.scalajs.react.raw.ReactDOMServer
@@ -25,35 +29,14 @@ import org.scalajs.dom.raw.Element
 import monocle.{Lens, Optional, POptional, Prism}
 import monocle.macros.GenLens
 
-object ScalaJs {
-
-  val apiEndpoint = "http://localhost:8080"
-
-  def main(args: Array[String]): Unit = {
-    val root = dom.document.getElementById("scalajsShoutOut")
-
-    renderApp(root)(DisplayedState(Success, Some(ExamRequestPage(StudentsRequest("", 0, "")))))
-  }
-
-  def renderApp(root: Element)(page: DisplayedState) = {
-    val state = ReactS.Fix[DisplayedState]
-    rootComponent(state, page)().renderIntoDOM(root)
-  }
-
-  import DisplayedState._
-
-  def rootComponent(state: ReactS.Fix[DisplayedState], s: DisplayedState) = {
-    ScalaComponent.builder[Unit]
-      .initialState(s)
-      .renderS(($, s) => {
-        s match {
-          case DisplayedState(status, Some(examRequestPage), None) =>
-            ExamRequestPageForm.renderExamRequestForm(state, $, s)
-          case DisplayedState(status, _, Some(examPage)) =>
-            ExamPageForm.renderExamForm(state, $, s)
-          case _ => ???
-        }
-      }
-      ).build
+object ExamPageForm {
+  def renderExamForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$, s: DisplayedState) = {
+    <.div(
+      <.div(s"status: ${
+        s.status.toString
+      }"),
+      <.div(s"Current exam: ${
+        s.examPage.get.toString
+      }"))
   }
 }
