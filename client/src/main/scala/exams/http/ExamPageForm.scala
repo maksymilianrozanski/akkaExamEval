@@ -1,10 +1,11 @@
 package exams.http
 
+import exams.http.DisplayedState.{examPageOptional, isSelectedLens, questionsSelectableLens2}
 import exams.http.ScalaJs.apiEndpoint
 import japgolly.scalajs.react.ScalazReact.ReactS
 import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.vdom.html_<^.<
-import exams.shared.data.HttpRequests.{StudentId, StudentsRequest}
+import exams.shared.data.HttpRequests.{ExamGenerated, StudentId, StudentsRequest}
 import exams.shared.data.{Answer, BlankQuestion, StudentsExam}
 import japgolly.scalajs.react.raw.ReactDOMServer
 import japgolly.scalajs.react.{Callback, CtorType, React, ReactEventFromInput, ScalaComponent, ScalaFnComponent, StateAccess, StateAccessPure, _}
@@ -45,7 +46,23 @@ object ExamPageForm {
     }
 
     def submitRequest(step3: Builder.Step3[Unit, DisplayedState, Unit]#$) = {
-
+      //todo: implement sending answers to "/student/evaluate" api endpoint
+      val ajax = Ajax("GET", apiEndpoint + "/student")
+        .send("")
+        .onComplete {
+          xhr =>
+            xhr.status match {
+              case 200 =>
+                println("Sent request and received 200 response code")
+                println(s"Response: ${xhr.responseText}")
+                import ExamSelectable.fromStudentsExam
+                step3.setState(step3.state)
+              case x =>
+                println(s"Sent request and received $x response code")
+                step3.setState(step3.state)
+            }
+        }
+      step3.modState(i => i, ajax.asCallback)
     }
 
     <.div(
@@ -59,18 +76,30 @@ object ExamPageForm {
         },
         <.div(s"Current exam: ${
           s.examPage.get.toString
-        }")(s.examPage.get.exam.questions.map(blankQuestionForm): _*))
+        }")(s.examPage.get.exam.questions
+          .zipWithIndex
+          .map(blankQuestionForm(state, $)): _*))
+      , <.button("Submit", ^.onClick --> submitRequest($))
     )
   }
 
-  private def blankQuestionForm(blankQuestion: BlankQuestionsSelectable) =
+  private def blankQuestionForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$)(
+    blankQuestionWithNumber: (BlankQuestionsSelectable, Int)) =
     <.div(
       <.p("question:"),
-      <.p(blankQuestion.text)
-      (blankQuestion.answers.zipWithIndex.map(answerForm): _*)
+      <.p(blankQuestionWithNumber._1.text)
+      (blankQuestionWithNumber._1.answers.zipWithIndex.map(answerForm(state, $)(blankQuestionWithNumber._2)): _*)
     )
 
-  private def answerForm(answerWithKey: (AnswerSelectable, Int)) =
+  private def answerForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$)(questionNumber: Int)(answerWithKey: (AnswerSelectable, Int)) = {
+
+    def onAnswerChange(e: ReactEventFromInput) =
+      state.mod(isSelectedLens(e.target.checked)(questionNumber, answerWithKey._2))
+
     <.label(s"answer: ${answerWithKey._1.text}",
-      <.input.checkbox())
+      <.input.checkbox(
+        ^.onChange ==>
+          $.runStateFn(onAnswerChange)
+      ))
+  }
 }
