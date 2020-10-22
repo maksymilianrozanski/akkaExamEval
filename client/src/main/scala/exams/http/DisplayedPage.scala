@@ -49,11 +49,11 @@ object DisplayedState {
   }
 
   //todo: rename
-  def answersOfQuestionModifier(questionNumber: Int, modifier: BlankQuestionsSelectable => BlankQuestionsSelectable): DisplayedState => DisplayedState =
+  private def answersOfQuestionModifier(questionNumber: Int, modifier: BlankQuestionsSelectable => BlankQuestionsSelectable): DisplayedState => DisplayedState =
     questionsSelectableLens2.modify(it => it.updated(questionNumber, modifier(it(questionNumber))))
 
   //todo: rename
-  def answerModifier(answerNumber: Int, modifier: AnswerSelectable => AnswerSelectable)(answers: List[AnswerSelectable]): List[AnswerSelectable] =
+  private def answerModifier(answerNumber: Int, modifier: AnswerSelectable => AnswerSelectable)(answers: List[AnswerSelectable]): List[AnswerSelectable] =
     answers.updated(answerNumber, modifier(answers(answerNumber)))
 
   //todo: rename
