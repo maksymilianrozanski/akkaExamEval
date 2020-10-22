@@ -1,6 +1,6 @@
 package exams.http
 
-import exams.http.DisplayedState.{examPageOptional, isSelectedLens, questionsSelectableLens2}
+import exams.http.DisplayedState.{examPageOptional, changeAnswerIsSelected, questionsSelectableLens2}
 import exams.http.ScalaJs.apiEndpoint
 import japgolly.scalajs.react.ScalazReact.ReactS
 import japgolly.scalajs.react.component.builder.Builder
@@ -94,7 +94,7 @@ object ExamPageForm {
   private def answerForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$)(questionNumber: Int)(answerWithKey: (AnswerSelectable, Int)) = {
 
     def onAnswerChange(e: ReactEventFromInput) =
-      state.mod(isSelectedLens(e.target.checked)(questionNumber, answerWithKey._2))
+      state.mod(changeAnswerIsSelected(e.target.checked)(questionNumber, answerWithKey._2))
 
     <.label(s"answer: ${answerWithKey._1.text}",
       <.input.checkbox(
