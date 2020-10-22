@@ -1,8 +1,9 @@
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 val akkaVersion = "2.6.9"
 val akkaHttpVersion = "10.2.0"
 lazy val postgresVersion = "42.2.16"
+lazy val scalaTestVersion = "3.2.0"
 
 lazy val commonSettings = Seq(
   version := "0.1",
@@ -50,7 +51,7 @@ lazy val server = project
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-persistence-testkit" % akkaVersion % Test,
-      "org.scalatest" %% "scalatest" % "3.2.0" % Test
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     ),
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
@@ -74,6 +75,7 @@ lazy val client = project
   .settings(commonSettings)
   .settings(
     scalaJSUseMainModuleInitializer := true,
+    jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv(),
     name := "client",
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "1.1.0",
@@ -86,7 +88,9 @@ lazy val client = project
       "io.circe" %%% "circe-generic" % circeVersion,
       "io.circe" %%% "circe-parser" % circeVersion,
       "com.github.julien-truffaut" %%% "monocle-core" % "2.0.3",
-      "com.github.julien-truffaut" %%% "monocle-macro" % "2.0.3"
+      "com.github.julien-truffaut" %%% "monocle-macro" % "2.0.3",
+      "org.scalatest" %%% "scalatest" % scalaTestVersion % Test,
+      "com.github.japgolly.scalajs-react" %%% "test" % "1.7.5" % Test
     ),
 
     // creates single js resource file for easy integration in html page
@@ -115,7 +119,12 @@ lazy val client = project
         / "umd/react-dom-server.browser.development.js"
         minified "umd/react-dom-server.browser.production.min.js"
         dependsOn "umd/react-dom.development.js"
-        commonJSName "ReactDOMServer"
+        commonJSName "ReactDOMServer",
+      "org.webjars.npm" % "react-dom" % reactJS % Test
+        / "umd/react-dom-test-utils.development.js"
+        minified "umd/react-dom-test-utils.production.min.js"
+        dependsOn "umd/react-dom.development.js"
+        commonJSName "ReactTestUtils"
     ),
 
     //enablePlugins(ScalaJSBundlerPlugin)
