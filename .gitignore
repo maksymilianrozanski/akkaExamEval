@@ -8,3 +8,5 @@
 /client/target
 /shared/.js/target
 /shared/.jvm/target
+/node_modules
+/js
