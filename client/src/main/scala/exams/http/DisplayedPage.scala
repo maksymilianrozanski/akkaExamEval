@@ -37,28 +37,26 @@ object DisplayedState {
   val questionsSelectableLens2: POptional[DisplayedState, DisplayedState, List[BlankQuestionsSelectable], List[BlankQuestionsSelectable]] =
     examSelectableLens2.composeLens(questionsSelectableLens)
 
-  //todo: rename
   type QuestionIndex = Int
   type AnswerIndex = Int
 
-  def modifyAnswer(qi: QuestionIndex, ai: AnswerIndex)(modifier: AnswerSelectable => AnswerSelectable): DisplayedState => DisplayedState = {
-    questionsSelectableLens2.modify(qs =>
-      qs.updated(qi,
-        qs(qi).copy(answers = qs(qi).answers.updated(ai, modifier(qs(qi).answers(ai))
-        ))))
-  }
+  /**
+   * @param valueToSet    isChecked value of AnswerSelectable to set
+   * @param questionIndex index of a question where value should be updated
+   * @param answerIndex   index of an answer where value should be updated
+   * @return
+   */
+  def changeAnswerIsSelected(valueToSet: Boolean)(questionIndex: QuestionIndex, answerIndex: AnswerIndex): DisplayedState => DisplayedState =
+    modifyAnswerOfQuestion(questionIndex, answerIndex)(_.copy(isChecked = valueToSet))
 
-  //todo: rename
-  private def answersOfQuestionModifier(questionNumber: Int, modifier: BlankQuestionsSelectable => BlankQuestionsSelectable): DisplayedState => DisplayedState =
+  private def modifyAnswerOfQuestion(qi: QuestionIndex, ai: AnswerIndex)(modifier: AnswerSelectable => AnswerSelectable): DisplayedState => DisplayedState =
+    modifyQuestion(qi, q => q.copy(answers = modifyAnswer(ai, modifier)(q.answers)))
+
+  private def modifyQuestion(questionNumber: Int, modifier: BlankQuestionsSelectable => BlankQuestionsSelectable): DisplayedState => DisplayedState =
     questionsSelectableLens2.modify(it => it.updated(questionNumber, modifier(it(questionNumber))))
 
-  //todo: rename
-  private def answerModifier(answerNumber: Int, modifier: AnswerSelectable => AnswerSelectable)(answers: List[AnswerSelectable]): List[AnswerSelectable] =
+  private def modifyAnswer(answerNumber: Int, modifier: AnswerSelectable => AnswerSelectable)(answers: List[AnswerSelectable]): List[AnswerSelectable] =
     answers.updated(answerNumber, modifier(answers(answerNumber)))
-
-  //todo: rename
-  def changeAnswerIsSelected(valueToSet: Boolean): (Int, Int) => DisplayedState => DisplayedState =
-    modifyAnswer(_: Int, _: Int)(_.copy(isChecked = valueToSet))
 
   val studentIdLens2: POptional[DisplayedState, DisplayedState, StudentId, StudentId] =
     pageOptional.composeLens(studentIdLens)
