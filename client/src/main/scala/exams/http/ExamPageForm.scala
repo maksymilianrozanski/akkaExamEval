@@ -1,35 +1,16 @@
 package exams.http
 
-import exams.http.DisplayedState.{changeAnswerIsSelected, examPageOptional, questionsSelectableLens2}
+import exams.http.DisplayedState.changeAnswerIsSelected
 import exams.http.ExamSelectable.toCompletedExam
 import exams.http.ScalaJs.apiEndpoint
-import japgolly.scalajs.react.ScalazReact.ReactS
-import japgolly.scalajs.react.component.builder.Builder
-import japgolly.scalajs.react.vdom.html_<^.<
-import exams.shared.data.HttpRequests.{ExamGenerated, StudentId, StudentsRequest}
-import exams.shared.data.{Answer, BlankQuestion, StudentsExam}
-import japgolly.scalajs.react.raw.ReactDOMServer
-import japgolly.scalajs.react.{Callback, CtorType, React, ReactEventFromInput, ScalaComponent, ScalaFnComponent, StateAccess, StateAccessPure, _}
-import org.scalajs.dom
-import org.scalajs.dom.html.Div
-import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs._
-import japgolly.scalajs.react.ScalazReact.{ReactS, reactCallbackScalazInstance}
-import japgolly.scalajs.react.extra.{Ajax, StateSnapshot}
-import scalaz.Scalaz.ToBindOps
-import japgolly.scalajs.react.ScalazReact._
-import japgolly.scalajs.react.component.Scala.Component
-import japgolly.scalajs.react.component.builder.Builder
-import japgolly.scalajs.react.vdom.html_<^._
-import scalaz.StateT.stateMonad
-import scalaz.effect.MonadIO.stateTMonadIO
-import io.circe._
 import io.circe.generic.auto._
-import io.circe.parser._
 import io.circe.syntax._
-import org.scalajs.dom.raw.Element
-import monocle.{Lens, Optional, POptional, Prism}
-import monocle.macros.GenLens
+import japgolly.scalajs.react.ScalazReact.{ReactS, reactCallbackScalazInstance, _}
+import japgolly.scalajs.react.component.builder.Builder
+import japgolly.scalajs.react.extra.Ajax
+import japgolly.scalajs.react.vdom.html_<^.{<, _}
+import japgolly.scalajs.react.{ReactEventFromInput, _}
+import scalaz.Scalaz.ToBindOps
 
 object ExamPageForm {
   def renderExamForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$, s: DisplayedState) = {
@@ -47,7 +28,6 @@ object ExamPageForm {
     }
 
     def submitRequest(step3: Builder.Step3[Unit, DisplayedState, Unit]#$) = {
-      //todo: implement sending answers to "/student/evaluate" api endpoint
       val ajax = Ajax("POST", apiEndpoint + "/student/evaluate")
         .setRequestContentTypeJson
         .setRequestHeader("Authorization", step3.state.examPage.get.token)
@@ -58,7 +38,6 @@ object ExamPageForm {
               case 200 =>
                 println("Sent request and received 200 response code")
                 println(s"Response: ${xhr.responseText}")
-                import ExamSelectable.fromStudentsExam
                 step3.setState(step3.state)
               case x =>
                 println(s"Sent request and received $x response code")
