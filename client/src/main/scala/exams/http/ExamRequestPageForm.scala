@@ -48,9 +48,10 @@ object ExamRequestPageForm {
               println("Sent request and received 200 response code")
               println(s"Response: ${xhr.responseText}")
               import ExamSelectable.fromStudentsExam
+              val tokenHeader = xhr.getResponseHeader("Access-Token")
               step3.setState(step3.state.copy(status = Success,
                 examPage = decode[ExamGenerated](xhr.responseText).toOption
-                  .map(it => ExamPage(it.exam))))
+                  .map(it => ExamPage(tokenHeader, it.exam))))
             case x =>
               println(s"Sent request and received $x response code")
               step3.setState(step3.state.copy(status = Failure))

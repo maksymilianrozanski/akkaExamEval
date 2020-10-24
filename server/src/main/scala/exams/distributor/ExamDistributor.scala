@@ -162,6 +162,7 @@ object ExamDistributor {
       exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)),
       requests = state.requests.filterNot(_._1 == event.exam.examId))
 
+  //todo: remove completed exam from ExamDistributorState exams on ExamCompleted
   def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState =
     state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)))
 }

@@ -1,6 +1,7 @@
 package exams.http
 
-import exams.http.DisplayedState.{examPageOptional, changeAnswerIsSelected, questionsSelectableLens2}
+import exams.http.DisplayedState.{changeAnswerIsSelected, examPageOptional, questionsSelectableLens2}
+import exams.http.ExamSelectable.toCompletedExam
 import exams.http.ScalaJs.apiEndpoint
 import japgolly.scalajs.react.ScalazReact.ReactS
 import japgolly.scalajs.react.component.builder.Builder
@@ -47,8 +48,10 @@ object ExamPageForm {
 
     def submitRequest(step3: Builder.Step3[Unit, DisplayedState, Unit]#$) = {
       //todo: implement sending answers to "/student/evaluate" api endpoint
-      val ajax = Ajax("GET", apiEndpoint + "/student")
-        .send("")
+      val ajax = Ajax("POST", apiEndpoint + "/student/evaluate")
+        .setRequestContentTypeJson
+        .setRequestHeader("Authorization", step3.state.examPage.get.token)
+        .send(toCompletedExam(step3.state.examPage.get.exam).asJson.noSpaces)
         .onComplete {
           xhr =>
             xhr.status match {

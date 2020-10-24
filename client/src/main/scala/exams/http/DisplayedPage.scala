@@ -1,15 +1,14 @@
 package exams.http
 
+import exams.http.AnswerSelectable.toAnswer
 import exams.shared.data.HttpRequests.{ExamId, SetId, StudentId, StudentsRequest}
-import exams.shared.data.{Answer, BlankQuestion, StudentsExam}
-import monocle.{Lens, Optional, POptional}
+import exams.shared.data.{Answer, BlankQuestion, CompletedExam, StudentsExam}
 import monocle.macros.GenLens
-import monocle.Traversal
-import cats.implicits._
+import monocle.{Lens, Optional, POptional}
 
 sealed trait DisplayedPage
 case class ExamRequestPage(studentsRequest: StudentsRequest) extends DisplayedPage
-case class ExamPage(exam: ExamSelectable) extends DisplayedPage
+case class ExamPage(token: String, exam: ExamSelectable) extends DisplayedPage
 
 case class DisplayedState(status: RequestStatus, examRequestPage: Option[ExamRequestPage] = None, examPage: Option[ExamPage] = None)
 
@@ -80,6 +79,9 @@ object ExamSelectable {
   implicit def fromStudentsExam(studentsExam: StudentsExam): ExamSelectable =
     ExamSelectable(studentsExam.examId, studentsExam.questions.zipWithIndex
       .map(BlankQuestionsSelectable.fromBlankQuestion))
+
+  implicit def toCompletedExam(exam: ExamSelectable): CompletedExam =
+    CompletedExam(exam.examId, exam.questions.map(_.answers.filter(_.isChecked).map(toAnswer)))
 }
 case class BlankQuestionsSelectable(text: String, answers: List[AnswerSelectable], number: Int)
 object BlankQuestionsSelectable {
