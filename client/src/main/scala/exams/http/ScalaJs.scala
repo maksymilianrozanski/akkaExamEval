@@ -40,8 +40,6 @@ object ScalaJs {
     rootComponent(state, page)().renderIntoDOM(root)
   }
 
-  import DisplayedState._
-
   def rootComponent(state: ReactS.Fix[DisplayedState], s: DisplayedState) = {
     ScalaComponent.builder[Unit]
       .initialState(s)

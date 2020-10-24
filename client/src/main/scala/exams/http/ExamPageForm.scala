@@ -16,16 +16,6 @@ import scalaz.Scalaz.{ToBindOps, function1Covariant}
 object ExamPageForm {
   def renderExamForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$, s: DisplayedState) = {
 
-    def preventDefault(e: ReactEventFromInput) = (
-      state.retM(e.preventDefaultCB) // Lift a Callback effect into a shape that allows composition
-        //   with state modification.
-        >> // Use >> to compose. It's flatMap (>>=) that ignores input.
-        state.mod(s => {
-          println("state: ", s)
-          s
-        }).liftCB // Here we lift a pure state modification into a shape that allows composition with Callback effects.
-      )
-
     def submitRequest(step3: Builder.Step3[Unit, DisplayedState, Unit]#$) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/evaluate")
         .setRequestContentTypeJson
@@ -51,7 +41,7 @@ object ExamPageForm {
         s.status.toString
       }"),
       <.form(
-        ^.onSubmit ==> $.runStateFn(preventDefault),
+        ^.onSubmit ==> { (_: ReactEventFromInput).preventDefaultCB },
         <.div(s"Current exam: ${
           s.examPage.get.toString
         }")(s.examPage.get.exam.questions

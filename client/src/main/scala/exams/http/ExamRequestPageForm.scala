@@ -26,16 +26,6 @@ object ExamRequestPageForm {
     def setIdStateHandler(s: ReactEventFromInput) =
       state.mod(setIdLens2.modify(_ => s.target.value))
 
-    def preventDefault(e: ReactEventFromInput) = (
-      state.retM(e.preventDefaultCB) // Lift a Callback effect into a shape that allows composition
-        //   with state modification.
-        >> // Use >> to compose. It's flatMap (>>=) that ignores input.
-        state.mod(s => {
-          println("state: ", s)
-          s
-        }).liftCB // Here we lift a pure state modification into a shape that allows composition with Callback effects.
-      )
-
     def submitRequest(step3: Builder.Step3[Unit, DisplayedState, Unit]#$) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/start2")
         .setRequestContentTypeJson
@@ -59,7 +49,7 @@ object ExamRequestPageForm {
     }
 
     <.form(
-      ^.onSubmit ==> $.runStateFn(preventDefault),
+      ^.onSubmit ==> {(_: ReactEventFromInput).preventDefaultCB},
       <.p(s.status.toString),
       <.div(
         <.label(
