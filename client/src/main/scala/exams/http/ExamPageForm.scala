@@ -1,31 +1,30 @@
 package exams.http
 
-import exams.http.DisplayedState.changeAnswerIsSelected
+import exams.http.DisplayedState.{changeAnswerIsSelected, withExamRemoved}
 import exams.http.ExamSelectable.toCompletedExam
 import exams.http.ScalaJs.apiEndpoint
 import io.circe.generic.auto._
 import io.circe.syntax._
+import japgolly.scalajs.react.AsyncCallback.unit.>>=
 import japgolly.scalajs.react.ScalazReact.{ReactS, reactCallbackScalazInstance, _}
 import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.extra.Ajax
 import japgolly.scalajs.react.vdom.html_<^.{<, _}
 import japgolly.scalajs.react.{ReactEventFromInput, _}
-import scalaz.Scalaz.ToBindOps
+import scalaz.Scalaz.{ToBindOps, function1Covariant}
 
 object ExamPageForm {
   def renderExamForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$, s: DisplayedState) = {
 
-    def handleSubmit(e: ReactEventFromInput) = {
-      (
-        state.retM(e.preventDefaultCB) // Lift a Callback effect into a shape that allows composition
-          //   with state modification.
-          >> // Use >> to compose. It's flatMap (>>=) that ignores input.
-          state.mod(s => {
-            println("state: ", s)
-            s
-          }).liftCB // Here we lift a pure state modification into a shape that allows composition with Callback effects.
-        )
-    }
+    def preventDefault(e: ReactEventFromInput) = (
+      state.retM(e.preventDefaultCB) // Lift a Callback effect into a shape that allows composition
+        //   with state modification.
+        >> // Use >> to compose. It's flatMap (>>=) that ignores input.
+        state.mod(s => {
+          println("state: ", s)
+          s
+        }).liftCB // Here we lift a pure state modification into a shape that allows composition with Callback effects.
+      )
 
     def submitRequest(step3: Builder.Step3[Unit, DisplayedState, Unit]#$) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/evaluate")
@@ -38,7 +37,7 @@ object ExamPageForm {
               case 200 =>
                 println("Sent request and received 200 response code")
                 println(s"Response: ${xhr.responseText}")
-                step3.setState(step3.state)
+                step3.setState(withExamRemoved(step3.state))
               case x =>
                 println(s"Sent request and received $x response code")
                 step3.setState(step3.state)
@@ -52,10 +51,7 @@ object ExamPageForm {
         s.status.toString
       }"),
       <.form(
-        ^.onSubmit ==> {
-          submitRequest($)
-          $.runStateFn(handleSubmit)
-        },
+        ^.onSubmit ==> $.runStateFn(preventDefault),
         <.div(s"Current exam: ${
           s.examPage.get.toString
         }")(s.examPage.get.exam.questions

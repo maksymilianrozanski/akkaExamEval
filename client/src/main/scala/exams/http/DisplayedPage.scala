@@ -48,6 +48,9 @@ object DisplayedState {
   def changeAnswerIsSelected(valueToSet: Boolean)(questionIndex: QuestionIndex, answerIndex: AnswerIndex): DisplayedState => DisplayedState =
     modifyAnswerOfQuestion(questionIndex, answerIndex)(_.copy(isChecked = valueToSet))
 
+  def withExamRemoved(displayedState: DisplayedState): DisplayedState =
+    displayedState.copy(examPage = None)
+
   private def modifyAnswerOfQuestion(qi: QuestionIndex, ai: AnswerIndex)(modifier: AnswerSelectable => AnswerSelectable): DisplayedState => DisplayedState =
     modifyQuestion(qi, q => q.copy(answers = modifyAnswer(ai, modifier)(q.answers)))
 
