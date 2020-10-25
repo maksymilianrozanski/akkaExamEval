@@ -51,7 +51,6 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
       optionalHeaderValueByName("Authorization") {
         case Some(token) => examTokenValidator(token, exam.examId) match {
           case Right(ValidMatchedToken(_)) =>
-            println(s"exam eval endpoint, request: $exam")
             future(exam)
             complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
           case Left(validationResult) => complete(tokenErrorResponse(validationResult))
