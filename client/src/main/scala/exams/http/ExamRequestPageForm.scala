@@ -6,12 +6,13 @@ import exams.shared.data.HttpRequests.ExamGenerated
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
-import japgolly.scalajs.react.ScalazReact.{ReactS, reactCallbackScalazInstance, _}
+import japgolly.scalajs.react.ScalazReact.{ReactS, _}
 import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.extra.Ajax
 import japgolly.scalajs.react.vdom.html_<^.{<, ^, _}
 import japgolly.scalajs.react.{ReactEventFromInput, _}
-import scalaz.Scalaz.ToBindOps
+
+import scala.util.Try
 
 object ExamRequestPageForm {
 
@@ -19,9 +20,8 @@ object ExamRequestPageForm {
     def studentIdStateHandler(s: ReactEventFromInput) =
       state.mod(studentIdLens2.modify(_ => s.target.value))
 
-    //todo: add int parse error handling
     def maxQuestionsStateHandler(s: ReactEventFromInput) =
-      state.mod(maxQuestionsLens2.modify(_ => Integer.parseInt(s.target.value)))
+      state.mod(maxQuestionsLens2.modify(_ => Try(Integer.parseInt(s.target.value)).getOrElse(0)))
 
     def setIdStateHandler(s: ReactEventFromInput) =
       state.mod(setIdLens2.modify(_ => s.target.value))
