@@ -41,7 +41,7 @@ object ExamPageForm {
         s.status.toString
       }"),
       <.form(
-        ^.onSubmit ==> { (_: ReactEventFromInput).preventDefaultCB },
+        ^.onSubmit ==> {(_: ReactEventFromInput).preventDefaultCB},
         <.div(s"Current exam: ${
           s.examPage.get.toString
         }")(s.examPage.get.exam.questions
@@ -55,7 +55,8 @@ object ExamPageForm {
     blankQuestionWithNumber: (BlankQuestionsSelectable, Int)) =
     <.div(
       <.p("question:"),
-      <.p(blankQuestionWithNumber._1.text)
+      <.p(blankQuestionWithNumber._1.text,
+        blankQuestionWithNumber._1.imageUrl.whenDefined(url => <.img(^.src := url)))
       (blankQuestionWithNumber._1.answers.zipWithIndex.map(answerForm(state, $)(blankQuestionWithNumber._2)): _*)
     )
 
