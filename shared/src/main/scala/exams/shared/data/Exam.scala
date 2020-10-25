@@ -31,7 +31,7 @@ case class Question(blank: BlankQuestion, correctAnswers: List[Answer])
  * @param text    question text displayed to the student
  * @param answers list of possible answers
  */
-case class BlankQuestion(text: String, answers: List[Answer])
+case class BlankQuestion(text: String, answers: List[Answer], imageUrl: Option[String] = None)
 /**
  * @param text text of answer
  */

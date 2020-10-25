@@ -88,9 +88,12 @@ object ExamSelectable {
   implicit def toCompletedExam(exam: ExamSelectable): CompletedExam =
     CompletedExam(exam.examId, exam.questions.map(_.answers.filter(_.isChecked).map(toAnswer)))
 }
-case class BlankQuestionsSelectable(text: String, answers: List[AnswerSelectable], number: Int)
+case class BlankQuestionsSelectable(text: String, answers: List[AnswerSelectable], number: Int, imageUrl: Option[String] = None)
 object BlankQuestionsSelectable {
-  implicit def fromBlankQuestion(questionNumber: (BlankQuestion, Int)): BlankQuestionsSelectable =
+  implicit def fromBlankQuestion(questionNumber: (BlankQuestion, Int)): BlankQuestionsSelectable = {
     BlankQuestionsSelectable(questionNumber._1.text,
-      questionNumber._1.answers.zipWithIndex.map(AnswerSelectable.fromAnswer), questionNumber._2)
+      questionNumber._1.answers.zipWithIndex.map(AnswerSelectable.fromAnswer),
+      questionNumber._2,
+      questionNumber._1.imageUrl)
+  }
 }
