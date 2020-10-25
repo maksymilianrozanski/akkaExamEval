@@ -1,5 +1,6 @@
 package exams.http
 
+import exams.http.DisplayedState.empty
 import exams.shared.data.HttpRequests.{StudentId, StudentsRequest}
 import exams.shared.data.StudentsExam
 import japgolly.scalajs.react.raw.ReactDOMServer
@@ -29,11 +30,9 @@ object ScalaJs {
 
   val apiEndpoint = "http://localhost:8080"
 
-  private val startupState = DisplayedState(Success, Some(ExamRequestPage(StudentsRequest("", 0, ""))))
-
   def main(args: Array[String]): Unit = {
     val root = dom.document.getElementById("scalajsShoutOut")
-    renderApp(root)(startupState)
+    renderApp(root)(empty)
   }
 
   def renderApp(root: Element)(page: DisplayedState) = {
@@ -51,7 +50,7 @@ object ScalaJs {
           case DisplayedState(_, Some(_), None) =>
             ExamRequestPageForm.renderExamRequestForm(state, $, s)
           case DisplayedState(_, None, _) =>
-            ExamRequestPageForm.renderExamRequestForm(state, $, startupState)
+            ExamRequestPageForm.renderExamRequestForm(state, $, empty)
         }
       }
       ).build

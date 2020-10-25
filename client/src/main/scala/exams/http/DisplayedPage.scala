@@ -13,6 +13,8 @@ case class ExamPage(token: String, exam: ExamSelectable) extends DisplayedPage
 case class DisplayedState(status: RequestStatus, examRequestPage: Option[ExamRequestPage] = None, examPage: Option[ExamPage] = None)
 
 object DisplayedState {
+  val empty: DisplayedState = DisplayedState(Success, Some(ExamRequestPage(StudentsRequest("", 0, ""))))
+
   private val studentIdLens: Lens[ExamRequestPage, StudentId] =
     GenLens[ExamRequestPage](_.studentsRequest.studentId)
   private val maxQuestionsLens: Lens[ExamRequestPage, Int] =
