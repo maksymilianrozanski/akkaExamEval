@@ -90,12 +90,9 @@ object ExamEvaluator {
   }
 
   private[evaluator] def percentOfPoints[T](validAnswers: List[T], studentsAnswers: List[T]) = {
-    val points = validAnswers.zip(studentsAnswers).map(
-      pair => {
-        println(s"correct answer: ${pair._1}, selected answer: ${pair._2}, point?:${pair._1 == pair._2}")
-        if (pair._1.toString == pair._2.toString) 1 else 0
-      }
-    ).sum
+    val points = validAnswers.zip(studentsAnswers)
+      .map(pair => if (pair._1.toString == pair._2.toString) 1 else 0)
+      .sum
     points.toDouble / validAnswers.length.toDouble
   }
 }
