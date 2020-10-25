@@ -29,10 +29,11 @@ object ScalaJs {
 
   val apiEndpoint = "http://localhost:8080"
 
+  private val startupState = DisplayedState(Success, Some(ExamRequestPage(StudentsRequest("", 0, ""))))
+
   def main(args: Array[String]): Unit = {
     val root = dom.document.getElementById("scalajsShoutOut")
-
-    renderApp(root)(DisplayedState(Success, Some(ExamRequestPage(StudentsRequest("", 0, "")))))
+    renderApp(root)(startupState)
   }
 
   def renderApp(root: Element)(page: DisplayedState) = {
@@ -45,11 +46,12 @@ object ScalaJs {
       .initialState(s)
       .renderS(($, s) => {
         s match {
-          case DisplayedState(status, Some(examRequestPage), None) =>
-            ExamRequestPageForm.renderExamRequestForm(state, $, s)
-          case DisplayedState(status, _, Some(examPage)) =>
+          case DisplayedState(_, _, Some(_)) =>
             ExamPageForm.renderExamForm(state, $, s)
-          case _ => ???
+          case DisplayedState(_, Some(_), None) =>
+            ExamRequestPageForm.renderExamRequestForm(state, $, s)
+          case DisplayedState(_, None, _) =>
+            ExamRequestPageForm.renderExamRequestForm(state, $, startupState)
         }
       }
       ).build
