@@ -1,4 +1,3 @@
-
 @(title: String)(content: Html)
 <!DOCTYPE html>
 
@@ -11,3 +10,8 @@
         @scalajs.html.scripts("client", name => s"/assets/$name", name => getClass.getResource(s"/public/$name") != null)
     </body>
 </html>
+<style>
+        body {
+            background-color: #f7f7f7;
+        }
+</style>
