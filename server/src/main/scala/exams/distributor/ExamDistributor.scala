@@ -116,32 +116,46 @@ object ExamDistributor {
 
   def onRequestExamEvaluation[T >: RequestExamEvaluation]
   (context: ActorContext[T], evaluator: ActorRef[ExamEvaluator])
-  (state: ExamDistributorState, command: RequestExamEvaluation): EffectBuilder[ExamCompleted, ExamDistributorState] = {
+  (state: ExamDistributorState, command: RequestExamEvaluation): EffectBuilder[ExamCompleted, ExamDistributorState] =
     command match {
-      case RequestExamEvaluation(examId, answers) =>
-        // 1 - find exam of id in persisted
-        state.exams.get(examId) match {
-          case Some(value) =>
-            if (answersLengthIsValid(value, answers))
-            // 2 - persist answers
-              Effect.persist(ExamCompleted(examId, answers))
-                .thenRun((s: ExamDistributorState) => {
-                  context.log.info("persisted ExamCompleted, id: {}", examId)
-                  // 3 - send answers to evaluator
-                  evaluator ! EvaluateAnswers(value.studentId, value.exam, answers)
-                })
-            else Effect.none.thenRun(_ =>
-              context.log.info("Answer's length:({}) isn't equal to expected: ({})", answers.length, value.exam.questions.length)
-            )
-          case None =>
-            context.log.info("Received RequestExamEvaluation, not found examId {}", examId)
-            Effect.none
+      case request@RequestExamEvaluation(examId, answers) =>
+        examExists(request, state)
+          .flatMap(answersLengthIsValid)
+          .flatMap(examAlreadyNotEvaluated) match {
+          case Right(ShouldSendToEvaluation(r)) =>
+            Effect.persist(ExamCompleted(examId, answers))
+              .thenRun((s: ExamDistributorState) => {
+                context.log.info("persisted ExamCompleted, id: {}", examId)
+                evaluator ! EvaluateAnswers(r._2.studentId, r._2.exam, r._1.answers)
+              })
+          case Left(error) =>
+            Effect.none.thenRun(_ => error match {
+              case ExamNotFound(examId) => context.log.info("onRequestExamEvaluation, examId: {} not found.", examId)
+              case AnswersLengthNotEqual(examId) => context.log.info("onRequestExamEvaluation, examId: {}, Answer's length isn't equal to expected", examId)
+              case AlreadyEvaluated(examId) => context.log.info("onRequestExamEvaluation, examId: {}, exam already sent to evaluation", examId)
+            })
         }
     }
-  }
 
-  private def answersLengthIsValid(persistedExam: PersistedExam, answers: Answers) =
-    persistedExam.exam.questions.lengthCompare(answers) == 0
+  sealed trait ExamValidationError
+  final case class ExamNotFound(examId: ExamId) extends ExamValidationError
+  final case class AnswersLengthNotEqual(examId: ExamId) extends ExamValidationError
+  final case class AlreadyEvaluated(examId: ExamId) extends ExamValidationError
+  final case class ShouldSendToEvaluation(request: (RequestExamEvaluation, PersistedExam, ExamDistributorState))
+
+  private def examExists(request: RequestExamEvaluation, state: ExamDistributorState) =
+    state.exams.get(request.examId) match {
+      case Some(persistedExam) => Right((request, persistedExam, state))
+      case None => Left(ExamNotFound(request.examId))
+    }
+
+  private def answersLengthIsValid(request: (RequestExamEvaluation, PersistedExam, ExamDistributorState)) =
+    if (request._2.exam.questions.lengthCompare(request._1.answers) == 0) Right(request)
+    else Left(AnswersLengthNotEqual(request._1.examId))
+
+  private def examAlreadyNotEvaluated(request: (RequestExamEvaluation, PersistedExam, ExamDistributorState)) =
+    if (request._3.answers.exists(_._1 == request._2.exam.examId)) Left(AlreadyEvaluated(request._1.examId))
+    else Right(ShouldSendToEvaluation(request))
 
   def distributorEventHandler(state: ExamDistributorState, event: ExamDistributorEvents): ExamDistributorState =
     event match {

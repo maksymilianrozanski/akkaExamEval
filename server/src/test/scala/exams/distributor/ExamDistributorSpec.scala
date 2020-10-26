@@ -215,6 +215,23 @@ class ExamDistributorSpec
         evaluator.expectNoMessage()
       }
     }
+
+    "exam was already sent to evaluation" must {
+      val evaluator = TestProbe[ExamEvaluator]()
+      val exam3Answers = List(List(Answer("yes"), Answer("no")), List(Answer("None")))
+      val initialState = threeExams.copy(answers = Map(persistedExam3.exam.examId -> PersistedAnswers(exam3Answers)))
+      val testKit = requestExamEvaluationTestKit(evaluator)(initialState)
+      val command = RequestExamEvaluation(persistedExam3.exam.examId, exam3Answers)
+      val result = testKit.runCommand(command).events
+
+      "not persist any events" in {
+        assertResult(Seq())(result)
+      }
+
+      "not send message to evaluator" in {
+        evaluator.expectNoMessage()
+      }
+    }
   }
 
   def requestExamTestKit(generator: TestProbe[ExamGenerator], messageAdapter: TestInbox[ExamOutput])(initialState: ExamDistributorState)
