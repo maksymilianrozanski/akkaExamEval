@@ -6,13 +6,14 @@ import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
 import exams.JsonSerializable
 import exams.distributor.ExamDistributor.{Answers, ExamId}
+import exams.http.StudentActions
+import exams.http.StudentActions.DisplayedToStudent
 import exams.shared.data.TeachersExam
 
 object ExamEvaluator {
 
   sealed trait ExamEvaluator extends JsonSerializable
-  final case class EvaluateAnswers(studentId: String, teachersExam: TeachersExam, answers: Answers) extends ExamEvaluator
-  //todo: add sending exam result to DisplayedToStudent after evaluating the exam
+  final case class EvaluateAnswers(studentId: String, teachersExam: TeachersExam, answers: Answers, replyTo: Option[ActorRef[DisplayedToStudent]]) extends ExamEvaluator
   final case class RequestResults(replyTo: ActorRef[List[ExamResult]]) extends ExamEvaluator
   final case class RequestSingleResult(examId: ExamId, replyTo: ActorRef[Option[ExamResult]]) extends ExamEvaluator
 
@@ -71,9 +72,10 @@ object ExamEvaluator {
   private[evaluator] def onEvaluateExamCommand[T >: EvaluateAnswers](context: ActorContext[T])(state: ExamEvaluatorState, command: EvaluateAnswers)
   : EffectBuilder[ExamEvaluated, ExamEvaluatorState] =
     command match {
-      case EvaluateAnswers(studentId, teachersExam@TeachersExam(examId, _), answers) =>
+      case EvaluateAnswers(studentId, teachersExam@TeachersExam(examId, _), answers, replyTo) =>
         context.log.info("Received exam evaluation request")
         val examResult = percentOfCorrectAnswers(teachersExam, answers)
+        replyTo.foreach(_ ! StudentActions.ExamResult(ExamResult(examId, studentId, examResult)))
         context.log.info("exam {} of student {} result: {}", examId, studentId, examResult)
         Effect.persist(ExamEvaluated(ExamResult(examId, studentId, examResult)))
           .thenRun((s: ExamEvaluatorState) =>

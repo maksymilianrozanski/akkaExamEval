@@ -126,7 +126,7 @@ object ExamDistributor {
             Effect.persist(ExamCompleted(examId, answers))
               .thenRun((s: ExamDistributorState) => {
                 context.log.info("persisted ExamCompleted, id: {}", examId)
-                evaluator ! EvaluateAnswers(r._2.studentId, r._2.exam, r._1.answers)
+                evaluator ! EvaluateAnswers(r._2.studentId, r._2.exam, r._1.answers, None)
               })
           case Left(error) =>
             Effect.none.thenRun(_ => error match {

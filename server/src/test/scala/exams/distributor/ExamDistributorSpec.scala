@@ -173,7 +173,7 @@ class ExamDistributorSpec
 
       val result = testKit.runCommand(command).events
       "send exam to exam evaluator" in {
-        evaluator.expectMessage(EvaluateAnswers(persistedExam3.studentId, persistedExam3.exam, answers))
+        evaluator.expectMessage(EvaluateAnswers(persistedExam3.studentId, persistedExam3.exam, answers, None))
       }
 
       "persist ExamCompleted" in {
