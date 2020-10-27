@@ -25,12 +25,15 @@ import io.circe.syntax._
 import org.scalajs.dom.raw.Element
 import monocle.{Lens, Optional, POptional, Prism}
 import monocle.macros.GenLens
+import scalacss.DevDefaults.{cssEnv, cssStringRenderer}
+import scalacss.ScalaCssReact._
 
 object ScalaJs {
 
   val apiEndpoint = "http://localhost:8080"
 
   def main(args: Array[String]): Unit = {
+    QuestionStyles.addToDocument()
     val root = dom.document.getElementById("scalajsShoutOut")
     renderApp(root)(empty)
   }

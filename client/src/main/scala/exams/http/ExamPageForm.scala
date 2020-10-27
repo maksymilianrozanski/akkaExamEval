@@ -12,6 +12,7 @@ import japgolly.scalajs.react.extra.Ajax
 import japgolly.scalajs.react.vdom.html_<^.{<, _}
 import japgolly.scalajs.react.{ReactEventFromInput, _}
 import scalaz.Scalaz.{ToBindOps, function1Covariant}
+import scalacss.ScalaCssReact._
 
 object ExamPageForm {
   def renderExamForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$, s: DisplayedState) = {
@@ -37,14 +38,10 @@ object ExamPageForm {
     }
 
     <.div(
-      <.div(s"status: ${
-        s.status.toString
-      }"),
+      <.div(s"status: ${s.status.toString}"),
       <.form(
         ^.onSubmit ==> {(_: ReactEventFromInput).preventDefaultCB},
-        <.div(s"Current exam: ${
-          s.examPage.get.toString
-        }")(s.examPage.get.exam.questions
+        <.div(s.examPage.get.exam.questions
           .zipWithIndex
           .map(blankQuestionForm(state, $)): _*))
       , <.button("Submit", ^.onClick --> submitRequest($))
@@ -53,11 +50,12 @@ object ExamPageForm {
 
   private def blankQuestionForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$)(
     blankQuestionWithNumber: (BlankQuestionsSelectable, Int)) =
-    <.div(
-      <.p("question:"),
-      <.p(blankQuestionWithNumber._1.text,
-        blankQuestionWithNumber._1.imageUrl.whenDefined(url => <.img(^.src := url)))
-      (blankQuestionWithNumber._1.answers.zipWithIndex.map(answerForm(state, $)(blankQuestionWithNumber._2)): _*)
+    <.div(QuestionStyles.questionContainer,
+      <.div(blankQuestionWithNumber._1.text,
+        <.div(
+          blankQuestionWithNumber._1.imageUrl.whenDefined(url => <.img(QuestionStyles.imageStyle, ^.src := url)))
+      ),
+      <.ul(blankQuestionWithNumber._1.answers.zipWithIndex.map(answerForm(state, $)(blankQuestionWithNumber._2)): _*)
     )
 
   private def answerForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$)(questionNumber: Int)(answerWithKey: (AnswerSelectable, Int)) = {
@@ -65,10 +63,11 @@ object ExamPageForm {
     def onAnswerChange(e: ReactEventFromInput) =
       state.mod(changeAnswerIsSelected(e.target.checked)(questionNumber, answerWithKey._2))
 
-    <.label(s"answer: ${answerWithKey._1.text}",
-      <.input.checkbox(
-        ^.onChange ==>
-          $.runStateFn(onAnswerChange)
-      ))
+    <.li(
+      <.label(s"${answerWithKey._1.text}",
+        <.input.checkbox(
+          ^.onChange ==>
+            $.runStateFn(onAnswerChange)
+        )))
   }
 }
