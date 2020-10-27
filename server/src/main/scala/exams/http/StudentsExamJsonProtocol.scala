@@ -17,7 +17,8 @@ trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
   implicit val studentsRequestFormat: RootJsonFormat[StudentsRequest] = jsonFormat3(StudentsRequest)
   implicit val questionFormat: RootJsonFormat[Question] = jsonFormat2(Question)
   implicit val questionsSetFormat: RootJsonFormat[QuestionsSet] = jsonFormat3(QuestionsSet)
-  implicit val examResult: RootJsonFormat[ExamResult] = jsonFormat3(ExamResult)
+  implicit val examResultFormat: RootJsonFormat[ExamResult] = jsonFormat3(ExamResult)
+  implicit val examResultDisplayedToStudentFormat: RootJsonFormat[StudentActions.ExamResult] = jsonFormat1(StudentActions.ExamResult)
 
   implicit object DisplayedToStudentFormat extends RootJsonWriter[DisplayedToStudent] {
 
@@ -25,6 +26,7 @@ trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
       obj match {
         case success: ExamGeneratedWithToken => examToDisplayFormat.write(ExamGenerated(success.exam))
         case failed: GeneratingFailed => generatingExamFailedFormat.write(failed)
+        case result: StudentActions.ExamResult => examResultDisplayedToStudentFormat.write(result)
       }
   }
 }
