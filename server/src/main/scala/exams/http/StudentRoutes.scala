@@ -42,7 +42,9 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
       case reason: GeneratingFailed =>
         HttpResponse(status = StatusCodes.NotFound, entity = HttpEntity(contentType = ContentTypes.`application/json`,
           DisplayedToStudentFormat.write(reason).prettyPrint))
-      case examResult: ExamResult => ???
+      case examResult: ExamResult =>
+        HttpResponse(status = StatusCodes.OK, entity = HttpEntity(contentType = ContentTypes.`application/json`,
+          DisplayedToStudentFormat.write(examResult).prettyPrint))
     }
 
   import exams.http.token.TokenGenerator._
