@@ -12,6 +12,7 @@ object ExamEvaluator {
 
   sealed trait ExamEvaluator extends JsonSerializable
   final case class EvaluateAnswers(studentId: String, teachersExam: TeachersExam, answers: Answers) extends ExamEvaluator
+  //todo: add sending exam result to DisplayedToStudent after evaluating the exam
   final case class RequestResults(replyTo: ActorRef[List[ExamResult]]) extends ExamEvaluator
   final case class RequestSingleResult(examId: ExamId, replyTo: ActorRef[Option[ExamResult]]) extends ExamEvaluator
 
