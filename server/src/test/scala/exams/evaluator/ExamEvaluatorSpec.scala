@@ -1,15 +1,16 @@
 package exams.evaluator
 
-import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestProbe}
+import akka.actor.testkit.typed.scaladsl.{ScalaTestWithActorTestKit, TestInbox, TestProbe}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit
 import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.SerializationSettings.enabled
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.EventSourcedTestConfig.EventSourcedBehaviorTestKitConfigJsonSerialization
-import exams.evaluator.ExamEvaluator.{ExamEvaluatorState, ExamResult}
+import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluatorState, ExamResult}
 import exams.shared.data
 import exams.shared.data.{Answer, BlankQuestion, Question, TeachersExam}
+import exams.student.{GiveResultToStudent, Student}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKitConfigJsonSerialization)
@@ -64,10 +65,9 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
       }, serializationSettings = enabled)
     }
 
-    "ExamEvaluator" when {
+    "ExamEvaluator receiving EvaluateAnswers with None replyTo" when {
       val command = ExamEvaluator.EvaluateAnswers("student234", data.TeachersExam("exam123",
-        questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))),
-        List(List(Answer("yes"))))
+        questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))), List(List(Answer("yes"))), None)
 
       val expectedEvent = ExamEvaluator.ExamEvaluated(ExamResult("exam123", "student234", 0))
 
@@ -88,6 +88,51 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
         val result = testKit.runCommand(command).event
         "return ExamEvaluated event" in {
           assert(result == expected)
+        }
+      }
+    }
+
+    "ExamEvaluator receiving EvaluateAnswers with Some(replyTo)" when {
+      val student = TestProbe[Student]()
+      val command = EvaluateAnswers("student234", data.TeachersExam("exam123",
+        questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))), List(List(Answer("yes"))), Some(student.ref))
+
+      val expectedEvent = ExamEvaluator.ExamEvaluated(ExamResult("exam123", "student234", 0))
+
+      "empty initial state" should {
+        val testKit = examEvaluatorTestKit(ExamEvaluator.emptyState)
+        val expected = expectedEvent
+        val result = testKit.runCommand(command).event
+        "return ExamEvaluated event" in {
+          assert(result == expected)
+        }
+
+        "send response to DisplayedToStudent" in {
+          student.expectMessage(GiveResultToStudent(expectedEvent.examResult))
+        }
+      }
+    }
+
+    "ExamEvaluator receiving EvaluateAnswers with Some(replyTo)" when {
+      val student = TestProbe[Student]()
+
+      val command = EvaluateAnswers("student234", data.TeachersExam("exam123",
+        questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))), List(List(Answer("yes"))), Some(student.ref))
+
+      val expectedEvent = ExamEvaluator.ExamEvaluated(ExamResult("exam123", "student234", 0))
+
+      "non empty initial state" should {
+        val initialState = ExamEvaluatorState(List(
+          ExamResult("exam123", "student123", 0.2), ExamResult("exam125", "student125", 0.8)))
+        val testKit = examEvaluatorTestKit(initialState)
+        val expected = expectedEvent
+        val result = testKit.runCommand(command).event
+        "return ExamEvaluated event" in {
+          assert(result == expected)
+        }
+
+        "send response to DisplayedToStudent" in {
+          student.expectMessage(GiveResultToStudent(expectedEvent.examResult))
         }
       }
     }

@@ -6,11 +6,16 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.StubQuestions.completedExam
 import exams.distributor.ExamDistributor.ExamId
+import exams.evaluator.ExamEvaluator
+import exams.http.StudentActions.{DisplayedToStudent, ExamResult}
 import exams.http.StudentRoutes.examEvalRequested
 import exams.http.token.TokenGenerator.{InvalidToken, InvalidTokenContent, ParsingError, TokenExpired, TokenValidationResult, ValidMatchedToken}
 import exams.shared.data.CompletedExam
+import exams.student.GiveResultToStudent
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+
+import scala.concurrent.Future
 
 class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with StudentsExamJsonProtocol with Matchers with SprayJsonSupport {
 
@@ -20,7 +25,10 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
 
     "examTokenValidator returns ValidMatchedToken" should {
       var completedExamCalledTimes = 0
-      implicit def completedExamAction(completedExam: CompletedExam): Unit = completedExamCalledTimes = completedExamCalledTimes + 1
+      implicit def completedExamAction(completedExam: CompletedExam): Future[DisplayedToStudent] = {
+        completedExamCalledTimes = completedExamCalledTimes + 1
+        Future(ExamResult(ExamEvaluator.ExamResult("exam1", "student2", 0.82)))
+      }
       implicit def examTokenValidator(token: String, examId: ExamId): Either[TokenValidationResult, ValidMatchedToken]
       = Right(ValidMatchedToken(examId))
       val route = examEvalRequested
@@ -34,13 +42,13 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
 
       "return appropriate message" in
         request ~> route ~> check {
-          contentType shouldBe ContentTypes.`text/plain(UTF-8)`
-          responseAs[String] shouldEqual "requested exam evaluation"
+          contentType shouldBe ContentTypes.`application/json`
+          responseAs[ExamEvaluator.ExamResult] shouldEqual ExamEvaluator.ExamResult("exam1", "student2", 0.82)
         }
     }
 
     "examTokenValidator returns not ValidMatchedToken:" when {
-      implicit def examCompletedStub: CompletedExam => Unit = (exam: CompletedExam) =>
+      implicit def examCompletedStub: CompletedExam => Future[DisplayedToStudent] = (exam: CompletedExam) =>
         fail(s"examCompletedStub was not expected to be called, was called with $exam")
 
       val request = Post(path, completedExam).addHeader(RawHeader("Authorization", token))

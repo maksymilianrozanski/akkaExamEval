@@ -4,6 +4,8 @@ import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import akka.actor.typed.scaladsl.Behaviors
 import exams.data.ExamGenerator
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam}
+import exams.evaluator.ExamEvaluator.ExamResult
+import exams.http.StudentActions
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
 import exams.shared.data.HttpRequests.StudentsRequest
 import exams.shared.data.StudentsExam
@@ -33,9 +35,13 @@ class StudentSpec extends AnyWordSpecLike {
     "receive GiveResultToStudent" should {
       val displayReceiver = TestInbox[DisplayedToStudent]()
       val testKit = BehaviorTestKit(Student(displayReceiver.ref, tokenGen))
-      testKit.run(GiveResultToStudent(0.8))
+      val examResult = ExamResult("exam12", "student12", 0.8)
+      testKit.run(GiveResultToStudent(examResult))
       "have 'stopped' behavior" in
         assertResult(Behaviors.stopped)(testKit.returnedBehavior)
+
+      "send exam result to displayReceiver" in
+        displayReceiver.expectMessage(StudentActions.ExamResult(examResult))
     }
 
     "receive RequestExamCommand" should {

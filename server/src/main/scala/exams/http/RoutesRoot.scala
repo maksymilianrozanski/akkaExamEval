@@ -15,7 +15,7 @@ import exams.http.token.TokenGenerator
 import exams.http.token.TokenGenerator.{TokenValidationResult, ValidMatchedToken}
 import exams.http.twirl.Implicits._
 import exams.shared.SharedMessages
-import exams.shared.data.CompletedExam
+import exams.shared.data.{CompletedExam, HttpRequests}
 import exams.shared.data.HttpRequests.StudentsRequest
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,9 +41,13 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport with Di
       (request: StudentsRequest) => actors.userActions.ask((replyTo: ActorRef[DisplayedToStudent]) =>
         StudentActions.RequestExamCommand(request, replyTo))
 
-    implicit def examCompletedFuture: CompletedExam => Unit =
+    implicit def examCompletedFuture: CompletedExam => Future[DisplayedToStudent] =
       (exam: CompletedExam) =>
-        actors.userActions ! SendExamToEvaluationCommand(RequestExamEvaluation(exam.examId, exam.selectedAnswers))
+        actors.userActions.ask(replyTo => {
+          //todo: use one type of request everywhere
+          val requestConverted = HttpRequests.ExamEvaluationRequest(exam.examId, exam.selectedAnswers)
+          SendExamToEvaluationCommand(requestConverted, Some(replyTo))
+        })
 
     implicit def addingQuestionsSet: QuestionsSet => Unit =
       (set: QuestionsSet) => actors.repository ! AddQuestionsSet(set)
@@ -75,7 +79,7 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport with Di
   }
 
   def allRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
-                completedExam: CompletedExam => Unit,
+                completedExam: CompletedExam => Future[DisplayedToStudent],
                 addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext,
                 examTokenValidator: ExamTokenValidator,
                 examResults: AllExamResults): Route =

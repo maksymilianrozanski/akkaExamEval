@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusC
 import akka.http.scaladsl.server.Directives.{complete, path, pathEndOrSingleSlash, pathPrefix, post, _}
 import akka.http.scaladsl.server.Route
 import exams.http.RoutesRoot.ExamTokenValidator
-import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
+import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, ExamResult, GeneratingFailed}
 import exams.http.token.TokenGenerator
 import exams.shared.data.CompletedExam
 import exams.shared.data.HttpRequests._
@@ -16,7 +16,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   def studentRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
-                    completedExam: CompletedExam => Unit, ec: ExecutionContext,
+                    completedExam: CompletedExam => Future[DisplayedToStudent], ec: ExecutionContext,
                     examTokenValidator: ExamTokenValidator): Route =
     pathPrefix("student") {
       (pathEndOrSingleSlash & get) {
@@ -42,17 +42,20 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
       case reason: GeneratingFailed =>
         HttpResponse(status = StatusCodes.NotFound, entity = HttpEntity(contentType = ContentTypes.`application/json`,
           DisplayedToStudentFormat.write(reason).prettyPrint))
+      case examResult: ExamResult =>
+        HttpResponse(status = StatusCodes.OK, entity = HttpEntity(contentType = ContentTypes.`application/json`,
+          examResultFormat.write(examResult.result).prettyPrint))
     }
 
   import exams.http.token.TokenGenerator._
 
-  private[http] def examEvalRequested(implicit future: CompletedExam => Unit, examTokenValidator: ExamTokenValidator): Route = {
+  private[http] def examEvalRequested(implicit future: CompletedExam => Future[DisplayedToStudent],
+                                      examTokenValidator: ExamTokenValidator, ec: ExecutionContext): Route = {
     entity(as[CompletedExam]) { exam: CompletedExam =>
       optionalHeaderValueByName("Authorization") {
         case Some(token) => examTokenValidator(token, exam.examId) match {
           case Right(ValidMatchedToken(_)) =>
-            future(exam)
-            complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
+            complete(future(exam).map(displayedToStudentToResponse))
           case Left(validationResult) => complete(tokenErrorResponse(validationResult))
         }
         case None => complete(HttpResponse(StatusCodes.Unauthorized))
