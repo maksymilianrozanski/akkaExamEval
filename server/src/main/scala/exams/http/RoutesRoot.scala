@@ -42,8 +42,8 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport with Di
         StudentActions.RequestExamCommand(request, replyTo))
 
     implicit def examCompletedFuture: CompletedExam => Unit =
-      (exam: CompletedExam) =>
-        actors.userActions ! SendExamToEvaluationCommand(RequestExamEvaluation(exam.examId, exam.selectedAnswers))
+      (exam: CompletedExam) => // todo: replace ! with ask
+        actors.userActions ! SendExamToEvaluationCommand(RequestExamEvaluation(exam.examId, exam.selectedAnswers, None))
 
     implicit def addingQuestionsSet: QuestionsSet => Unit =
       (set: QuestionsSet) => actors.repository ! AddQuestionsSet(set)

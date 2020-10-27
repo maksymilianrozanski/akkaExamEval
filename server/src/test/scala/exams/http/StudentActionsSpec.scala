@@ -32,11 +32,10 @@ class StudentActionsSpec extends AnyWordSpecLike with should.Matchers {
   "receive RequestExamEvaluation command" should {
     val inbox = TestInbox[ExamDistributor]()
     val testKit = BehaviorTestKit(StudentActions()(inbox.ref))
-    val messageContent = RequestExamEvaluation("exam123",
-      List(
-        List(Answer("1")),
-        List(Answer("2"), Answer("3"))
-      ))
+    val messageContent = RequestExamEvaluation("exam123", List(
+            List(Answer("1")),
+            List(Answer("2"), Answer("3"))
+          ), None)
     testKit.run(StudentActions.SendExamToEvaluationCommand(messageContent))
     "redirect message to ExamDistributor" in {
       inbox.expectMessage(messageContent)

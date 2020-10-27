@@ -8,6 +8,7 @@ import exams.JsonSerializable
 import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
 import exams.data._
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
+import exams.http.StudentActions
 import exams.shared.data
 import exams.shared.data.HttpRequests.StudentsRequest
 import exams.shared.data.{Answer, ExamRequest, TeachersExam}
@@ -28,7 +29,7 @@ object ExamDistributor {
    * @param student         ActorRef to actor who requested the exam
    */
   final case class RequestExam(studentsRequest: StudentsRequest, student: ActorRef[Student]) extends ExamDistributor
-  final case class RequestExamEvaluation(examId: String, answers: Answers) extends ExamDistributor
+  final case class RequestExamEvaluation(examId: String, answers: Answers, replyTo: Option[ActorRef[StudentActions.DisplayedToStudent]]) extends ExamDistributor
   private[exams] case class ReceivedGeneratedExam(exam: ExamOutput) extends ExamDistributor
 
   //events
@@ -118,7 +119,7 @@ object ExamDistributor {
   (context: ActorContext[T], evaluator: ActorRef[ExamEvaluator])
   (state: ExamDistributorState, command: RequestExamEvaluation): EffectBuilder[ExamCompleted, ExamDistributorState] =
     command match {
-      case request@RequestExamEvaluation(examId, answers) =>
+      case request@RequestExamEvaluation(examId, answers, replyTo) =>
         examExists(request, state)
           .flatMap(answersLengthIsValid)
           .flatMap(examAlreadyNotEvaluated) match {
@@ -126,7 +127,7 @@ object ExamDistributor {
             Effect.persist(ExamCompleted(examId, answers))
               .thenRun((s: ExamDistributorState) => {
                 context.log.info("persisted ExamCompleted, id: {}", examId)
-                evaluator ! EvaluateAnswers(r._2.studentId, r._2.exam, r._1.answers, None)
+                evaluator ! EvaluateAnswers(r._2.studentId, r._2.exam, r._1.answers, replyTo)
               })
           case Left(error) =>
             Effect.none.thenRun(_ => error match {

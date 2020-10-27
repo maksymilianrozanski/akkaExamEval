@@ -11,6 +11,7 @@ import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
 import exams.data._
 import exams.distributor.ExamDistributor._
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
+import exams.http.StudentActions.DisplayedToStudent
 import exams.shared.data
 import exams.shared.data.HttpRequests.StudentsRequest
 import exams.shared.data.{Answer, BlankQuestion, ExamRequest, Question, TeachersExam}
@@ -167,13 +168,14 @@ class ExamDistributorSpec
   "ExamDistributor's onRequestExamEvaluation" when {
     "answers length is equal to persisted exam's questions length, and exam with given id is persisted" must {
       val evaluator = TestProbe[ExamEvaluator]()
+      val displayedToStudent = TestProbe[DisplayedToStudent]()
       val testKit = requestExamEvaluationTestKit(evaluator)(threeExams)
       val answers = List(List(Answer("yes"), Answer("no")), List(Answer("None")))
-      val command = RequestExamEvaluation(persistedExam3.exam.examId, answers)
+      val command = RequestExamEvaluation(persistedExam3.exam.examId, answers, Some(displayedToStudent.ref))
 
       val result = testKit.runCommand(command).events
       "send exam to exam evaluator" in {
-        evaluator.expectMessage(EvaluateAnswers(persistedExam3.studentId, persistedExam3.exam, answers, None))
+        evaluator.expectMessage(EvaluateAnswers(persistedExam3.studentId, persistedExam3.exam, answers, Some(displayedToStudent.ref)))
       }
 
       "persist ExamCompleted" in {
@@ -184,9 +186,10 @@ class ExamDistributorSpec
 
     "answers length is not equal to persisted exam's questions length" must {
       val evaluator = TestProbe[ExamEvaluator]()
+      val displayedToStudent = TestProbe[DisplayedToStudent]()
       val testKit = requestExamEvaluationTestKit(evaluator)(threeExams)
       val answers = List(List(Answer("no")))
-      val command = RequestExamEvaluation(persistedExam3.exam.examId, answers)
+      val command = RequestExamEvaluation(persistedExam3.exam.examId, answers, Some(displayedToStudent.ref))
 
       val result = testKit.runCommand(command).events
       "not persist events" in {
@@ -201,9 +204,10 @@ class ExamDistributorSpec
 
     "answers id is not contained in persisted exams" must {
       val evaluator = TestProbe[ExamEvaluator]()
+      val displayedToStudent = TestProbe[DisplayedToStudent]()
       val testKit = requestExamEvaluationTestKit(evaluator)(threeExams)
       val answers = List(List(Answer("yes"), Answer("no")), List(Answer("None")))
-      val command = RequestExamEvaluation("invalidId", answers)
+      val command = RequestExamEvaluation("invalidId", answers, Some(displayedToStudent.ref))
       val result = testKit.runCommand(command).events
 
       "not persist events" in {
@@ -218,10 +222,11 @@ class ExamDistributorSpec
 
     "exam was already sent to evaluation" must {
       val evaluator = TestProbe[ExamEvaluator]()
+      val displayedToStudent = TestProbe[DisplayedToStudent]()
       val exam3Answers = List(List(Answer("yes"), Answer("no")), List(Answer("None")))
       val initialState = threeExams.copy(answers = Map(persistedExam3.exam.examId -> PersistedAnswers(exam3Answers)))
       val testKit = requestExamEvaluationTestKit(evaluator)(initialState)
-      val command = RequestExamEvaluation(persistedExam3.exam.examId, exam3Answers)
+      val command = RequestExamEvaluation(persistedExam3.exam.examId, exam3Answers, Some(displayedToStudent.ref))
       val result = testKit.runCommand(command).events
 
       "not persist any events" in {
