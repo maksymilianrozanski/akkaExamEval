@@ -12,7 +12,6 @@ object StudentActions {
 
   sealed trait Command
   final case class RequestExamCommand(studentsRequest: StudentsRequest, replyTo: ActorRef[DisplayedToStudent]) extends Command
-  //todo: add sending DisplayedToStudent ref with RequestExamEvaluation to ExamDistributor
   final case class SendExamToEvaluationCommand(exam: HttpRequests.ExamEvaluationRequest, replyTo: Option[ActorRef[DisplayedToStudent]]) extends Command
 
   sealed trait DisplayedToStudent
