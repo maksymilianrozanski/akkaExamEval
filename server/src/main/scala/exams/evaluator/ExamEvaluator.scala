@@ -75,10 +75,11 @@ object ExamEvaluator {
     command match {
       case EvaluateAnswers(studentId, teachersExam@TeachersExam(examId, _), answers, replyTo) =>
         context.log.info("Received exam evaluation request")
-        val examResult = percentOfCorrectAnswers(teachersExam, answers)
+        val examScore = percentOfCorrectAnswers(teachersExam, answers)
+        val examResult = ExamResult(examId, studentId, examScore)
         replyTo.foreach(_ ! GiveResultToStudent(examResult))
-        context.log.info("exam {} of student {} result: {}", examId, studentId, examResult)
-        Effect.persist(ExamEvaluated(ExamResult(examId, studentId, examResult)))
+        context.log.info("exam {} of student {} result: {}", examId, studentId, examScore)
+        Effect.persist(ExamEvaluated(examResult))
           .thenRun((s: ExamEvaluatorState) =>
             context.log.info("persisted exam result {}", examId))
     }

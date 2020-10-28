@@ -67,7 +67,7 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
 
     "ExamEvaluator receiving EvaluateAnswers with None replyTo" when {
       val command = ExamEvaluator.EvaluateAnswers("student234", data.TeachersExam("exam123",
-                    questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))), List(List(Answer("yes"))), None)
+        questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))), List(List(Answer("yes"))), None)
 
       val expectedEvent = ExamEvaluator.ExamEvaluated(ExamResult("exam123", "student234", 0))
 
@@ -95,7 +95,7 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
     "ExamEvaluator receiving EvaluateAnswers with Some(replyTo)" when {
       val student = TestProbe[Student]()
       val command = EvaluateAnswers("student234", data.TeachersExam("exam123",
-              questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))), List(List(Answer("yes"))), Some(student.ref))
+        questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))), List(List(Answer("yes"))), Some(student.ref))
 
       val expectedEvent = ExamEvaluator.ExamEvaluated(ExamResult("exam123", "student234", 0))
 
@@ -108,7 +108,7 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
         }
 
         "send response to DisplayedToStudent" in {
-          student.expectMessage(GiveResultToStudent(0))
+          student.expectMessage(GiveResultToStudent(expectedEvent.examResult))
         }
       }
     }
@@ -117,7 +117,7 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
       val student = TestProbe[Student]()
 
       val command = EvaluateAnswers("student234", data.TeachersExam("exam123",
-              questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))), List(List(Answer("yes"))), Some(student.ref))
+        questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))), List(List(Answer("yes"))), Some(student.ref))
 
       val expectedEvent = ExamEvaluator.ExamEvaluated(ExamResult("exam123", "student234", 0))
 
@@ -132,7 +132,7 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
         }
 
         "send response to DisplayedToStudent" in {
-          student.expectMessage(GiveResultToStudent(0))
+          student.expectMessage(GiveResultToStudent(expectedEvent.examResult))
         }
       }
     }

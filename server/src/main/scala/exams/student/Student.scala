@@ -8,12 +8,13 @@ import exams.http.StudentActions.{ExamGeneratedWithToken, GeneratingFailed}
 import exams.http.token.TokenGenerator
 import exams.shared.data.HttpRequests.StudentsRequest
 import exams.shared.data.StudentsExam
+import exams.evaluator.ExamEvaluator.ExamResult
 
 sealed trait Student
 final case class RequestExamCommand(code: StudentsRequest, distributor: ActorRef[ExamDistributor]) extends Student
 
 final case class GiveExamToStudent(emptyExam: StudentsExam) extends Student
-final case class GiveResultToStudent(result: Double) extends Student
+final case class GiveResultToStudent(result: ExamResult) extends Student
 case object GeneratingExamFailed extends Student
 
 object Student {
