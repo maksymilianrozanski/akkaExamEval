@@ -5,7 +5,7 @@ import akka.actor.typed.{ActorRef, Behavior}
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
 import exams.evaluator.ExamEvaluator
 import exams.shared.data.HttpRequests.{ExamGenerated, StudentsRequest}
-import exams.shared.data.StudentsExam
+import exams.shared.data.{HttpRequests, StudentsExam}
 import exams.student.Student
 
 object StudentActions {
@@ -13,7 +13,7 @@ object StudentActions {
   sealed trait Command
   final case class RequestExamCommand(studentsRequest: StudentsRequest, replyTo: ActorRef[DisplayedToStudent]) extends Command
   //todo: add sending DisplayedToStudent ref with RequestExamEvaluation to ExamDistributor
-  final case class SendExamToEvaluationCommand(exam: RequestExamEvaluation) extends Command
+  final case class SendExamToEvaluationCommand(exam: HttpRequests.ExamEvaluationRequest, replyTo: Option[ActorRef[DisplayedToStudent]]) extends Command
 
   sealed trait DisplayedToStudent
   final case class ExamGeneratedWithToken(exam: StudentsExam, token: String) extends DisplayedToStudent
@@ -33,8 +33,9 @@ object StudentActions {
           val student = context.spawnAnonymous(Student(displayReceiver))
           distributor ! RequestExam(studentsRequest, student)
           Behaviors.same
-        case SendExamToEvaluationCommand(exam) =>
-          distributor ! exam
+        case SendExamToEvaluationCommand(exam, displayReceiver) =>
+          val student = displayReceiver.map(it => context.spawnAnonymous(Student(it)))
+          distributor ! RequestExamEvaluation(exam.examId, exam.answers, student)
           Behaviors.same
       })
   }

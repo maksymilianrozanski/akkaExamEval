@@ -168,7 +168,7 @@ class ExamDistributorSpec
   "ExamDistributor's onRequestExamEvaluation" when {
     "answers length is equal to persisted exam's questions length, and exam with given id is persisted" must {
       val evaluator = TestProbe[ExamEvaluator]()
-      val displayedToStudent = TestProbe[DisplayedToStudent]()
+      val displayedToStudent = TestProbe[Student]()
       val testKit = requestExamEvaluationTestKit(evaluator)(threeExams)
       val answers = List(List(Answer("yes"), Answer("no")), List(Answer("None")))
       val command = RequestExamEvaluation(persistedExam3.exam.examId, answers, Some(displayedToStudent.ref))
@@ -186,7 +186,7 @@ class ExamDistributorSpec
 
     "answers length is not equal to persisted exam's questions length" must {
       val evaluator = TestProbe[ExamEvaluator]()
-      val displayedToStudent = TestProbe[DisplayedToStudent]()
+      val displayedToStudent = TestProbe[Student]()
       val testKit = requestExamEvaluationTestKit(evaluator)(threeExams)
       val answers = List(List(Answer("no")))
       val command = RequestExamEvaluation(persistedExam3.exam.examId, answers, Some(displayedToStudent.ref))
@@ -204,7 +204,7 @@ class ExamDistributorSpec
 
     "answers id is not contained in persisted exams" must {
       val evaluator = TestProbe[ExamEvaluator]()
-      val displayedToStudent = TestProbe[DisplayedToStudent]()
+      val displayedToStudent = TestProbe[Student]()
       val testKit = requestExamEvaluationTestKit(evaluator)(threeExams)
       val answers = List(List(Answer("yes"), Answer("no")), List(Answer("None")))
       val command = RequestExamEvaluation("invalidId", answers, Some(displayedToStudent.ref))
@@ -222,7 +222,7 @@ class ExamDistributorSpec
 
     "exam was already sent to evaluation" must {
       val evaluator = TestProbe[ExamEvaluator]()
-      val displayedToStudent = TestProbe[DisplayedToStudent]()
+      val displayedToStudent = TestProbe[Student]()
       val exam3Answers = List(List(Answer("yes"), Answer("no")), List(Answer("None")))
       val initialState = threeExams.copy(answers = Map(persistedExam3.exam.examId -> PersistedAnswers(exam3Answers)))
       val testKit = requestExamEvaluationTestKit(evaluator)(initialState)

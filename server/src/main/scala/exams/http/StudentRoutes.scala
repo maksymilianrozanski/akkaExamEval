@@ -16,7 +16,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   def studentRoutes(implicit studentsRequest: StudentsRequest => Future[DisplayedToStudent],
-                    completedExam: CompletedExam => Unit, ec: ExecutionContext,
+                    completedExam: CompletedExam => Future[DisplayedToStudent], ec: ExecutionContext,
                     examTokenValidator: ExamTokenValidator): Route =
     pathPrefix("student") {
       (pathEndOrSingleSlash & get) {
@@ -49,7 +49,7 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   import exams.http.token.TokenGenerator._
 
-  private[http] def examEvalRequested(implicit future: CompletedExam => Unit, examTokenValidator: ExamTokenValidator): Route = {
+  private[http] def examEvalRequested(implicit future: CompletedExam => Future[DisplayedToStudent], examTokenValidator: ExamTokenValidator): Route = {
     entity(as[CompletedExam]) { exam: CompletedExam =>
       optionalHeaderValueByName("Authorization") {
         case Some(token) => examTokenValidator(token, exam.examId) match {

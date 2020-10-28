@@ -29,7 +29,7 @@ object ExamDistributor {
    * @param student         ActorRef to actor who requested the exam
    */
   final case class RequestExam(studentsRequest: StudentsRequest, student: ActorRef[Student]) extends ExamDistributor
-  final case class RequestExamEvaluation(examId: String, answers: Answers, replyTo: Option[ActorRef[StudentActions.DisplayedToStudent]]) extends ExamDistributor
+  final case class RequestExamEvaluation(examId: String, answers: Answers, replyTo: Option[ActorRef[Student]]) extends ExamDistributor
   private[exams] case class ReceivedGeneratedExam(exam: ExamOutput) extends ExamDistributor
 
   //events

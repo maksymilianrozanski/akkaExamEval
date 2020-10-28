@@ -22,7 +22,7 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
     implicit def examRequestedStub: StudentsRequest => Future[ExamGeneratedWithToken] = (request: StudentsRequest) =>
       fail(s"examRequestedStub was not expected to be called, was called with $request")
 
-    implicit def examCompletedStub: CompletedExam => Unit = (exam: CompletedExam) =>
+    implicit def examCompletedStub: CompletedExam => Future[DisplayedToStudent] = (exam: CompletedExam) =>
       fail(s"examCompletedStub was not expected to be called, was called with $exam")
 
     implicit def addingQuestionsSetStub: QuestionsSet => Unit = (set: QuestionsSet) =>
@@ -108,9 +108,10 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
       "examId in token matches request's examId" should {
         "call examCompleted action" in {
           var calledTimes = 0
-          implicit def examCompletedAction: CompletedExam => Unit = (exam: CompletedExam) => {
+          implicit def examCompletedAction: CompletedExam => Future[DisplayedToStudent] = (exam: CompletedExam) => {
             require(completedExam == exam, s"expected $completedExam, received: $exam")
             calledTimes = calledTimes + 1
+            ???
           }
 
           import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub, examResultsStub}
@@ -121,8 +122,9 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
 
         "returned response" should {
           import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub, examResultsStub}
-          implicit def examCompletedAction: CompletedExam => Unit = (exam: CompletedExam) => {
+          implicit def examCompletedAction: CompletedExam => Future[DisplayedToStudent] = (exam: CompletedExam) => {
             require(completedExam == exam, s"expected $completedExam, received: $exam")
+            ???
           }
           val route = RoutesRoot.allRoutes
 
