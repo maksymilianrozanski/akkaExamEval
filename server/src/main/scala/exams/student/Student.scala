@@ -30,6 +30,7 @@ object Student {
           Behaviors.stopped
         case GiveResultToStudent(result) =>
           context.log.info("Received result: {} ", result)
+          //todo: send result to displayReceiver
           Behaviors.stopped
         case RequestExamCommand(code, distributor) =>
           context.log.info("received starting exam request")

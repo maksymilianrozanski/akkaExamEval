@@ -44,18 +44,18 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
           DisplayedToStudentFormat.write(reason).prettyPrint))
       case examResult: ExamResult =>
         HttpResponse(status = StatusCodes.OK, entity = HttpEntity(contentType = ContentTypes.`application/json`,
-          DisplayedToStudentFormat.write(examResult).prettyPrint))
+          examResultFormat.write(examResult.result).prettyPrint))
     }
 
   import exams.http.token.TokenGenerator._
 
-  private[http] def examEvalRequested(implicit future: CompletedExam => Future[DisplayedToStudent], examTokenValidator: ExamTokenValidator): Route = {
+  private[http] def examEvalRequested(implicit future: CompletedExam => Future[DisplayedToStudent],
+                                      examTokenValidator: ExamTokenValidator, ec: ExecutionContext): Route = {
     entity(as[CompletedExam]) { exam: CompletedExam =>
       optionalHeaderValueByName("Authorization") {
         case Some(token) => examTokenValidator(token, exam.examId) match {
           case Right(ValidMatchedToken(_)) =>
-            future(exam)
-            complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "requested exam evaluation"))
+            complete(future(exam).map(displayedToStudentToResponse))
           case Left(validationResult) => complete(tokenErrorResponse(validationResult))
         }
         case None => complete(HttpResponse(StatusCodes.Unauthorized))
