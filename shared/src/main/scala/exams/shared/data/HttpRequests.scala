@@ -16,8 +16,13 @@ object HttpRequests {
    */
   case class StudentsRequest(studentId: StudentId, maxQuestions: Int, setId: SetId)
 
-  case class ExamEvaluationRequest(examId: String, answers: Answers)
-
   case class ExamGenerated(exam: StudentsExam)
 
+  /**
+   * Exam completed by a student
+   *
+   * @param examId          generated unique exam identifier
+   * @param answers answers selected by a student, list indexes corresponding to question number
+   */
+  case class CompletedExam(examId: String, answers: List[List[Answer]])
 }

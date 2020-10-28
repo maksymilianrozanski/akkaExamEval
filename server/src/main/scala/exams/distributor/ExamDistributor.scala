@@ -5,13 +5,11 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior, ReplyEffect}
 import exams.JsonSerializable
-import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
+import exams.data.ExamGenerator.{ExamGenerator, ExamOutput, ExamRequest}
 import exams.data._
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
-import exams.http.StudentActions
-import exams.shared.data
 import exams.shared.data.HttpRequests.StudentsRequest
-import exams.shared.data.{Answer, ExamRequest, TeachersExam}
+import exams.shared.data.{Answer, TeachersExam}
 import exams.student.{GeneratingExamFailed, GiveExamToStudent, Student}
 
 object ExamDistributor {
@@ -80,7 +78,7 @@ object ExamDistributor {
       .thenReply(generator) {
         state: ExamDistributorState =>
           context.log.info("persisted ExamRequested, id: {}", state.lastExamId)
-          val examRequest = data.ExamRequest(nextExamId, command.studentsRequest.studentId,
+          val examRequest = ExamRequest(nextExamId, command.studentsRequest.studentId,
             command.studentsRequest.maxQuestions, command.studentsRequest.setId)
           val messageToGenerator = ExamGenerator.ReceivedExamRequest(examRequest, messageAdapter)
           messageToGenerator

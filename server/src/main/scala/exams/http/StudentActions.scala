@@ -12,7 +12,7 @@ object StudentActions {
 
   sealed trait Command
   final case class RequestExamCommand(studentsRequest: StudentsRequest, replyTo: ActorRef[DisplayedToStudent]) extends Command
-  final case class SendExamToEvaluationCommand(exam: HttpRequests.ExamEvaluationRequest, replyTo: Option[ActorRef[DisplayedToStudent]]) extends Command
+  final case class SendExamToEvaluationCommand(exam: HttpRequests.CompletedExam, replyTo: Option[ActorRef[DisplayedToStudent]]) extends Command
 
   sealed trait DisplayedToStudent
   final case class ExamGeneratedWithToken(exam: StudentsExam, token: String) extends DisplayedToStudent

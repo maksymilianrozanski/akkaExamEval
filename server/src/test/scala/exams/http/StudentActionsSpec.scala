@@ -6,7 +6,7 @@ import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
 import exams.http.StudentActions.{DisplayedToStudent, RequestExamCommand, SendExamToEvaluationCommand}
 import exams.shared.data.Answer
-import exams.shared.data.HttpRequests.{ExamEvaluationRequest, StudentsRequest}
+import exams.shared.data.HttpRequests.{CompletedExam, StudentsRequest}
 import exams.student.Student
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -33,7 +33,7 @@ class StudentActionsSpec extends AnyWordSpecLike with should.Matchers {
     val inbox = TestInbox[ExamDistributor]()
     val displayInbox = TestInbox[DisplayedToStudent]()
     val testKit = BehaviorTestKit(StudentActions()(inbox.ref))
-    val messageContent = ExamEvaluationRequest("exam123", List(
+    val messageContent = CompletedExam("exam123", List(
       List(Answer("1")),
       List(Answer("2"), Answer("3"))
     ))

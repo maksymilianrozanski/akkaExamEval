@@ -3,11 +3,12 @@ package exams.data
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet, TakeQuestionsSetReply}
-import exams.distributor.ExamDistributor.ExamId
 import exams.shared.data
-import exams.shared.data.{Answer, BlankQuestion, ExamRequest, Question, TeachersExam}
+import exams.shared.data.HttpRequests.{ExamId, SetId, StudentId}
+import exams.shared.data.{Answer, BlankQuestion, Question, TeachersExam}
 
 object ExamGenerator {
+  case class ExamRequest(examId: ExamId, studentId: StudentId, maxQuestions: Int, setId: SetId)
 
   case class ExamOutput(request: ExamRequest, teachersExam: Option[TeachersExam])
   type ExamRequestWithRef = (ExamRequest, ActorRef[ExamOutput])

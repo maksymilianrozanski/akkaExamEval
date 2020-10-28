@@ -8,7 +8,6 @@ import akka.http.scaladsl.server.Route
 import exams.http.RoutesRoot.ExamTokenValidator
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, ExamResult, GeneratingFailed}
 import exams.http.token.TokenGenerator
-import exams.shared.data.CompletedExam
 import exams.shared.data.HttpRequests._
 
 import scala.concurrent.{ExecutionContext, Future}

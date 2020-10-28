@@ -6,8 +6,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.util.Timeout
 import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, QuestionsSet}
-import exams.data._
-import exams.distributor.ExamDistributor.{ExamDistributor, ExamId, RequestExamEvaluation}
+import exams.distributor.ExamDistributor.{ExamDistributor, ExamId}
 import exams.evaluator.ExamEvaluator
 import exams.evaluator.ExamEvaluator.RequestResults
 import exams.http.StudentActions.{DisplayedToStudent, SendExamToEvaluationCommand}
@@ -15,8 +14,8 @@ import exams.http.token.TokenGenerator
 import exams.http.token.TokenGenerator.{TokenValidationResult, ValidMatchedToken}
 import exams.http.twirl.Implicits._
 import exams.shared.SharedMessages
-import exams.shared.data.{CompletedExam, HttpRequests}
-import exams.shared.data.HttpRequests.StudentsRequest
+import exams.shared.data.HttpRequests
+import exams.shared.data.HttpRequests.{CompletedExam, StudentsRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,12 +41,7 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport with Di
         StudentActions.RequestExamCommand(request, replyTo))
 
     implicit def examCompletedFuture: CompletedExam => Future[DisplayedToStudent] =
-      (exam: CompletedExam) =>
-        actors.userActions.ask(replyTo => {
-          //todo: use one type of request everywhere
-          val requestConverted = HttpRequests.ExamEvaluationRequest(exam.examId, exam.selectedAnswers)
-          SendExamToEvaluationCommand(requestConverted, Some(replyTo))
-        })
+      (exam: CompletedExam) => actors.userActions.ask(replyTo => SendExamToEvaluationCommand(exam, Some(replyTo)))
 
     implicit def addingQuestionsSet: QuestionsSet => Unit =
       (set: QuestionsSet) => actors.repository ! AddQuestionsSet(set)

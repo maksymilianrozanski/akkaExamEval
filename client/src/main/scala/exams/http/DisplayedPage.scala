@@ -1,8 +1,8 @@
 package exams.http
 
 import exams.http.AnswerSelectable.toAnswer
-import exams.shared.data.HttpRequests.{ExamId, SetId, StudentId, StudentsRequest}
-import exams.shared.data.{Answer, BlankQuestion, CompletedExam, StudentsExam}
+import exams.shared.data.HttpRequests._
+import exams.shared.data.{Answer, BlankQuestion, StudentsExam}
 import monocle.macros.GenLens
 import monocle.{Lens, Optional, POptional}
 

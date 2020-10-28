@@ -1,18 +1,6 @@
 package exams.shared.data
 
-import exams.shared.data.HttpRequests.{ExamId, SetId, StudentId}
-
-//data
-sealed trait Exam
-final case class EmptyExam(questions: TeachersExam) extends Exam
-
-/**
- * Exam completed by a student
- *
- * @param examId          generated unique exam identifier
- * @param selectedAnswers answers selected by a student, list indexes corresponding to question number
- */
-final case class CompletedExam(examId: String, selectedAnswers: List[List[Answer]]) extends Exam
+import exams.shared.data.HttpRequests.ExamId
 
 case class TeachersExam(examId: ExamId, questions: List[Question])
 object TeachersExam {
@@ -36,5 +24,3 @@ case class BlankQuestion(text: String, answers: List[Answer], imageUrl: Option[S
  * @param text text of answer
  */
 case class Answer(text: String)
-
-case class ExamRequest(examId: ExamId, studentId: StudentId, maxQuestions: Int, setId: SetId)

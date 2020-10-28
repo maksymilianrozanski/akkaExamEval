@@ -7,14 +7,13 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.Serializati
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.EventSourcedTestConfig.EventSourcedBehaviorTestKitConfigJsonSerialization
-import exams.data.ExamGenerator.{ExamGenerator, ExamOutput}
+import exams.data.ExamGenerator.{ExamGenerator, ExamOutput, ExamRequest}
 import exams.data._
 import exams.distributor.ExamDistributor._
 import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluator}
-import exams.http.StudentActions.DisplayedToStudent
 import exams.shared.data
 import exams.shared.data.HttpRequests.StudentsRequest
-import exams.shared.data.{Answer, BlankQuestion, ExamRequest, Question, TeachersExam}
+import exams.shared.data.{Answer, BlankQuestion, Question, TeachersExam}
 import exams.student.{GeneratingExamFailed, GiveExamToStudent, Student}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -299,7 +298,7 @@ class ExamDistributorSpec
           requests = Map("19" -> student1.ref, "20" -> student2.ref))
 
         import exams.data.StubQuestions._
-        val examRequest = data.ExamRequest("19", "student123", 2, "set1")
+        val examRequest = ExamRequest("19", "student123", 2, "set1")
         val exam = data.TeachersExam("19", List(question1, question2))
         val command = ReceivedGeneratedExam(ExamOutput(examRequest, Some(exam)))
 
@@ -323,7 +322,7 @@ class ExamDistributorSpec
         val initialState = ExamDistributor.emptyState.copy(lastExamId = 20,
           requests = Map("19" -> student1.ref, "20" -> student2.ref))
 
-        val examRequest = data.ExamRequest("19", "student123", 2, "set1")
+        val examRequest = ExamRequest("19", "student123", 2, "set1")
         val command = ReceivedGeneratedExam(ExamOutput(examRequest, None))
         val testKit = receivedGeneratedExamTestKit(initialState)
         testKit.runCommand(command)
