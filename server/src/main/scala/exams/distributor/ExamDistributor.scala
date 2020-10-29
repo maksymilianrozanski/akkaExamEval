@@ -51,7 +51,7 @@ object ExamDistributor {
 
   def distributor(actorsPack: ActorsPack): Behavior[ExamDistributor] = Behaviors.setup[ExamDistributor](context => {
     val messageAdapter: ActorRef[ExamOutput] =
-      context.messageAdapter(response => ReceivedGeneratedExam(response))
+      context.messageAdapter(ReceivedGeneratedExam)
 
     EventSourcedBehavior[ExamDistributor, ExamDistributorEvents, ExamDistributorState](
       persistenceId = PersistenceId.ofUniqueId("examDistributor"),
@@ -78,10 +78,8 @@ object ExamDistributor {
       .thenReply(generator) {
         state: ExamDistributorState =>
           context.log.info("persisted ExamRequested, id: {}", state.lastExamId)
-          val examRequest = ExamRequest(nextExamId, command.studentsRequest.studentId,
-            command.studentsRequest.maxQuestions, command.studentsRequest.setId)
-          val messageToGenerator = ExamGenerator.ReceivedExamRequest(examRequest, messageAdapter)
-          messageToGenerator
+          ExamGenerator.ReceivedExamRequest(ExamRequest.fromStudentsRequest(
+            nextExamId, command.studentsRequest), messageAdapter)
       }
   }
 
@@ -175,7 +173,6 @@ object ExamDistributor {
       exams = state.exams.updated(event.exam.examId, PersistedExam(event.studentId, event.exam)),
       requests = state.requests.filterNot(_._1 == event.exam.examId))
 
-  //todo: remove completed exam from ExamDistributorState exams on ExamCompleted
   def examCompletedHandler(state: ExamDistributorState, event: ExamCompleted): ExamDistributorState =
     state.copy(answers = state.answers.updated(event.examId, PersistedAnswers(event.answers)))
 }
