@@ -2,6 +2,7 @@ package exams.http
 
 import exams.http.AnswerSelectable.toAnswer
 import exams.shared.data.HttpRequests._
+import exams.shared.data.HttpResponses.ExamResult2
 import exams.shared.data.{Answer, BlankQuestion, StudentsExam}
 import monocle.macros.GenLens
 import monocle.{Lens, Optional, POptional}
@@ -9,8 +10,12 @@ import monocle.{Lens, Optional, POptional}
 sealed trait DisplayedPage
 case class ExamRequestPage(studentsRequest: StudentsRequest) extends DisplayedPage
 case class ExamPage(token: String, exam: ExamSelectable) extends DisplayedPage
+case class ExamResultPage(score: Double) extends DisplayedPage
 
-case class DisplayedState(status: RequestStatus, examRequestPage: Option[ExamRequestPage] = None, examPage: Option[ExamPage] = None)
+case class DisplayedState(status: RequestStatus,
+                          examRequestPage: Option[ExamRequestPage] = None,
+                          examPage: Option[ExamPage] = None,
+                          examResultPage: Option[ExamResult2] = None)
 
 object DisplayedState {
   val empty: DisplayedState = DisplayedState(Success, Some(ExamRequestPage(StudentsRequest("", 0, ""))))

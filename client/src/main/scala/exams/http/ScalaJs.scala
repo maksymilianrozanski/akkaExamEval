@@ -48,11 +48,13 @@ object ScalaJs {
       .initialState(s)
       .renderS(($, s) => {
         s match {
-          case DisplayedState(_, _, Some(_)) =>
+          case DisplayedState(_, _, Some(_), _) =>
             ExamPageForm.renderExamForm(state, $, s)
-          case DisplayedState(_, Some(_), None) =>
+          case DisplayedState(_, _, _, Some(result)) =>
+            ExamResultPageForm.renderExamResultPageForm(state, $, s)
+          case DisplayedState(_, Some(_), None, _) =>
             ExamRequestPageForm.renderExamRequestForm(state, $, s)
-          case DisplayedState(_, None, _) =>
+          case DisplayedState(_, None, _, _) =>
             ExamRequestPageForm.renderExamRequestForm(state, $, empty)
         }
       }

@@ -23,6 +23,7 @@ object ExamEvaluator {
 
   val emptyState: ExamEvaluatorState = ExamEvaluatorState(List())
   final case class ExamEvaluatorState(results: List[ExamResult]) extends JsonSerializable
+  //todo: move to shared project/responses
   case class ExamResult(examId: String, studentId: String, result: Double)
 
   def apply(): Behavior[ExamEvaluator] = evaluator()
