@@ -8,7 +8,7 @@ import exams.http.StudentActions.{ExamGeneratedWithToken, GeneratingFailed}
 import exams.http.token.TokenGenerator
 import exams.shared.data.HttpRequests.StudentsRequest
 import exams.shared.data.StudentsExam
-import exams.evaluator.ExamEvaluator.ExamResult
+import exams.shared.data.HttpResponses.ExamResult
 
 sealed trait Student
 final case class RequestExamCommand(code: StudentsRequest, distributor: ActorRef[ExamDistributor]) extends Student
@@ -31,7 +31,7 @@ object Student {
           Behaviors.stopped
         case GiveResultToStudent(result) =>
           context.log.info("Received result: {} ", result)
-          displayReceiver ! StudentActions.ExamResult(result)
+          displayReceiver ! StudentActions.ExamResult3(result)
           Behaviors.stopped
         case RequestExamCommand(code, distributor) =>
           context.log.info("received starting exam request")

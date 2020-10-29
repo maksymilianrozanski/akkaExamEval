@@ -1,13 +1,12 @@
 package exams.evaluator
 
-import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
 import exams.JsonSerializable
 import exams.distributor.ExamDistributor.{Answers, ExamId}
-import exams.http.StudentActions
-import exams.http.StudentActions.DisplayedToStudent
+import exams.shared.data.HttpResponses.ExamResult
 import exams.shared.data.TeachersExam
 import exams.student.{GiveResultToStudent, Student}
 
@@ -23,8 +22,6 @@ object ExamEvaluator {
 
   val emptyState: ExamEvaluatorState = ExamEvaluatorState(List())
   final case class ExamEvaluatorState(results: List[ExamResult]) extends JsonSerializable
-  //todo: move to shared project/responses
-  case class ExamResult(examId: String, studentId: String, result: Double)
 
   def apply(): Behavior[ExamEvaluator] = evaluator()
 

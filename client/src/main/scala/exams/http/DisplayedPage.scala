@@ -2,7 +2,7 @@ package exams.http
 
 import exams.http.AnswerSelectable.toAnswer
 import exams.shared.data.HttpRequests._
-import exams.shared.data.HttpResponses.ExamResult2
+import exams.shared.data.HttpResponses.ExamResult
 import exams.shared.data.{Answer, BlankQuestion, StudentsExam}
 import monocle.macros.GenLens
 import monocle.{Lens, Optional, POptional}
@@ -15,7 +15,7 @@ case class ExamResultPage(score: Double) extends DisplayedPage
 case class DisplayedState(status: RequestStatus,
                           examRequestPage: Option[ExamRequestPage] = None,
                           examPage: Option[ExamPage] = None,
-                          examResultPage: Option[ExamResult2] = None)
+                          examResultPage: Option[ExamResult] = None)
 
 object DisplayedState {
   val empty: DisplayedState = DisplayedState(Success, Some(ExamRequestPage(StudentsRequest("", 0, ""))))

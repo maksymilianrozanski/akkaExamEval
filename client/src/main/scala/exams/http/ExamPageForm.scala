@@ -3,7 +3,7 @@ package exams.http
 import exams.http.DisplayedState.{changeAnswerIsSelected, withExamRemoved}
 import exams.http.ExamSelectable.toCompletedExam
 import exams.http.ScalaJs.apiEndpoint
-import exams.shared.data.HttpResponses.ExamResult2
+import exams.shared.data.HttpResponses.ExamResult
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
@@ -30,7 +30,7 @@ object ExamPageForm {
               case 200 =>
                 println("Sent request and received 200 response code")
                 println(s"Response: ${xhr.responseText}")
-                val examResult = decode[ExamResult2](xhr.responseText).toOption
+                val examResult = decode[ExamResult](xhr.responseText).toOption
                 step3.setState(withExamRemoved(step3.state)
                   .copy(examResultPage = examResult))
               case x =>

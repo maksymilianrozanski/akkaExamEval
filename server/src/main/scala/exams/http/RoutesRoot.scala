@@ -16,6 +16,7 @@ import exams.http.twirl.Implicits._
 import exams.shared.SharedMessages
 import exams.shared.data.HttpRequests
 import exams.shared.data.HttpRequests.{CompletedExam, StudentsRequest}
+import exams.shared.data.HttpResponses.ExamResult
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,7 +30,7 @@ case class RoutesActorsPack(userActions: ActorRef[StudentActions.Command],
 object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport with Directives {
 
   type ExamTokenValidator = (String, ExamId) => Either[TokenValidationResult, ValidMatchedToken]
-  type AllExamResults = () => Future[List[ExamEvaluator.ExamResult]]
+  type AllExamResults = () => Future[List[ExamResult]]
 
   def createStudentRoutes(implicit actors: RoutesActorsPack): Route = {
     implicit val actorSystem: ActorSystem[_] = actors.system

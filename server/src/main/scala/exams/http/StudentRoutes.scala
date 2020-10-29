@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusC
 import akka.http.scaladsl.server.Directives.{complete, path, pathEndOrSingleSlash, pathPrefix, post, _}
 import akka.http.scaladsl.server.Route
 import exams.http.RoutesRoot.ExamTokenValidator
-import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, ExamResult, GeneratingFailed}
+import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, ExamResult3, GeneratingFailed}
 import exams.http.token.TokenGenerator
 import exams.shared.data.HttpRequests._
 
@@ -41,7 +41,7 @@ object StudentRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
       case reason: GeneratingFailed =>
         HttpResponse(status = StatusCodes.NotFound, entity = HttpEntity(contentType = ContentTypes.`application/json`,
           DisplayedToStudentFormat.write(reason).prettyPrint))
-      case examResult: ExamResult =>
+      case examResult: ExamResult3 =>
         HttpResponse(status = StatusCodes.OK, entity = HttpEntity(contentType = ContentTypes.`application/json`,
           examResultFormat.write(examResult.result).prettyPrint))
     }

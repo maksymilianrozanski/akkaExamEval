@@ -6,8 +6,7 @@ import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.ExamRepository.QuestionsSet
 import exams.data.StubQuestions.{question2, question3}
-import exams.evaluator.ExamEvaluator
-import exams.evaluator.ExamEvaluator.ExamResult
+import exams.shared.data.HttpResponses.ExamResult
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import spray.json.DefaultJsonProtocol
@@ -20,7 +19,7 @@ class RepoRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
 
   "/repo/add endpoint" when {
 
-    implicit def examResultsStub(): Future[List[ExamEvaluator.ExamResult]] =
+    implicit def examResultsStub(): Future[List[ExamResult]] =
       fail("examResults was not expected to be called")
 
     val questionsSet = QuestionsSet("set2", "example set description", Set(question2, question3))
@@ -68,7 +67,7 @@ class RepoRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
     val password = "somePassword"
     val request = Get(path) ~> addCredentials(BasicHttpCredentials("adm", password))
     val results = List(ExamResult("exam123", "student123", 0.9), ExamResult("exam124", "student124", 0.92))
-    implicit def allExamResults(): Future[List[ExamEvaluator.ExamResult]] = Future(results)
+    implicit def allExamResults(): Future[List[ExamResult]] = Future(results)
     val route = RepoRoutes.innerRepoRoutes(addingQuestionsSetStub, allExamResults)
     "respond with all stored exam results" in
       request ~> route ~> check {

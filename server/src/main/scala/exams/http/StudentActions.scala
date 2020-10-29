@@ -5,6 +5,7 @@ import akka.actor.typed.{ActorRef, Behavior}
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
 import exams.evaluator.ExamEvaluator
 import exams.shared.data.HttpRequests.{ExamGenerated, StudentsRequest}
+import exams.shared.data.HttpResponses.ExamResult
 import exams.shared.data.{HttpRequests, StudentsExam}
 import exams.student.Student
 
@@ -20,7 +21,7 @@ object StudentActions {
     implicit def toExamGenerated(examGeneratedWithToken: ExamGeneratedWithToken): ExamGenerated = ExamGenerated(examGeneratedWithToken.exam)
   }
   case class GeneratingFailed(reason: String) extends DisplayedToStudent
-  case class ExamResult(result: ExamEvaluator.ExamResult) extends DisplayedToStudent
+  case class ExamResult3(result: ExamResult) extends DisplayedToStudent
 
   def apply()(implicit distributor: ActorRef[ExamDistributor]): Behavior[Command] = registry(distributor)
 

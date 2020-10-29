@@ -7,10 +7,11 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import exams.data.StubQuestions.completedExam
 import exams.distributor.ExamDistributor.ExamId
 import exams.evaluator.ExamEvaluator
-import exams.http.StudentActions.{DisplayedToStudent, ExamResult}
+import exams.http.StudentActions.{DisplayedToStudent, ExamResult3}
 import exams.http.StudentRoutes.examEvalRequested
 import exams.http.token.TokenGenerator.{InvalidToken, InvalidTokenContent, ParsingError, TokenExpired, TokenValidationResult, ValidMatchedToken}
 import exams.shared.data.HttpRequests.CompletedExam
+import exams.shared.data.HttpResponses.ExamResult
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -26,7 +27,7 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
       var completedExamCalledTimes = 0
       implicit def completedExamAction(completedExam: CompletedExam): Future[DisplayedToStudent] = {
         completedExamCalledTimes = completedExamCalledTimes + 1
-        Future(ExamResult(ExamEvaluator.ExamResult("exam1", "student2", 0.82)))
+        Future(ExamResult3(ExamResult("exam1", "student2", 0.82)))
       }
       implicit def examTokenValidator(token: String, examId: ExamId): Either[TokenValidationResult, ValidMatchedToken]
       = Right(ValidMatchedToken(examId))
@@ -42,7 +43,7 @@ class StudentRoutesSpec extends AnyWordSpecLike with ScalatestRouteTest with Stu
       "return appropriate message" in
         request ~> route ~> check {
           contentType shouldBe ContentTypes.`application/json`
-          responseAs[ExamEvaluator.ExamResult] shouldEqual ExamEvaluator.ExamResult("exam1", "student2", 0.82)
+          responseAs[ExamResult] shouldEqual ExamResult("exam1", "student2", 0.82)
         }
     }
 

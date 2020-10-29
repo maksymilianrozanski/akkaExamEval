@@ -9,9 +9,10 @@ import exams.data.StubQuestions.completedExam
 import exams.distributor.ExamDistributor.ExamId
 import exams.evaluator.ExamEvaluator
 import exams.http.RoutesRoot.AllExamResults
-import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, ExamResult, GeneratingFailed}
+import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, ExamResult3, GeneratingFailed}
 import exams.http.token.TokenGenerator.{InvalidToken, TokenValidationResult, ValidMatchedToken}
 import exams.shared.data.HttpRequests._
+import exams.shared.data.HttpResponses.ExamResult
 import exams.shared.data.StudentsExam
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -112,7 +113,7 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
           implicit def examCompletedAction: CompletedExam => Future[DisplayedToStudent] = (exam: CompletedExam) => {
             require(completedExam == exam, s"expected $completedExam, received: $exam")
             calledTimes = calledTimes + 1
-            Future(ExamResult(ExamEvaluator.ExamResult("exam123", "student123", 0.8)))
+            Future(ExamResult3(ExamResult("exam123", "student123", 0.8)))
           }
 
           import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub, examResultsStub}
@@ -125,7 +126,7 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
           import ActorInteractionsStubs.{addingQuestionsSetStub, examRequestedStub, examResultsStub}
           implicit def examCompletedAction: CompletedExam => Future[DisplayedToStudent] = (exam: CompletedExam) => {
             require(completedExam == exam, s"expected $completedExam, received: $exam")
-            Future(ExamResult(ExamEvaluator.ExamResult("exam123", "student123", 0.8)))
+            Future(ExamResult3(ExamResult("exam123", "student123", 0.8)))
           }
           val route = RoutesRoot.allRoutes
 
@@ -137,7 +138,7 @@ class RoutesRootSpec extends AnyWordSpecLike with ScalatestRouteTest with Studen
             request ~> route ~> check(status shouldBe StatusCodes.OK)
 
           "have expected content" in
-            request ~> route ~> check(responseAs[ExamEvaluator.ExamResult] shouldBe ExamEvaluator.ExamResult("exam123", "student123", 0.8))
+            request ~> route ~> check(responseAs[ExamResult] shouldBe ExamResult("exam123", "student123", 0.8))
         }
       }
 

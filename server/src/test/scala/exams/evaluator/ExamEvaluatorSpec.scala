@@ -7,11 +7,13 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.Serializati
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.EventSourcedTestConfig.EventSourcedBehaviorTestKitConfigJsonSerialization
-import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluatorState, ExamResult}
+import exams.evaluator.ExamEvaluator.{EvaluateAnswers, ExamEvaluated, ExamEvaluatorState}
+import exams.shared.data.HttpResponses.ExamResult
 import exams.shared.data
 import exams.shared.data.{Answer, BlankQuestion, Question, TeachersExam}
 import exams.student.{GiveResultToStudent, Student}
 import org.scalatest.wordspec.AnyWordSpecLike
+
 
 class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKitConfigJsonSerialization)
   with AnyWordSpecLike {
@@ -119,7 +121,7 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
       val command = EvaluateAnswers("student234", data.TeachersExam("exam123",
         questions = List(Question(BlankQuestion("text", List(Answer("yes"), Answer("no"))), List(Answer("no"))))), List(List(Answer("yes"))), Some(student.ref))
 
-      val expectedEvent = ExamEvaluator.ExamEvaluated(ExamResult("exam123", "student234", 0))
+      val expectedEvent = ExamEvaluated(ExamResult("exam123", "student234", 0))
 
       "non empty initial state" should {
         val initialState = ExamEvaluatorState(List(
@@ -194,7 +196,7 @@ class ExamEvaluatorSpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTe
         val command = ExamEvaluator.RequestSingleResult("exam123", testProbe.ref)
         val testKit = examEvaluatorTestKit(ExamEvaluatorState(persistedResults))
         testKit.runCommand(command)
-        "reply with ExamResult" in {
+        "reply with ExamResult2" in {
           testProbe.expectMessage(Some(persistedResults(1)))
         }
       }

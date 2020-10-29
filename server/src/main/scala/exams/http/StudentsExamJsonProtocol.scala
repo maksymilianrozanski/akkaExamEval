@@ -1,7 +1,7 @@
 package exams.http
 
 import exams.data.ExamRepository.QuestionsSet
-import exams.evaluator.ExamEvaluator.ExamResult
+import exams.shared.data.HttpResponses.ExamResult
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
 import exams.shared.data.HttpRequests.{CompletedExam, ExamGenerated, StudentsRequest}
 import exams.shared.data._
@@ -18,7 +18,7 @@ trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
   implicit val questionFormat: RootJsonFormat[Question] = jsonFormat2(Question)
   implicit val questionsSetFormat: RootJsonFormat[QuestionsSet] = jsonFormat3(QuestionsSet)
   implicit val examResultFormat: RootJsonFormat[ExamResult] = jsonFormat3(ExamResult)
-  implicit val examResultDisplayedToStudentFormat: RootJsonFormat[StudentActions.ExamResult] = jsonFormat1(StudentActions.ExamResult)
+  implicit val examResultDisplayedToStudentFormat: RootJsonFormat[StudentActions.ExamResult3] = jsonFormat1(StudentActions.ExamResult3)
 
   implicit object DisplayedToStudentFormat extends RootJsonWriter[DisplayedToStudent] {
 
@@ -26,7 +26,7 @@ trait StudentsExamJsonProtocol extends DefaultJsonProtocol {
       obj match {
         case success: ExamGeneratedWithToken => examToDisplayFormat.write(ExamGenerated(success.exam))
         case failed: GeneratingFailed => generatingExamFailedFormat.write(failed)
-        case result: StudentActions.ExamResult => examResultDisplayedToStudentFormat.write(result)
+        case result: StudentActions.ExamResult3 => examResultDisplayedToStudentFormat.write(result)
       }
   }
 }
