@@ -7,6 +7,8 @@ import exams.shared.data
 import exams.shared.data.HttpRequests.{ExamId, SetId, StudentId, StudentsRequest}
 import exams.shared.data.{Answer, BlankQuestion, Question, TeachersExam}
 
+import scala.util.Random
+
 object ExamGenerator {
   case class ExamRequest(examId: ExamId, studentId: StudentId, maxQuestions: Int, setId: SetId)
   object ExamRequest {
@@ -91,7 +93,6 @@ object ExamGenerator {
     }
 
   private[data] def createExam(questionsSet: QuestionsSet)(examRequest: ExamRequest) = {
-    //todo: add taking random questions
-    data.TeachersExam(examRequest.examId, questionsSet.questions.take(examRequest.maxQuestions).toList)
+    data.TeachersExam(examRequest.examId, Random.shuffle(questionsSet.questions).take(examRequest.maxQuestions).toList)
   }
 }
