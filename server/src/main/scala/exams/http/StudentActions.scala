@@ -4,8 +4,8 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam, RequestExamEvaluation}
 import exams.evaluator.ExamEvaluator
-import exams.shared.data.HttpRequests.{ExamGenerated, StudentsRequest}
-import exams.shared.data.HttpResponses.ExamResult
+import exams.shared.data.HttpRequests.StudentsRequest
+import exams.shared.data.HttpResponses.{ExamGenerated, ExamResult}
 import exams.shared.data.{HttpRequests, StudentsExam}
 import exams.student.Student
 

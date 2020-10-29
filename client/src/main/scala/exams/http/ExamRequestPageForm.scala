@@ -2,7 +2,7 @@ package exams.http
 
 import exams.http.DisplayedState.{maxQuestionsLens2, setIdLens2, studentIdLens2}
 import exams.http.ScalaJs.apiEndpoint
-import exams.shared.data.HttpRequests.ExamGenerated
+import exams.shared.data.HttpResponses.ExamGenerated
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._

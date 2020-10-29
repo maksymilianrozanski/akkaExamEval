@@ -1,9 +1,9 @@
 package exams.http
 
 import exams.data.ExamRepository.QuestionsSet
-import exams.shared.data.HttpResponses.ExamResult
+import exams.shared.data.HttpResponses.{ExamGenerated, ExamResult}
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
-import exams.shared.data.HttpRequests.{CompletedExam, ExamGenerated, StudentsRequest}
+import exams.shared.data.HttpRequests.{CompletedExam, StudentsRequest}
 import exams.shared.data._
 import spray.json.{DefaultJsonProtocol, JsValue, RootJsonFormat, RootJsonWriter}
 

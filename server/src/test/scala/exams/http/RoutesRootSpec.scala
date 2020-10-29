@@ -12,7 +12,7 @@ import exams.http.RoutesRoot.AllExamResults
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, ExamResult3, GeneratingFailed}
 import exams.http.token.TokenGenerator.{InvalidToken, TokenValidationResult, ValidMatchedToken}
 import exams.shared.data.HttpRequests._
-import exams.shared.data.HttpResponses.ExamResult
+import exams.shared.data.HttpResponses.{ExamGenerated, ExamResult}
 import exams.shared.data.StudentsExam
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike

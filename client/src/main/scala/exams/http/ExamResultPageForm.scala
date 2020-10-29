@@ -5,7 +5,6 @@ import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.vdom.html_<^.<
 import exams.http.DisplayedState.{maxQuestionsLens2, setIdLens2, studentIdLens2}
 import exams.http.ScalaJs.apiEndpoint
-import exams.shared.data.HttpRequests.ExamGenerated
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
