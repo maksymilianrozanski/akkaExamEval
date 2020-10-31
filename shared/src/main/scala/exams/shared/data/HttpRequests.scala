@@ -9,6 +9,7 @@ object HttpRequests {
 
   /**
    * Request of generating an exam
+   * payload of POST /student/start2 api endpoint
    *
    * @param studentId    student identifier
    * @param maxQuestions maximal number of questions in generated exam
@@ -18,8 +19,9 @@ object HttpRequests {
 
   /**
    * Exam completed by a student
+   * payload of POST /student/evaluate api endpoint
    *
-   * @param examId          generated unique exam identifier
+   * @param examId  generated unique exam identifier
    * @param answers answers selected by a student, list indexes corresponding to question number
    */
   case class CompletedExam(examId: String, answers: List[List[Answer]])
