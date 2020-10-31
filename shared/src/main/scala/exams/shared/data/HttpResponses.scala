@@ -11,6 +11,11 @@ object HttpResponses {
    */
   case class ExamResult(examId: String, studentId: String, result: Double)
 
+  /**
+   * Generated exam returned at POST /student/start2 endpoint
+   *
+   * @param exam exam given to a student (without correct answers)
+   */
   case class ExamGenerated(exam: StudentsExam)
 
 }
