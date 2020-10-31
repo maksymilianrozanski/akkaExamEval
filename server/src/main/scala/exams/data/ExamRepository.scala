@@ -1,12 +1,12 @@
 package exams.data
 
-import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EffectBuilder, EventSourcedBehavior}
 import exams.JsonSerializable
 import exams.distributor.ExamDistributor.ExamId
-import exams.shared.data.Question
+import exams.shared.data.HttpRequests.QuestionsSet
 
 object ExamRepository {
 
@@ -24,13 +24,6 @@ object ExamRepository {
 
   val emptyState: ExamRepositoryState = ExamRepositoryState(List())
   case class ExamRepositoryState(questions: List[QuestionsSet])  extends JsonSerializable
-
-  /**
-   * @param setId unique id of questions set
-   * @param description questions set description
-   * @param questions set of blank questions with correct answers
-   */
-  case class QuestionsSet(setId: SetId, description: String, questions: Set[Question])
 
   def examRepository(): Behavior[ExamRepository] = Behaviors.setup[ExamRepository] { context =>
     EventSourcedBehavior[ExamRepository, ExamRepositoryEvents, ExamRepositoryState](

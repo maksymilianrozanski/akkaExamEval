@@ -25,4 +25,11 @@ object HttpRequests {
    * @param answers answers selected by a student, list indexes corresponding to question number
    */
   case class CompletedExam(examId: String, answers: List[List[Answer]])
+
+  /**
+   * @param setId unique id of questions set
+   * @param description questions set description
+   * @param questions set of blank questions with correct answers
+   */
+  case class QuestionsSet(setId: SetId, description: String, questions: Set[Question])
 }
