@@ -6,7 +6,8 @@ import scala.io.Source
 
 object Auth {
 
-  val secretPass: String = Source.fromResource("repoAuth.txt").getLines().toList.head
+  val secretPass: String = "pass"
+//    Source.fromResource("repoAuth.txt").getLines().toList.head
 
   def userPassAuthenticator(credentials: Credentials): Option[String] = {
     credentials match {
