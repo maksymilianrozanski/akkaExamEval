@@ -1,11 +1,24 @@
-version: '2'
+version: '3.8'
 
 services:
-  cassandra:
-    image: cassandra:3
-    container_name: cassandra
-    ports:
-      - "7000:7000"
-      - "9042:9042"
+  postgres:
+    image: postgres:latest
+    container_name: postgres
     environment:
-      - "CASSANDRA_CLUSTER_NAME=OUR_DOCKERIZED_CASSANDRA_SINGLE_NODE_CLUSTER"
+      - "TZ=Europe/Amsterdam"
+      - "POSTGRES_USER=docker"
+      - "POSTGRES_PASSWORD=docker"
+    ports:
+      - "5432:5432"
+    volumes:
+      - "./sql:/docker-entrypoint-initdb.d"
+
+  webserver:
+    build: .
+    image: akkaexams:0.1
+    environment:
+      "JDBC_DATABASE_URL": "jdbc:postgresql://postgres:5432/exams?user=docker&password=docker"
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"

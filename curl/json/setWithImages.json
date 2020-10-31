@@ -1,0 +1,62 @@
+{
+  "setId": "set2",
+  "description": "set 2 - some questions with images",
+  "questions": [
+    {
+      "blank": {
+        "text": "Is it a cat?",
+        "answers": [
+          {
+            "text": "yes"
+          },
+          {
+            "text": "no"
+          }
+        ],
+        "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Domestic_Cat_Demonstrating_Dilated_Slit_Pupils.jpg/800px-Domestic_Cat_Demonstrating_Dilated_Slit_Pupils.jpg"
+      },
+      "correctAnswers": [
+        {
+          "text": "yes"
+        }
+      ]
+    },
+    {
+      "blank": {
+        "text": "Count cats",
+        "answers": [
+          {
+            "text": "3"
+          },
+          {
+            "text": "6"
+          }
+        ],
+        "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Cat_poster_1.jpg/1920px-Cat_poster_1.jpg"
+      },
+      "correctAnswers": [
+        {
+          "text": "6"
+        }
+      ]
+    },
+    {
+      "blank": {
+        "text": "Do you like cats?",
+        "answers": [
+          {
+            "text": "yes"
+          },
+          {
+            "text": "no"
+          }
+        ]
+      },
+      "correctAnswers": [
+        {
+          "text": "yes"
+        }
+      ]
+    }
+  ]
+}

@@ -8,10 +8,17 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/client" />
             <option value="$PROJECT_DIR$/project" />
+            <option value="$PROJECT_DIR$/server" />
+            <option value="$PROJECT_DIR$/shared" />
+            <option value="$PROJECT_DIR$/shared/.js" />
+            <option value="$PROJECT_DIR$/shared/.jvm" />
           </set>
         </option>
         <option name="sbtVersion" value="1.4.0" />
+        <option name="useSbtShellForBuild" value="true" />
+        <option name="useSbtShellForImport" value="true" />
       </SbtProjectSettings>
     </option>
   </component>
