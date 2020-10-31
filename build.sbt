@@ -125,7 +125,7 @@ lazy val client = project
         minified "umd/react-dom-test-utils.production.min.js"
         dependsOn "umd/react-dom.development.js"
         commonJSName "ReactTestUtils"
-    ),
+    )
 
     //enablePlugins(ScalaJSBundlerPlugin)
     //npmDependencies in Compile ++= Seq(
