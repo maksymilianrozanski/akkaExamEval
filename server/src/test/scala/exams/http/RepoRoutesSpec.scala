@@ -4,8 +4,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.headers.BasicHttpCredentials
 import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import exams.data.ExamRepository.QuestionsSet
 import exams.data.StubQuestions.{question2, question3}
+import exams.shared.data.HttpRequests.QuestionsSet
 import exams.shared.data.HttpResponses.ExamResult
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike

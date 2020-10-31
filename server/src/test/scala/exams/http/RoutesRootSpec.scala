@@ -4,14 +4,12 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import exams.data.ExamRepository.QuestionsSet
 import exams.data.StubQuestions.completedExam
 import exams.distributor.ExamDistributor.ExamId
-import exams.evaluator.ExamEvaluator
 import exams.http.RoutesRoot.AllExamResults
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, ExamResult3, GeneratingFailed}
 import exams.http.token.TokenGenerator.{InvalidToken, TokenValidationResult, ValidMatchedToken}
-import exams.shared.data.HttpRequests._
+import exams.shared.data.HttpRequests.{QuestionsSet, _}
 import exams.shared.data.HttpResponses.{ExamGenerated, ExamResult}
 import exams.shared.data.StudentsExam
 import org.scalatest.matchers.should.Matchers

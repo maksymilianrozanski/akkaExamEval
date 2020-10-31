@@ -3,7 +3,8 @@ package exams.data
 import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
 import akka.actor.typed.scaladsl.Behaviors
 import exams.data.ExamGenerator._
-import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet}
+import exams.data.ExamRepository.{ExamRepository, TakeQuestionsSet}
+import exams.shared.data.HttpRequests.QuestionsSet
 import exams.shared.data.TeachersExam
 import org.scalatest.wordspec.AnyWordSpecLike
 
