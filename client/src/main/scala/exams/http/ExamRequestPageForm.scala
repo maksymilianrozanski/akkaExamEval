@@ -38,12 +38,11 @@ object ExamRequestPageForm {
               import ExamSelectable.fromStudentsExam
               val tokenHeader = xhr.getResponseHeader("Access-Token")
 
-              val examPage = decode[ExamGenerated](xhr.responseText).toOption
-                .map(it => ExamPage(tokenHeader, it.exam))
-                //todo: replace with safe get
-                .get
-
-              step3.setState(examPage)
+              decode[ExamGenerated](xhr.responseText).toOption
+                .map(it => ExamPage(tokenHeader, it.exam)) match {
+                case Some(examPage) => step3.setState(examPage)
+                case None => step3.setState(ErrorPage("Invalid server response"))
+              }
 
             case x =>
               println(s"Sent request and received $x response code")
@@ -55,8 +54,6 @@ object ExamRequestPageForm {
 
     <.form(
       ^.onSubmit ==> {(_: ReactEventFromInput).preventDefaultCB},
-      //todo: add status
-      //      <.p(s.status.toString),
       <.div(
         <.label(
           ^.`for` := "studentId",

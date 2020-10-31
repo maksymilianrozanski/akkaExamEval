@@ -21,8 +21,7 @@ object ExamPageForm {
       val ajax = Ajax("POST", apiEndpoint + "/student/evaluate")
         .setRequestContentTypeJson
         .setRequestHeader("Authorization",
-          //todo: handle empty token
-          examPagePrism.getOption(step3.state).map(_.token).get)
+          examPagePrism.getOption(step3.state).map(_.token).getOrElse(""))
         .send(toCompletedExam(examPagePrism.getOption(step3.state).get.exam).asJson.noSpaces)
         .onComplete {
           xhr =>
@@ -30,19 +29,21 @@ object ExamPageForm {
               case 200 =>
                 println("Sent request and received 200 response code")
                 println(s"Response: ${xhr.responseText}")
-                //todo: handle empty
-                val examResult = decode[ExamResult](xhr.responseText).toOption.get
-                step3.setState(ExamResultPage(examResult))
+
+                decode[ExamResult](xhr.responseText).toOption match {
+                  case Some(examResult) => step3.setState(ExamResultPage(examResult))
+                  case None => step3.setState(ErrorPage("Invalid server response"))
+                }
+
               case x =>
                 println(s"Sent request and received $x response code")
-                step3.setState(step3.state)
+                step3.setState(ErrorPage(s"Sent request and received $x response code"))
             }
         }
       step3.modState(i => i, ajax.asCallback)
     }
 
     <.div(
-      //      <.div(s"status: ${s.status.toString}"),
       <.form(
         ^.onSubmit ==> {(_: ReactEventFromInput).preventDefaultCB},
         <.div(examPagePrism.getOption(s).get.exam.questions
