@@ -1,6 +1,6 @@
 package exams.http
 
-import exams.http.DisplayedState.{maxQuestionsLens2, setIdLens2, studentIdLens2}
+import exams.http.DisplayedState.{examRequestPagePrism2, maxQuestionsLens2, setIdLens2, studentIdLens2}
 import exams.http.ScalaJs.apiEndpoint
 import exams.shared.data.HttpResponses.ExamGenerated
 import io.circe.generic.auto._
@@ -16,7 +16,7 @@ import scala.util.Try
 
 object ExamRequestPageForm {
 
-  def renderExamRequestForm(state: ReactS.Fix[DisplayedState], $: Builder.Step3[Unit, DisplayedState, Unit]#$, s: DisplayedState) = {
+  def renderExamRequestForm(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$, s: DisplayedPage) = {
     def studentIdStateHandler(s: ReactEventFromInput) =
       state.mod(studentIdLens2.modify(_ => s.target.value))
 
@@ -26,10 +26,10 @@ object ExamRequestPageForm {
     def setIdStateHandler(s: ReactEventFromInput) =
       state.mod(setIdLens2.modify(_ => s.target.value))
 
-    def submitRequest(step3: Builder.Step3[Unit, DisplayedState, Unit]#$) = {
+    def submitRequest(step3: Builder.Step3[Unit, DisplayedPage, Unit]#$) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/start2")
         .setRequestContentTypeJson
-        .send(step3.state.examRequestPage.get.studentsRequest.asJson.noSpaces).onComplete {
+        .send(examRequestPagePrism2.getOption(step3.state).get.studentsRequest.asJson.noSpaces).onComplete {
         xhr =>
           xhr.status match {
             case 200 =>
@@ -37,12 +37,17 @@ object ExamRequestPageForm {
               println(s"Response: ${xhr.responseText}")
               import ExamSelectable.fromStudentsExam
               val tokenHeader = xhr.getResponseHeader("Access-Token")
-              step3.setState(step3.state.copy(status = Success,
-                examPage = decode[ExamGenerated](xhr.responseText).toOption
-                  .map(it => ExamPage(tokenHeader, it.exam))))
+
+              val examPage = decode[ExamGenerated](xhr.responseText).toOption
+                .map(it => ExamPage(tokenHeader, it.exam))
+                //todo: replace with safe get
+                .get
+
+              step3.setState(examPage)
+
             case x =>
               println(s"Sent request and received $x response code")
-              step3.setState(step3.state.copy(status = Failure))
+              step3.setState(ErrorPage(s"Sent request and received $x response code"))
           }
       }
       step3.modState(i => i, ajax.asCallback)
@@ -50,7 +55,8 @@ object ExamRequestPageForm {
 
     <.form(
       ^.onSubmit ==> {(_: ReactEventFromInput).preventDefaultCB},
-      <.p(s.status.toString),
+      //todo: add status
+      //      <.p(s.status.toString),
       <.div(
         <.label(
           ^.`for` := "studentId",
