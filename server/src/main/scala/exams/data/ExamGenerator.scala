@@ -2,9 +2,9 @@ package exams.data
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
-import exams.data.ExamRepository.{ExamRepository, QuestionsSet, TakeQuestionsSet, TakeQuestionsSetReply}
+import exams.data.ExamRepository.{ExamRepository, TakeQuestionsSet, TakeQuestionsSetReply}
 import exams.shared.data
-import exams.shared.data.HttpRequests.{ExamId, SetId, StudentId, StudentsRequest}
+import exams.shared.data.HttpRequests._
 import exams.shared.data.{Answer, BlankQuestion, Question, TeachersExam}
 
 import scala.util.Random

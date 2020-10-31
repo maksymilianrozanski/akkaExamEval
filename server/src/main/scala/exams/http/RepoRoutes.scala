@@ -4,8 +4,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{path, pathPrefix, _}
 import akka.http.scaladsl.server.Route
-import exams.data.ExamRepository.QuestionsSet
 import exams.http.RoutesRoot.AllExamResults
+import exams.shared.data.HttpRequests.QuestionsSet
 
 object RepoRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
 

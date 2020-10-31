@@ -5,7 +5,7 @@ import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.util.Timeout
-import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, QuestionsSet}
+import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository}
 import exams.distributor.ExamDistributor.{ExamDistributor, ExamId}
 import exams.evaluator.ExamEvaluator
 import exams.evaluator.ExamEvaluator.RequestResults
@@ -14,8 +14,7 @@ import exams.http.token.TokenGenerator
 import exams.http.token.TokenGenerator.{TokenValidationResult, ValidMatchedToken}
 import exams.http.twirl.Implicits._
 import exams.shared.SharedMessages
-import exams.shared.data.HttpRequests
-import exams.shared.data.HttpRequests.{CompletedExam, StudentsRequest}
+import exams.shared.data.HttpRequests.{CompletedExam, QuestionsSet, StudentsRequest}
 import exams.shared.data.HttpResponses.ExamResult
 
 import scala.concurrent.{ExecutionContext, Future}

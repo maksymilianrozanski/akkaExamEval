@@ -7,7 +7,8 @@ import akka.persistence.testkit.scaladsl.EventSourcedBehaviorTestKit.Serializati
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import exams.EventSourcedTestConfig.EventSourcedBehaviorTestKitConfigJsonSerialization
-import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, ExamRepositoryEvents, ExamRepositoryState, QuestionsSet, QuestionsSetAdded, TakeQuestionsSet, TakeQuestionsSetReply}
+import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository, ExamRepositoryEvents, ExamRepositoryState, QuestionsSetAdded, TakeQuestionsSet, TakeQuestionsSetReply}
+import exams.shared.data.HttpRequests.QuestionsSet
 import org.scalatest.wordspec.AnyWordSpecLike
 
 class ExamRepositorySpec extends ScalaTestWithActorTestKit(EventSourcedBehaviorTestKitConfigJsonSerialization) with AnyWordSpecLike {
