@@ -1,6 +1,5 @@
 package exams.http
 
-import exams.http.DisplayedState.empty
 import exams.shared.data.HttpRequests.{StudentId, StudentsRequest}
 import exams.shared.data.StudentsExam
 import japgolly.scalajs.react.raw.ReactDOMServer
@@ -35,27 +34,23 @@ object ScalaJs {
   def main(args: Array[String]): Unit = {
     QuestionStyles.addToDocument()
     val root = dom.document.getElementById("scalajsShoutOut")
-    renderApp(root)(empty)
+    renderApp(root)(DisplayedState.empty)
   }
 
-  def renderApp(root: Element)(page: DisplayedState) = {
-    val state = ReactS.Fix[DisplayedState]
+  def renderApp(root: Element)(page: DisplayedPage) = {
+    val state = ReactS.Fix[DisplayedPage]
     rootComponent(state, page)().renderIntoDOM(root)
   }
 
-  def rootComponent(state: ReactS.Fix[DisplayedState], s: DisplayedState) = {
+  def rootComponent(state: ReactS.Fix[DisplayedPage], s: DisplayedPage) = {
     ScalaComponent.builder[Unit]
       .initialState(s)
       .renderS(($, s) => {
         s match {
-          case DisplayedState(_, _, Some(_), _) =>
-            ExamPageForm.renderExamForm(state, $, s)
-          case DisplayedState(_, _, _, Some(result)) =>
-            ExamResultPageForm.renderExamResultPageForm(state, $, s)
-          case DisplayedState(_, Some(_), None, _) =>
-            ExamRequestPageForm.renderExamRequestForm(state, $, s)
-          case DisplayedState(_, None, _, _) =>
-            ExamRequestPageForm.renderExamRequestForm(state, $, empty)
+          case ExamRequestPage(studentsRequest) => ExamRequestPageForm.renderExamRequestForm(state, $, s)
+          case ExamPage(token, exam) =>ExamPageForm.renderExamForm(state, $, s)
+          case ExamResultPage(score) =>ExamResultPageForm.renderExamResultPageForm(state, $, s)
+          case ErrorPage(reason) => ???
         }
       }
       ).build
