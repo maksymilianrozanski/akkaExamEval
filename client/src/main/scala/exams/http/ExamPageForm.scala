@@ -1,6 +1,6 @@
 package exams.http
 
-import exams.http.DisplayedState.{changeAnswerIsSelected, examPagePrism2}
+import exams.http.DisplayedState.{changeAnswerIsSelected, examPagePrism}
 import exams.http.ExamSelectable.toCompletedExam
 import exams.http.ScalaJs.apiEndpoint
 import exams.shared.data.HttpResponses.ExamResult
@@ -22,8 +22,8 @@ object ExamPageForm {
         .setRequestContentTypeJson
         .setRequestHeader("Authorization",
           //todo: handle empty token
-          examPagePrism2.getOption(step3.state).map(_.token).get)
-        .send(toCompletedExam(examPagePrism2.getOption(step3.state).get.exam).asJson.noSpaces)
+          examPagePrism.getOption(step3.state).map(_.token).get)
+        .send(toCompletedExam(examPagePrism.getOption(step3.state).get.exam).asJson.noSpaces)
         .onComplete {
           xhr =>
             xhr.status match {
@@ -45,7 +45,7 @@ object ExamPageForm {
       //      <.div(s"status: ${s.status.toString}"),
       <.form(
         ^.onSubmit ==> {(_: ReactEventFromInput).preventDefaultCB},
-        <.div(examPagePrism2.getOption(s).get.exam.questions
+        <.div(examPagePrism.getOption(s).get.exam.questions
           .zipWithIndex
           .map(blankQuestionForm(state, $)): _*))
       , <.button("Submit", ^.onClick --> submitRequest($))

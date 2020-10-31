@@ -1,6 +1,6 @@
 package exams.http
 
-import exams.http.DisplayedState.{examRequestPagePrism2, maxQuestionsLens2, setIdLens2, studentIdLens2}
+import exams.http.DisplayedState.{examRequestPagePrism, maxQuestionsLens, setIdLens, studentIdLens}
 import exams.http.ScalaJs.apiEndpoint
 import exams.shared.data.HttpResponses.ExamGenerated
 import io.circe.generic.auto._
@@ -18,18 +18,18 @@ object ExamRequestPageForm {
 
   def renderExamRequestForm(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$, s: DisplayedPage) = {
     def studentIdStateHandler(s: ReactEventFromInput) =
-      state.mod(studentIdLens2.modify(_ => s.target.value))
+      state.mod(studentIdLens.modify(_ => s.target.value))
 
     def maxQuestionsStateHandler(s: ReactEventFromInput) =
-      state.mod(maxQuestionsLens2.modify(_ => Try(Integer.parseInt(s.target.value)).getOrElse(0)))
+      state.mod(maxQuestionsLens.modify(_ => Try(Integer.parseInt(s.target.value)).getOrElse(0)))
 
     def setIdStateHandler(s: ReactEventFromInput) =
-      state.mod(setIdLens2.modify(_ => s.target.value))
+      state.mod(setIdLens.modify(_ => s.target.value))
 
     def submitRequest(step3: Builder.Step3[Unit, DisplayedPage, Unit]#$) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/start2")
         .setRequestContentTypeJson
-        .send(examRequestPagePrism2.getOption(step3.state).get.studentsRequest.asJson.noSpaces).onComplete {
+        .send(examRequestPagePrism.getOption(step3.state).get.studentsRequest.asJson.noSpaces).onComplete {
         xhr =>
           xhr.status match {
             case 200 =>
