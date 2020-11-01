@@ -7,12 +7,16 @@ import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
 import exams.data.{ExamGenerator, ExamRepository}
 import exams.distributor.ExamDistributor
 import exams.distributor.ExamDistributor.ExamDistributor
 import exams.evaluator.ExamEvaluator
 import exams.http.RoutesRoot.testJs
 import exams.http.{RoutesActorsPack, RoutesRoot, StudentActions}
+import org.postgresql.Driver
+import slick.jdbc.DataSourceJdbcDataSource
+import slick.util.ClassLoaderUtil
 
 import scala.util.{Failure, Success}
 
@@ -59,5 +63,4 @@ object Main {
   def main(args: Array[String]): Unit = {
     ActorSystem(Main(), "examEvaluator")
   }
-
 }

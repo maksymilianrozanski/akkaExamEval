@@ -29,7 +29,7 @@ import scalacss.ScalaCssReact._
 
 object ScalaJs {
 
-  val apiEndpoint = "http://localhost:8080"
+  val apiEndpoint = "https://akkaexams.herokuapp.com"
 
   def main(args: Array[String]): Unit = {
     QuestionStyles.addToDocument()

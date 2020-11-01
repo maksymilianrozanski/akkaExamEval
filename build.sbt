@@ -8,7 +8,7 @@ lazy val scalaTestVersion = "3.2.0"
 onLoad in Global := (onLoad in Global).value andThen (Command.process("project server", _))
 
 lazy val commonSettings = Seq(
-  version := "0.1",
+  version := "0.14",
   name := "akkaExams",
   organization := "exams",
   scalaVersion := "2.13.3",
