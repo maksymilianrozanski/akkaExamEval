@@ -2,7 +2,7 @@ package exams.http.views
 
 import exams.http.DisplayedState.{changeAnswerIsSelected, examPagePrism}
 import exams.http.ExamSelectable.toCompletedExam
-import exams.http.ScalaJs.apiEndpoint
+import exams.http.ScalaJs.{Step3Builder, apiEndpoint}
 import exams.http._
 import exams.shared.data.HttpResponses.ExamResult
 import io.circe.generic.auto._
@@ -17,9 +17,9 @@ import org.scalajs.dom.html.Div
 import scalacss.ScalaCssReact._
 
 object ExamView {
-  def apply(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$, s: DisplayedPage): VdomTagOf[Div] = {
+  def apply(state: ReactS.Fix[DisplayedPage], $: Step3Builder, s: DisplayedPage): VdomTagOf[Div] = {
 
-    def submitRequest(step3: Builder.Step3[Unit, DisplayedPage, Unit]#$) = {
+    def submitRequest(step3: Step3Builder) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/evaluate")
         .setRequestContentTypeJson
         .setRequestHeader("Authorization",
@@ -55,7 +55,7 @@ object ExamView {
     )
   }
 
-  private def blankQuestionForm(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$)(
+  private def blankQuestionForm(state: ReactS.Fix[DisplayedPage], $: Step3Builder)(
     blankQuestionWithNumber: (BlankQuestionsSelectable, Int)) =
     <.div(QuestionStyles.questionContainer,
       <.div(blankQuestionWithNumber._1.text,
@@ -65,7 +65,7 @@ object ExamView {
       <.ul(blankQuestionWithNumber._1.answers.zipWithIndex.map(answerForm(state, $)(blankQuestionWithNumber._2)): _*)
     )
 
-  private def answerForm(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$)(questionNumber: Int)(answerWithKey: (AnswerSelectable, Int)) = {
+  private def answerForm(state: ReactS.Fix[DisplayedPage], $: Step3Builder)(questionNumber: Int)(answerWithKey: (AnswerSelectable, Int)) = {
 
     def onAnswerChange(e: ReactEventFromInput) =
       state.mod(changeAnswerIsSelected(e.target.checked)(questionNumber, answerWithKey._2))

@@ -8,7 +8,7 @@ import japgolly.scalajs.react.ScalazReact.ReactS
 import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.vdom.html_<^.<
 import exams.http.DisplayedState.examResultPagePrism
-import exams.http.ScalaJs.apiEndpoint
+import exams.http.ScalaJs.{Step3Builder, apiEndpoint}
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
@@ -22,7 +22,7 @@ import japgolly.scalajs.react.component.builder.Builder
 import org.scalajs.dom.html.Paragraph
 object ErrorView {
 
-  def apply(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$, s: DisplayedPage): VdomTagOf[Paragraph] = {
+  def apply(state: ReactS.Fix[DisplayedPage], $: Step3Builder, s: DisplayedPage): VdomTagOf[Paragraph] = {
     val reason = DisplayedState.errorPagePrism.getOption(s).map(_.reason).getOrElse("unknown")
     <.p(s"Something went wrong ... \n probably because of: $reason")
   }

@@ -1,7 +1,7 @@
 package exams.http.views
 
 import exams.http.DisplayedState.{examRequestPagePrism, maxQuestionsLens, setIdLens, studentIdLens}
-import exams.http.ScalaJs.apiEndpoint
+import exams.http.ScalaJs.{Step3Builder, apiEndpoint}
 import exams.http.{DisplayedPage, ErrorPage, ExamPage}
 import exams.shared.data.HttpResponses.ExamGenerated
 import io.circe.generic.auto._
@@ -18,7 +18,7 @@ import scala.util.Try
 
 object ExamRequestView {
 
-  def apply(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$, s: DisplayedPage): VdomTagOf[Form] = {
+  def apply(state: ReactS.Fix[DisplayedPage], $: Step3Builder, s: DisplayedPage): VdomTagOf[Form] = {
     def studentIdStateHandler(s: ReactEventFromInput) =
       state.mod(studentIdLens.modify(_ => s.target.value))
 
@@ -28,7 +28,7 @@ object ExamRequestView {
     def setIdStateHandler(s: ReactEventFromInput) =
       state.mod(setIdLens.modify(_ => s.target.value))
 
-    def submitRequest(step3: Builder.Step3[Unit, DisplayedPage, Unit]#$) = {
+    def submitRequest(step3: Step3Builder) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/start2")
         .setRequestContentTypeJson
         .send(examRequestPagePrism.getOption(step3.state).get.studentsRequest.asJson.noSpaces).onComplete {

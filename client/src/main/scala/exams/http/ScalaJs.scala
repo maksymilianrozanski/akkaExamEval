@@ -4,6 +4,7 @@ import exams.http.views.{ErrorView, ExamRequestView, ExamResultView, ExamView}
 import japgolly.scalajs.react.{CtorType, ScalaComponent}
 import japgolly.scalajs.react.ScalazReact.ReactS
 import japgolly.scalajs.react.component.Scala.{Component, Unmounted}
+import japgolly.scalajs.react.component.builder.Builder
 import org.scalajs.dom
 import org.scalajs.dom.raw.Element
 import org.scalajs.dom.{console, window}
@@ -11,6 +12,8 @@ import scalacss.DevDefaults.{cssEnv, cssStringRenderer}
 import scalacss.ScalaCssReact._
 
 object ScalaJs {
+
+  type Step3Builder = Builder.Step3[Unit, DisplayedPage, Unit]#$
 
   val apiEndpoint: String = window.location.origin.getOrElse({
     console.log("unknown base url")
