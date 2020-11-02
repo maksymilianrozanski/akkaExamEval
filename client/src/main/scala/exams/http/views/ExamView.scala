@@ -13,10 +13,11 @@ import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.extra.Ajax
 import japgolly.scalajs.react.vdom.html_<^.{<, ^, _}
 import japgolly.scalajs.react.{ReactEventFromInput, _}
+import org.scalajs.dom.html.Div
 import scalacss.ScalaCssReact._
 
-object ExamPageForm {
-  def renderExamForm(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$, s: DisplayedPage) = {
+object ExamView {
+  def apply(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$, s: DisplayedPage): VdomTagOf[Div] = {
 
     def submitRequest(step3: Builder.Step3[Unit, DisplayedPage, Unit]#$) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/evaluate")

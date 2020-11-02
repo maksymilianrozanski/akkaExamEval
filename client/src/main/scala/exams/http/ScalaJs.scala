@@ -1,8 +1,9 @@
 package exams.http
 
-import exams.http.views.{ErrorPageForm, ExamPageForm, ExamRequestPageForm, ExamResultPageForm}
-import japgolly.scalajs.react.ScalaComponent
+import exams.http.views.{ErrorView, ExamRequestView, ExamResultView, ExamView}
+import japgolly.scalajs.react.{CtorType, ScalaComponent}
 import japgolly.scalajs.react.ScalazReact.ReactS
+import japgolly.scalajs.react.component.Scala.{Component, Unmounted}
 import org.scalajs.dom
 import org.scalajs.dom.raw.Element
 import org.scalajs.dom.{console, window}
@@ -22,20 +23,20 @@ object ScalaJs {
     renderApp(root)(DisplayedState.empty)
   }
 
-  def renderApp(root: Element)(page: DisplayedPage) = {
+  def renderApp(root: Element)(page: DisplayedPage): Unmounted[Unit, DisplayedPage, Unit]#Mounted = {
     val state = ReactS.Fix[DisplayedPage]
     rootComponent(state, page)().renderIntoDOM(root)
   }
 
-  def rootComponent(state: ReactS.Fix[DisplayedPage], s: DisplayedPage) = {
+  def rootComponent(state: ReactS.Fix[DisplayedPage], s: DisplayedPage): Component[Unit, DisplayedPage, Unit, CtorType.Nullary] = {
     ScalaComponent.builder[Unit]
       .initialState(s)
       .renderS(($, s) => {
         s match {
-          case ExamRequestPage(studentsRequest) => ExamRequestPageForm.renderExamRequestForm(state, $, s)
-          case ExamPage(token, exam) => ExamPageForm.renderExamForm(state, $, s)
-          case ExamResultPage(score) => ExamResultPageForm.renderExamResultPageForm(state, $, s)
-          case ErrorPage(reason) => ErrorPageForm.renderErrorPage(state, $, s)
+          case _: ExamRequestPage => ExamRequestView(state, $, s)
+          case _: ExamPage => ExamView(state, $, s)
+          case _: ExamResultPage => ExamResultView(state, $, s)
+          case _: ErrorPage => ErrorView(state, $, s)
         }
       }
       ).build

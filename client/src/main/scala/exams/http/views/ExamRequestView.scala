@@ -12,12 +12,13 @@ import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.extra.Ajax
 import japgolly.scalajs.react.vdom.html_<^.{<, ^, _}
 import japgolly.scalajs.react.{ReactEventFromInput, _}
+import org.scalajs.dom.html.Form
 
 import scala.util.Try
 
-object ExamRequestPageForm {
+object ExamRequestView {
 
-  def renderExamRequestForm(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$, s: DisplayedPage) = {
+  def apply(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$, s: DisplayedPage): VdomTagOf[Form] = {
     def studentIdStateHandler(s: ReactEventFromInput) =
       state.mod(studentIdLens.modify(_ => s.target.value))
 
