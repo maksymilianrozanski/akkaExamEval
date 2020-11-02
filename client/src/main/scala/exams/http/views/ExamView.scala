@@ -17,7 +17,7 @@ import org.scalajs.dom.html.Div
 import scalacss.ScalaCssReact._
 
 object ExamView {
-  def apply(state: ReactS.Fix[DisplayedPage], $: Step3Builder, s: DisplayedPage): VdomTagOf[Div] = {
+  def apply(state: ReactS.Fix[DisplayedPage], $: Step3Builder, s: ExamPage): VdomTagOf[Div] = {
 
     def submitRequest(step3: Step3Builder) = {
       val ajax = Ajax("POST", apiEndpoint + "/student/evaluate")

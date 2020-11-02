@@ -36,10 +36,10 @@ object ScalaJs {
       .initialState(s)
       .renderS(($, s) => {
         s match {
-          case _: ExamRequestPage => ExamRequestView(state, $, s)
-          case _: ExamPage => ExamView(state, $, s)
-          case _: ExamResultPage => ExamResultView(state, $, s)
-          case _: ErrorPage => ErrorView(state, $, s)
+          case page: ExamRequestPage => ExamRequestView(state, $, page)
+          case page: ExamPage => ExamView(state, $, page)
+          case page: ExamResultPage => ExamResultView(state, $, page)
+          case page: ErrorPage => ErrorView(state, $, page)
         }
       }
       ).build

@@ -1,6 +1,6 @@
 package exams.http.views
 
-import exams.http.{DisplayedPage, DisplayedState}
+import exams.http.{DisplayedPage, DisplayedState, ErrorPage}
 import japgolly.scalajs.react.ScalazReact.ReactS
 import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.vdom.html_<^.<
@@ -22,7 +22,7 @@ import japgolly.scalajs.react.component.builder.Builder
 import org.scalajs.dom.html.Paragraph
 object ErrorView {
 
-  def apply(state: ReactS.Fix[DisplayedPage], $: Step3Builder, s: DisplayedPage): VdomTagOf[Paragraph] = {
+  def apply(state: ReactS.Fix[DisplayedPage], $: Step3Builder, s: ErrorPage): VdomTagOf[Paragraph] = {
     val reason = DisplayedState.errorPagePrism.getOption(s).map(_.reason).getOrElse("unknown")
     <.p(s"Something went wrong ... \n probably because of: $reason")
   }
