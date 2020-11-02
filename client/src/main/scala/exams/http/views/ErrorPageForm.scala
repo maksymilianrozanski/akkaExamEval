@@ -1,4 +1,9 @@
-package exams.http
+package exams.http.views
+
+import exams.http.{DisplayedPage, DisplayedState}
+import japgolly.scalajs.react.ScalazReact.ReactS
+import japgolly.scalajs.react.component.builder.Builder
+import japgolly.scalajs.react.vdom.html_<^.<
 
 import japgolly.scalajs.react.ScalazReact.ReactS
 import japgolly.scalajs.react.component.builder.Builder
@@ -15,7 +20,6 @@ import japgolly.scalajs.react.vdom.html_<^.{<, ^, _}
 import japgolly.scalajs.react.{ReactEventFromInput, _}
 import japgolly.scalajs.react.ScalazReact.ReactS
 import japgolly.scalajs.react.component.builder.Builder
-
 object ErrorPageForm {
 
   def renderErrorPage(state: ReactS.Fix[DisplayedPage], $: Builder.Step3[Unit, DisplayedPage, Unit]#$, s: DisplayedPage) = {

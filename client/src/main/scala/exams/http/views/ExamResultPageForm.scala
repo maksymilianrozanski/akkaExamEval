@@ -1,18 +1,10 @@
-package exams.http
+package exams.http.views
 
+import exams.http.DisplayedPage
+import exams.http.DisplayedState.examResultPagePrism
 import japgolly.scalajs.react.ScalazReact.ReactS
 import japgolly.scalajs.react.component.builder.Builder
-import japgolly.scalajs.react.vdom.html_<^.<
-import exams.http.DisplayedState.examResultPagePrism
-import exams.http.ScalaJs.apiEndpoint
-import io.circe.generic.auto._
-import io.circe.parser.decode
-import io.circe.syntax._
-import japgolly.scalajs.react.ScalazReact.{ReactS, _}
-import japgolly.scalajs.react.component.builder.Builder
-import japgolly.scalajs.react.extra.Ajax
-import japgolly.scalajs.react.vdom.html_<^.{<, ^, _}
-import japgolly.scalajs.react.{ReactEventFromInput, _}
+import japgolly.scalajs.react.vdom.html_<^.{<, _}
 
 object ExamResultPageForm {
 

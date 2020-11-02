@@ -1,7 +1,8 @@
-package exams.http
+package exams.http.views
 
 import exams.http.DisplayedState.{examRequestPagePrism, maxQuestionsLens, setIdLens, studentIdLens}
 import exams.http.ScalaJs.apiEndpoint
+import exams.http.{DisplayedPage, ErrorPage, ExamPage}
 import exams.shared.data.HttpResponses.ExamGenerated
 import io.circe.generic.auto._
 import io.circe.parser.decode
@@ -35,7 +36,6 @@ object ExamRequestPageForm {
             case 200 =>
               println("Sent request and received 200 response code")
               println(s"Response: ${xhr.responseText}")
-              import ExamSelectable.fromStudentsExam
               val tokenHeader = xhr.getResponseHeader("Access-Token")
 
               decode[ExamGenerated](xhr.responseText).toOption

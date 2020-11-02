@@ -1,8 +1,9 @@
-package exams.http
+package exams.http.views
 
 import exams.http.DisplayedState.{changeAnswerIsSelected, examPagePrism}
 import exams.http.ExamSelectable.toCompletedExam
 import exams.http.ScalaJs.apiEndpoint
+import exams.http._
 import exams.shared.data.HttpResponses.ExamResult
 import io.circe.generic.auto._
 import io.circe.parser.decode
@@ -10,7 +11,7 @@ import io.circe.syntax._
 import japgolly.scalajs.react.ScalazReact.{ReactS, _}
 import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.extra.Ajax
-import japgolly.scalajs.react.vdom.html_<^.{<, _}
+import japgolly.scalajs.react.vdom.html_<^.{<, ^, _}
 import japgolly.scalajs.react.{ReactEventFromInput, _}
 import scalacss.ScalaCssReact._
 

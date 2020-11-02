@@ -1,5 +1,6 @@
 package exams.http
 
+import exams.http.views.{ErrorPageForm, ExamPageForm, ExamRequestPageForm, ExamResultPageForm}
 import japgolly.scalajs.react.ScalaComponent
 import japgolly.scalajs.react.ScalazReact.ReactS
 import org.scalajs.dom
