@@ -15,9 +15,9 @@ services:
 
   webserver:
     build: .
-    image: akkaexams:0.1
+    image: akkaexams:0.15
     environment:
-      "JDBC_DATABASE_URL": "jdbc:postgresql://postgres:5432/exams?user=docker&password=docker"
+      "DATABASE_URL": "postgres://docker:docker@postgres:5432/postgres"
     depends_on:
       - postgres
     ports:
