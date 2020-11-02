@@ -34,7 +34,7 @@ object ScalaJs {
           case ExamRequestPage(studentsRequest) => ExamRequestPageForm.renderExamRequestForm(state, $, s)
           case ExamPage(token, exam) => ExamPageForm.renderExamForm(state, $, s)
           case ExamResultPage(score) => ExamResultPageForm.renderExamResultPageForm(state, $, s)
-          case ErrorPage(reason) => ???
+          case ErrorPage(reason) => ErrorPageForm.renderErrorPage(state, $, s)
         }
       }
       ).build

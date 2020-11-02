@@ -23,6 +23,11 @@ object DisplayedState {
     case _ => None
   }(identity)
 
+  val errorPagePrism: Prism[DisplayedPage, ErrorPage] = Prism[DisplayedPage, ErrorPage] {
+    case page: ErrorPage => Some(page)
+    case _ => None
+  }(identity)
+
   private val examRequestLens = GenLens[ExamRequestPage](_.studentsRequest)
   private val studentIdFromRequestLens = GenLens[StudentsRequest](_.studentId)
   private val maxQuestionsFromRequestLens = GenLens[StudentsRequest](_.maxQuestions)
