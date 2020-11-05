@@ -8,8 +8,11 @@ import exams.shared.data.HttpRequests.StudentsRequest
 import exams.shared.data.HttpResponses.{ExamGenerated, ExamResult}
 import exams.shared.data.{HttpRequests, StudentsExam}
 import exams.student.Student
+import exams.student.Student.studentWithTimer
 
 object StudentActions {
+
+  type spawnStudent = ActorRef[DisplayedToStudent] => Behavior[Student]
 
   sealed trait Command
   final case class RequestExamCommand(studentsRequest: StudentsRequest, replyTo: ActorRef[DisplayedToStudent]) extends Command
@@ -23,18 +26,19 @@ object StudentActions {
   case class GeneratingFailed(reason: String) extends DisplayedToStudent
   case class ExamResult3(result: ExamResult) extends DisplayedToStudent
 
-  def apply()(implicit distributor: ActorRef[ExamDistributor]): Behavior[Command] = registry(distributor)
+  def apply(studentBehavior: spawnStudent = studentWithTimer(_))(
+    implicit distributor: ActorRef[ExamDistributor]): Behavior[Command] = registry(studentBehavior: spawnStudent)(distributor)
 
-  def registry(distributor: ActorRef[ExamDistributor]): Behavior[Command] = {
+  def registry(studentBehavior: spawnStudent)(distributor: ActorRef[ExamDistributor]): Behavior[Command] = {
     Behaviors.setup(context =>
       Behaviors.receiveMessage {
         case RequestExamCommand(studentsRequest, displayReceiver) =>
           context.log.info("received starting exam request")
-          val student = context.spawnAnonymous(Student(displayReceiver))
+          val student = context.spawnAnonymous(studentBehavior(displayReceiver))
           distributor ! RequestExam(studentsRequest, student)
           Behaviors.same
         case SendExamToEvaluationCommand(exam, displayReceiver) =>
-          val student = displayReceiver.map(it => context.spawnAnonymous(Student(it)))
+          val student = displayReceiver.map(it => context.spawnAnonymous(studentBehavior(it)))
           distributor ! RequestExamEvaluation(exam.examId, exam.answers, student)
           Behaviors.same
       })

@@ -7,8 +7,10 @@ import exams.http.StudentActions
 import exams.http.StudentActions.{ExamGeneratedWithToken, GeneratingFailed}
 import exams.http.token.TokenGenerator
 import exams.shared.data.HttpRequests.StudentsRequest
-import exams.shared.data.StudentsExam
 import exams.shared.data.HttpResponses.ExamResult
+import exams.shared.data.StudentsExam
+
+import scala.concurrent.duration.DurationInt
 
 sealed trait Student
 final case class RequestExamCommand(code: StudentsRequest, distributor: ActorRef[ExamDistributor]) extends Student
@@ -16,13 +18,22 @@ final case class RequestExamCommand(code: StudentsRequest, distributor: ActorRef
 final case class GiveExamToStudent(emptyExam: StudentsExam) extends Student
 final case class GiveResultToStudent(result: ExamResult) extends Student
 case object GeneratingExamFailed extends Student
+private case object ShouldStop extends Student
 
 object Student {
 
-  def apply(displayReceiver: ActorRef[StudentActions.DisplayedToStudent], tokenGen: StudentsExam => String = tokenFromExam): Behavior[Student] =
-    stateless(displayReceiver, tokenGen)
+  def apply(displayReceiver: ActorRef[StudentActions.DisplayedToStudent], tokenGen: StudentsExam => String = tokenFromExam): Behavior[Student] = {
+    stateless(displayReceiver)(tokenGen)
+  }
 
-  def stateless(displayReceiver: ActorRef[StudentActions.DisplayedToStudent], tokenGen: StudentsExam => String): Behavior[Student] =
+  def studentWithTimer(displayReceiver: ActorRef[StudentActions.DisplayedToStudent], tokenGen: StudentsExam => String = tokenFromExam): Behavior[Student] = {
+    Behaviors.withTimers[Student](timers => {
+      timers.startSingleTimer(ShouldStop, 5 seconds)
+      Student(displayReceiver, tokenGen)
+    })
+  }
+
+  def stateless(displayReceiver: ActorRef[StudentActions.DisplayedToStudent])(tokenGen: StudentsExam => String): Behavior[Student] =
     Behaviors.setup(context =>
       Behaviors.receiveMessage {
         case GiveExamToStudent(emptyExam) =>
@@ -40,6 +51,9 @@ object Student {
         case GeneratingExamFailed =>
           context.log.info("student received GeneratingExamFailed message")
           displayReceiver ! GeneratingFailed("unknown")
+          Behaviors.stopped
+        case ShouldStop =>
+          context.log.info("student did not receive any message - stopping the actor")
           Behaviors.stopped
       }
     )

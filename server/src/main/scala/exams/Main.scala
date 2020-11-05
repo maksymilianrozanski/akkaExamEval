@@ -12,6 +12,7 @@ import exams.distributor.ExamDistributor
 import exams.distributor.ExamDistributor.ExamDistributor
 import exams.evaluator.ExamEvaluator
 import exams.http.{RoutesActorsPack, RoutesRoot, StudentActions}
+import exams.student.Student.studentWithTimer
 
 import scala.util.{Failure, Success}
 

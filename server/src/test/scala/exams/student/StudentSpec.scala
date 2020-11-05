@@ -1,18 +1,28 @@
 package exams.student
 
-import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, TestInbox}
+import akka.actor.testkit.typed.scaladsl.{BehaviorTestKit, ManualTime, ScalaTestWithActorTestKit, TestInbox, TestProbe}
+import akka.actor.typed.{PostStop, PreRestart}
 import akka.actor.typed.scaladsl.Behaviors
 import exams.data.ExamGenerator
 import exams.distributor.ExamDistributor.{ExamDistributor, RequestExam}
 import exams.http.StudentActions
 import exams.http.StudentActions.{DisplayedToStudent, ExamGeneratedWithToken, GeneratingFailed}
 import exams.shared.data.HttpRequests.StudentsRequest
-import exams.shared.data.StudentsExam
-import org.scalatest.wordspec.AnyWordSpecLike
 import exams.shared.data.HttpResponses.ExamResult
+import exams.shared.data.StudentsExam
+import exams.student.Student.studentWithTimer
+import org.scalatest.wordspec.AnyWordSpecLike
+
+import scala.concurrent.duration._
 
 
-class StudentSpec extends AnyWordSpecLike {
+class StudentSpec
+  extends
+    ScalaTestWithActorTestKit(ManualTime.config)
+    with
+    AnyWordSpecLike {
+
+  val manualTime: ManualTime = ManualTime()
 
   "Student" when {
 
@@ -67,6 +77,27 @@ class StudentSpec extends AnyWordSpecLike {
 
       "send message to displayReceiver" in
         displayReceiver.expectMessage(GeneratingFailed("unknown"))
+    }
+
+    "does not receive any message for x seconds" should {
+      case object StudentStopped
+      val displayReceiver = TestInbox[DisplayedToStudent]()
+      val studentStoppedProbe = TestProbe[StudentStopped.type]()
+
+      val behavior = Behaviors.setup[StudentStopped.type](context => {
+        context.watch(spawn(studentWithTimer(displayReceiver.ref, tokenGen)))
+        Behaviors.receiveSignal {
+          case (_, signal) if signal == PostStop =>
+            studentStoppedProbe.ref ! StudentStopped
+            Behaviors.same
+        }
+      })
+      spawn(behavior)
+
+      manualTime.expectNoMessageFor(4 seconds)
+      manualTime.timePasses(2 seconds)
+
+      "stop itself" in studentStoppedProbe.expectMessage(StudentStopped)
     }
   }
 }
