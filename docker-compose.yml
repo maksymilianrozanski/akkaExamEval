@@ -18,6 +18,7 @@ services:
     image: akkaexams:0.15
     environment:
       "DATABASE_URL": "postgres://docker:docker@postgres:5432/postgres"
+      "adminPass": "pass"
     depends_on:
       - postgres
     ports:
