@@ -9,6 +9,7 @@ import exams.data.ExamRepository.{AddQuestionsSet, ExamRepository}
 import exams.distributor.ExamDistributor.{ExamDistributor, ExamId}
 import exams.evaluator.ExamEvaluator
 import exams.evaluator.ExamEvaluator.RequestResults
+import exams.http.Auth.CredentialsVerifier
 import exams.http.StudentActions.{DisplayedToStudent, SendExamToEvaluationCommand}
 import exams.http.token.TokenGenerator
 import exams.http.token.TokenGenerator.{TokenValidationResult, ValidMatchedToken}
@@ -52,6 +53,8 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport with Di
     implicit def requestAllResults: AllExamResults = () =>
       actors.evaluator.ask(RequestResults)
 
+    import Auth.adminCredentials
+
     RoutesRoot.allRoutes
   }
 
@@ -76,6 +79,7 @@ object RoutesRoot extends StudentsExamJsonProtocol with SprayJsonSupport with Di
                 completedExam: CompletedExam => Future[DisplayedToStudent],
                 addingQuestionsSet: QuestionsSet => Unit, ec: ExecutionContext,
                 examTokenValidator: ExamTokenValidator,
-                examResults: AllExamResults): Route =
+                examResults: AllExamResults,
+                auth: CredentialsVerifier): Route =
     testJs ~ StudentRoutes.studentRoutes ~ RepoRoutes.repoRoutes
 }

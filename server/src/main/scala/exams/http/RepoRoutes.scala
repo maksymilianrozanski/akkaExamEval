@@ -4,16 +4,17 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{path, pathPrefix, _}
 import akka.http.scaladsl.server.Route
+import exams.http.Auth.CredentialsVerifier
 import exams.http.RoutesRoot.AllExamResults
 import exams.shared.data.HttpRequests.QuestionsSet
 
 object RepoRoutes extends StudentsExamJsonProtocol with SprayJsonSupport {
 
   def repoRoutes(implicit addingQuestionsSet: QuestionsSet => Unit,
-                 requestResults: AllExamResults): Route = {
+                 requestResults: AllExamResults, auth: CredentialsVerifier): Route = {
     pathPrefix("repo") {
       Route.seal {
-        authenticateBasic(realm = "secure site", Auth.userPassAuthenticator) { user =>
+        authenticateBasic(realm = "secure site", auth.verify) { user =>
           innerRepoRoutes
         }
       }

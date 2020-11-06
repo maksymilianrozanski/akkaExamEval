@@ -2,17 +2,21 @@ package exams.http
 
 import akka.http.scaladsl.server.directives.Credentials
 
-import scala.io.Source
-
 object Auth {
 
-  val secretPass: String = "pass"
-//    Source.fromResource("repoAuth.txt").getLines().toList.head
+  private[http] def userPassAuthenticator(validPass: Option[String])(credentials: Credentials): Option[String] = {
+    if (validPass.isEmpty) println("adminPass from environment is missing!")
+    validPass.flatMap(validPass =>
+      credentials match {
+        case pass@Credentials.Provided(username) if pass.verify(validPass) => Some(username)
+        case _ => None
+      }
+    )
+  }
 
-  def userPassAuthenticator(credentials: Credentials): Option[String] = {
-    credentials match {
-      case pass@Credentials.Provided(username) if pass.verify(secretPass) => Some(username)
-      case _ => None
-    }
+  implicit def adminCredentials: CredentialsVerifier = CredentialsVerifier(sys.env.get("adminPass"))
+
+  final case class CredentialsVerifier(validPassword: Option[String]) {
+    def verify(credentials: Credentials): Option[String] = userPassAuthenticator(validPassword)(credentials)
   }
 }
