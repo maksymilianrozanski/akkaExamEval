@@ -15,7 +15,7 @@ services:
 
   webserver:
     build: .
-    image: akkaexams:0.15
+    image: akkaexams:0.16
     environment:
       "DATABASE_URL": "postgres://docker:docker@postgres:5432/postgres"
       "adminPass": "pass"
