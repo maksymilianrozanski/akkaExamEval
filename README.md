@@ -1,7 +1,7 @@
 A simple app created while exploring typed akka, and akka persistence.
 
 App is allows generating exams/quizzes from question pool. The results of exams are saved, and exam score is displayed
-to user.
+to users.
 
 Steps to run in local environment:
 
