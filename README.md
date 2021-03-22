@@ -1,5 +1,7 @@
 A simple app created while exploring Akka Typed, and Akka Persistence.
 
+The project is not polished up yet. Some functionalities, like error handling are not fully implemented yet.
+
 App is allows generating exams/quizzes from question pool. The results of exams are saved, and exam score is displayed
 to users.
 
